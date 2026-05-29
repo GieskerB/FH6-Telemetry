@@ -1,14 +1,7 @@
 #include <bits/stdc++.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
-#include <netinet/in.h>
 
-// Size of DATA OUT from FH6
-#define TELEMETRY_SIZE 324
+#include "../include/fh6_data.hpp"
 
 // Running variable to stop loop when program ends.
 static volatile bool running = true;
@@ -43,7 +36,7 @@ int create_socket(int server_port) {
 }
 
 // Small wrapper around sendto
-ssize_t send_message(int server_socket, char* message, const struct sockaddr* client_addr) {
+ssize_t send_message(int server_socket, const void* message, const struct sockaddr* client_addr) {
     return sendto(server_socket, message, sizeof(message), 0, client_addr, sizeof(struct sockaddr));
 }
 
@@ -52,11 +45,10 @@ void send_loop(int server_socket, const struct sockaddr* client_addr) {
     while (running) {
 
         // Dummy data for now...
-        char message[TELEMETRY_SIZE];
-        memset(message, 'A', TELEMETRY_SIZE);
+        struct fh6_data dummy_data;
 
         // Call wrapper, exit if data could not be send.
-        if (send_message(server_socket,message, client_addr) < 0) {
+        if (send_message(server_socket, ((const char*) &dummy_data), client_addr) < 0) {
             perror("Sendto failed");
             exit(EXIT_FAILURE);;
         }
