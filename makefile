@@ -3,11 +3,10 @@ CXXFLAGS := -Wall -Wextra -Werror -o3 -std=c++17
 SRCDIR := src
 BUILDDIR := build
 
-PROGS := fh6_telemetry, udp_test
 
 PROGS := fh6_telemetry udp_test
-fh6_telemetry_SRCS := $(SRCDIR)/main.cpp
-udp_test_SRCS := $(SRCDIR)/test_udp.cpp
+fh6_telemetry_SRCS := $(SRCDIR)/main.cpp $(SRCDIR)/socket_setup.cpp
+udp_test_SRCS := $(SRCDIR)/test_udp.cpp $(SRCDIR)/socket_setup.cpp
 
 fh6_telemetry_OBJS := $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%.o, $(fh6_telemetry_SRCS))
 udp_test_OBJS := $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%.o, $(udp_test_SRCS))
