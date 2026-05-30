@@ -4,13 +4,12 @@
 
 #include "../include/engine_rpm.hpp"
 #include <iostream>
-#include <cmath>
-#include <vector>
+#include <algorithm>
 
 namespace engine_rpm {
 
     static constexpr short WIDTH = 400;
-    static constexpr short HEIGHT = 400;
+    static constexpr short HEIGHT = 200;
 
     static SDL_Window * window = nullptr;
     static SDL_Renderer* renderer = nullptr;
@@ -27,170 +26,138 @@ namespace engine_rpm {
             perror(SDL_GetError());
             exit(EXIT_FAILURE);
         }
-        font = TTF_OpenFont("assets/airstrike.ttf",24);
+        font = TTF_OpenFont("assets/airstrike.ttf",255);
         if(font == nullptr) {
             perror(SDL_GetError());
             exit(EXIT_FAILURE);
         }
     }
 
-// High-performance procedural arc renderer using stack-allocated primitives
-    void DrawArc(SDL_Renderer* ren, float cx, float cy, float r, float start_angle, float end_angle, float thickness, SDL_Color color) {
-        if (start_angle > end_angle) return;
+void update(const fh6_data & data_out) {
+        // 1. Clear the screen with a transparent background
+        SDL_SetRenderDrawColor(renderer, 69, 69, 69, 69);
+        SDL_RenderClear(renderer);
 
-        // Drastically lowered segment count for background structures
-        // Since the lines are narrow, 24 segments provide visual smoothness without CPU overhead
-        constexpr int MAX_SEGMENTS = 24; 
+        // ==========================================
+        // 2. DATA CALCULATIONS
+        // ==========================================
+        // Convert VelocityZ (m/s) to kmh
+        int speed_kmh = std::abs(static_cast<int>(data_out.VelocityZ * 3.6));
+        speed_kmh = std::clamp(speed_kmh, 0, 999);
         
-        SDL_Vertex vertices[(MAX_SEGMENTS + 1) * 2];
-        int indices[MAX_SEGMENTS * 6];
+        // Calculate RPM percentage for the bar
+        float rpm_range = data_out.EngineMaxRpm - data_out.EngineIdleRpm;
+        float rpm_pct = 0.0f;
+        if (rpm_range > 0.0f) {
+            rpm_pct = (data_out.CurrentEngineRpm - data_out.EngineIdleRpm) / rpm_range;
+            rpm_pct = std::clamp(rpm_pct, 0.0f, 1.0f);
+        }
 
-        float r_out = r + thickness / 2.0f;
-        float r_in = r - thickness / 2.0f;
-        SDL_FColor fcolor = { color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, color.a / 255.0f };
+        // Format Strings
+        std::string gear_str = (data_out.Gear == 0) ? "N" : std::to_string(data_out.Gear);
+        
 
-        for (int i = 0; i <= MAX_SEGMENTS; ++i) {
-            float t = (float)i / MAX_SEGMENTS;
-            float angle = start_angle + t * (end_angle - start_angle);
-            float rad = angle * (M_PI / 180.0f);
+        // Render Gear Text using SDL3_ttf
+        SDL_Color color = {255, 127, 0, 255};
+        SDL_Surface* gear_surface = TTF_RenderText_Blended(font, gear_str.c_str(), 0, color);
+        if (gear_surface) {
+            SDL_Texture* gear_texture = SDL_CreateTextureFromSurface(renderer, gear_surface);
+            if (gear_texture) {
+                SDL_FRect gear_rect = {
+                    WIDTH * 0.75 ,
+                    HEIGHT * 0.1 ,
+                    WIDTH * 0.2,
+                    HEIGHT * 0.4
+                };
+                SDL_RenderTexture(renderer, gear_texture, nullptr, &gear_rect);
+                SDL_DestroyTexture(gear_texture);
+            }
+            SDL_DestroySurface(gear_surface);
+        }
 
-            float c = std::cos(rad);
-            float s = std::sin(rad);
+        // ==========================================
+        // 4. DRAW SPEEDOMETER TEXT (000)
+        // ==========================================
+        // Format speed with leading zeros (e.g., "000")
+        char speed_buffer[4];
+        snprintf(speed_buffer, sizeof(speed_buffer), "%03d", speed_kmh);
 
-            int v_idx = i * 2;
-            vertices[v_idx]     = { { cx + r_out * c, cy + r_out * s }, fcolor, { 0, 0 } }; // Outer arc bound
-            vertices[v_idx + 1] = { { cx + r_in * c,  cy + r_in * s  }, fcolor, { 0, 0 } }; // Inner arc bound
+        SDL_Color white_muted = {200, 200, 200, 255};
+        SDL_Surface* speed_surface = TTF_RenderText_Blended(font, speed_buffer, 0, white_muted);
+        if (speed_surface) {
+            SDL_Texture* speed_texture = SDL_CreateTextureFromSurface(renderer, speed_surface);
+            if (speed_texture) {
+                // Positioned to the right of the gear circle, scaled up
+                SDL_FRect speed_rect = {
+                    HEIGHT * 0.1f,
+                    HEIGHT * 0,
+                    WIDTH * 0.667,
+                    HEIGHT * 0.8f };
+                SDL_RenderTexture(renderer, speed_texture, nullptr, &speed_rect);
+                SDL_DestroyTexture(speed_texture);
+            }
+            SDL_DestroySurface(speed_surface);
+        }
 
-            if (i < MAX_SEGMENTS) {
-                int base_idx = i * 6;
-                indices[base_idx]     = v_idx;
-                indices[base_idx + 1] = v_idx + 1;
-                indices[base_idx + 2] = v_idx + 2;
+        // Render auxiliary labels ("kmh")
+        SDL_Surface* unit_surface = TTF_RenderText_Blended(font, "kmh", 0, white_muted);
+        if (unit_surface) {
+            SDL_Texture* unit_texture = SDL_CreateTextureFromSurface(renderer, unit_surface);
+            if (unit_texture) {
+                SDL_FRect unit_rect = {
+                    WIDTH * 0.75 ,
+                    HEIGHT * 0.5 ,
+                    WIDTH * 0.2,
+                    HEIGHT * 0.2
+                };
+                SDL_RenderTexture(renderer, unit_texture, nullptr, &unit_rect);
+                SDL_DestroyTexture(unit_texture);
+            }
+            SDL_DestroySurface(unit_surface);
+        }
 
-                indices[base_idx + 3] = v_idx + 1;
-                indices[base_idx + 4] = v_idx + 3;
-                indices[base_idx + 5] = v_idx + 2;
+        // ==========================================
+        // 5. DRAW THE REV COUNTER BAR
+        // ==========================================
+        float bar_x = WIDTH * 0.1;
+        float bar_y = HEIGHT * 0.75;
+        float bar_max_width = WIDTH * 0.8f;
+        float bar_height = WIDTH / 20;
+        float current_bar_width = bar_max_width * rpm_pct;
+
+        // Background track (Dark semi-transparent tray)
+        SDL_SetRenderDrawColor(renderer, 50, 50, 50, 128);
+        SDL_FRect bg_bar = { bar_x, bar_y, bar_max_width, bar_height };
+        SDL_RenderFillRect(renderer, &bg_bar);
+
+        // Main Progress Bar (Light silver/white)
+        SDL_SetRenderDrawColor(renderer, 220, 225, 230, 255);
+        SDL_FRect progress_bar = { bar_x, bar_y, current_bar_width, bar_height };
+        SDL_RenderFillRect(renderer, &progress_bar);
+
+        // Redline indicator (If RPM is over 90%, paint the active tip neon pink/red)
+        if (rpm_pct > 0.90f) {
+            float redline_start_x = bar_x + (bar_max_width * 0.90f);
+            float redline_width = current_bar_width - (bar_max_width * 0.90f);
+            
+            if (redline_width > 0.0f) {
+                SDL_SetRenderDrawColor(renderer, 255, 42, 109, 255); 
+                SDL_FRect redline_bar = { redline_start_x, bar_y, redline_width, bar_height };
+                SDL_RenderFillRect(renderer, &redline_bar);
             }
         }
 
-        SDL_RenderGeometry(ren, nullptr, vertices, (MAX_SEGMENTS + 1) * 2, indices, MAX_SEGMENTS * 6);
-    }
-
-    // Helper to easily render text centered or aligned
-    void RenderText(SDL_Renderer* ren, TTF_Font* font, const std::string& text, float x, float y, SDL_Color color, bool center_x = false, int font_size = 24) {
-        if (!font || text.empty()) return;
-        
-        // SDL3 TTF text properties scale adjustment
-        TTF_SetFontSize(font, font_size);
-        SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), text.length(), color);
-        if (!surface) return;
-
-        SDL_Texture* texture = SDL_CreateTextureFromSurface(ren, surface);
-        if (!texture) {
-            SDL_DestroySurface(surface);
-            return;
-        }
-
-        float w = (float)surface->w;
-        float h = (float)surface->h;
-        float target_x = center_x ? x - (w / 2.0f) : x;
-
-        SDL_FRect dst_rect = { target_x, y, w, h };
-        SDL_RenderTexture(ren, texture, nullptr, &dst_rect);
-
-        SDL_DestroyTexture(texture);
-        SDL_DestroySurface(surface);
-    }
-
-    void update(const fh6_data & data_out) {
-        // Clear background with transparency
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-        SDL_RenderClear(renderer);
-
-        // UI positioning dynamically based on current window layout
-        float cx = WIDTH / 2.0f;
-        float cy = HEIGHT / 2.0f;
-        float radius = 90.0f;
-        float thickness = 4.0f;
-
-        // 1. Calculate dynamic RPM percentage mapping
-        float rpm_pct = 0.0f;
-        if (data_out.EngineMaxRpm > data_out.EngineIdleRpm) {
-            rpm_pct = (data_out.CurrentEngineRpm - data_out.EngineIdleRpm) / (data_out.EngineMaxRpm - data_out.EngineIdleRpm);
-            if (rpm_pct < 0.0f) rpm_pct = 0.0f;
-            if (rpm_pct > 1.0f) rpm_pct = 1.0f;
-        }
-
-        // Arc starts at bottom-right (45 deg) and wraps counter-clockwise to top-right (-45 or 315 deg)
-        float start_angle = 95.0f;
-        float total_sweep = 200.0f; 
-        float current_end_angle = start_angle + (rpm_pct * total_sweep);
-
-        // 2. Color setups matching original UI
-        SDL_Color white = { 255, 255, 255, 255 };
-        SDL_Color gray  = { 100, 100, 100, 150 };
-        SDL_Color red   = { 230, 40, 40, 255 };
-        // SDL_Color blue  = { 50, 180, 245, 255 };
-
-        // 3. Draw RPM Background Tracks & Active Progress
-        // Draw the full background track in muted grey
-        DrawArc(renderer, cx, cy, radius, start_angle, start_angle + total_sweep, thickness, gray);
-
-        // Redline arc zone (top 15% of the powerband)
-        float redline_pct = 0.85f;
-        float redline_start = start_angle + (total_sweep * redline_pct);
-        DrawArc(renderer, cx, cy, radius + 1.0f, redline_start, start_angle + total_sweep, thickness + 1.0f, red);
-
-        // Dynamic filled arc up to the current RPM position (stops if it hits redline)
-        float current_white_end = std::min(current_end_angle, redline_start);
-        DrawArc(renderer, cx, cy, radius, start_angle, current_white_end, thickness, white);
-
-        // If RPM is in the redline range, overlay the white progress bar with red
-        if (current_end_angle > redline_start) {
-            DrawArc(renderer, cx, cy, radius + 1.0f, redline_start, current_end_angle, thickness + 1.0f, red);
-        }
-
-        // 4. Draw RPM Numeric Tick Labels (0, 2, 4, 6 scaled by Max RPM)
-        int max_val = static_cast<int>(std::round(data_out.EngineMaxRpm / 1000.0f));
-        int steps[] = { 0, max_val / 3, (max_val * 2) / 3, max_val };
-
-        for (int i = 0; i < 4; ++i) {
-            float t = (float)i / 3.0f;
-            float angle = start_angle + (t * total_sweep);
-            float rad = angle * (M_PI / 180.0f);
-            
-            // Push text offset slightly outward from the line
-            float tx = cx + (radius + 18.0f) * std::cos(rad);
-            float ty = cy + (radius + 18.0f) * std::sin(rad);
-
-            RenderText(renderer, font, std::to_string(steps[i]), tx, ty - 8, gray, true, 14);
-        }
-
-        // 5. Draw Gear Indicator & Underline
-        std::string gear_str = (data_out.Gear == 0) ? "N" : ((data_out.Gear == 11) ? "N" : std::to_string(data_out.Gear));
-        RenderText(renderer, font, gear_str, cx, cy - 45, white, true, 76);
-
-        // // Underline beneath the Gear value
-        // SDL_FRect line_rect = { cx - 25.0f, cy + 25.0f, 50.0f, 3.0f };
-        // SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        // SDL_RenderFillRect(renderer, &line_rect);
-
-        // // 6. Draw Throttle/Brake Vertical Gauges (Simulated/Placeholder visualization via basic indicators)
-        // SDL_FRect brake_bar = { cx + 35.0f, cy - 20.0f, 3.0f, 40.0f };
-        // SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255);
-        // SDL_RenderFillRect(renderer, &brake_bar);
-
-        // SDL_FRect throttle_bar = { cx + 43.0f, cy - 20.0f, 3.0f, 40.0f };
-        // SDL_SetRenderDrawColor(renderer, blue.r, blue.g, blue.b, blue.a);
-        // SDL_RenderFillRect(renderer, &throttle_bar);
-
-        // 7. Render Speedometer reading (VelocityZ converted from m/s to KPH)
-        int speed_mph = static_cast<int>(std::abs(data_out.VelocityZ) * 3.6f);
-        RenderText(renderer, font, std::to_string(speed_mph), cx + 55.0f, cy + 50.0f, white, true, 34);
-        RenderText(renderer, font, "KPH", cx + 55.0f, cy + 85.0f, gray, true, 14);
-
+        // Final screen presentation for SDL 3
         SDL_RenderPresent(renderer);
     }
+    
+    // void update(const fh6_data & data_out) {
+    //     // data_out.CurrentEngineRpm
+    //     // data_out.EngineIdleRpm
+    //     // data_out.EngineMaxRpm
+    //     // data_out.Gear
+    //     // data_out.VelocityZ
+    // }
 
     void close() {
         SDL_DestroyRenderer(renderer);

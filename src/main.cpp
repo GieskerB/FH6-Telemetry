@@ -20,6 +20,7 @@ ssize_t receive_message(int sockfd, void* message, const struct sockaddr* client
 
 // Continuously receive data via UDP.
 void receive_loop(int sockfd, const struct sockaddr* client_addr) {
+    unsigned int last_time_stamp = 0;
     while (running) {
         struct fh6_data data_out;
 
@@ -28,6 +29,15 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr) {
             perror("recvfrom failed");
             exit(EXIT_FAILURE);
         }
+
+        if(last_time_stamp < data_out.TimestampMS) {
+            last_time_stamp = data_out.TimestampMS;
+        } else if (last_time_stamp > (std::numeric_limits<unsigned int>::max() - 1000) and data_out.TimestampMS < 1000) {
+            last_time_stamp = data_out.TimestampMS;
+        } else {
+            continue;
+        }
+
         engine_rpm::update(data_out);
 
         SDL_Event event;
