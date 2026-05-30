@@ -1,9 +1,13 @@
 #include <bits/stdc++.h>
 #include <arpa/inet.h>
 #include <iostream>
+#include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 #include "../include/fh6_data.hpp"
 #include "../include/socket_setup.hpp"
+
+#include "../include/engine_rpm.hpp"
 
 // Running variable to stop loop when program ends.
 volatile bool running = true;
@@ -16,26 +20,37 @@ ssize_t receive_message(int sockfd, void* message, const struct sockaddr* client
 
 // Continuously receive data via UDP.
 void receive_loop(int sockfd, const struct sockaddr* client_addr) {
-    for (int i = 0; i < 1000; ++i) {
-        struct fh6_data dummy_data;
+    while (running) {
+        struct fh6_data data_out;
 
         // Call wrapper, exit if data could not be received.
-        if (receive_message(sockfd, ((void*) &dummy_data), (const struct sockaddr*)&client_addr) < 0) {
+        if (receive_message(sockfd, ((void*) &data_out), (const struct sockaddr*)&client_addr) < 0) {
             perror("recvfrom failed");
             exit(EXIT_FAILURE);
         }
+        engine_rpm::update(data_out);
 
-        printf("%d\n", dummy_data.IsRaceOn);
+        SDL_Event event;
+        SDL_PollEvent(&event);
     }
     close(sockfd);
 }
-
 int main(int argc, const char* argv[]) {
 
     if(argc != 2) {
         perror("UPD test server requires one argument:\n\tmessage port\n");
         exit(EXIT_FAILURE);
     }
+
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
+        perror(SDL_GetError());
+        exit(EXIT_FAILURE);
+    }
+    if (!TTF_Init()) {
+        perror(SDL_GetError());
+        exit(EXIT_FAILURE);
+    }
+    engine_rpm::init();
 
     // setup everything socket related as well as the ctrl-c handler
     auto [sockfd, client_addr] = setup(std::stoi(argv[1]));
@@ -48,6 +63,11 @@ int main(int argc, const char* argv[]) {
 
     // start receiving data
     receive_loop(sockfd, (const struct sockaddr*)&client_addr);
+
+    engine_rpm::close();
+
+    SDL_Quit();
+    TTF_Quit();
 
     return 0;
 }
