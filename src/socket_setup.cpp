@@ -20,11 +20,28 @@ void handle(int) {
 
 sock_info setup(const int port) {
     // Create UDP socket
+#ifdef _WIN32
+    WSADATA wsaData;
+    int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != 0) {
+        std::cerr << "WSAStartup failed with error: " << iResult << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    // Create UDP socket (Windows uses the SOCKET type)
+    SOCKET sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (sockfd == INVALID_SOCKET) {
+        std::cerr << "Socket creation failed with error: " << WSAGetLastError() << std::endl;
+        WSACleanup();
+        exit(EXIT_FAILURE);
+    }
+#else
     const int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
+#endif
 
 #ifndef _WIN32
     // setup handle function

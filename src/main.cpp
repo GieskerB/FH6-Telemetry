@@ -24,9 +24,39 @@
 volatile bool running = true;
 
 // Small wrapper around recvfrom
-ssize_t receive_message(int sockfd, void* message, const struct sockaddr* client_addr) {
+void receive_message(int sockfd, void* message, const struct sockaddr* client_addr) {
     static socklen_t len = sizeof(struct sockaddr);
-    return recvfrom(sockfd, static_cast<char*>(message), TELEMETRY_SIZE, MSG_WAITALL, (struct sockaddr *)&client_addr, &len);
+    auto result = recvfrom(sockfd, static_cast<char*>(message), TELEMETRY_SIZE, MSG_WAITALL, (struct sockaddr *)&client_addr, &len);
+
+#ifdef _WIN32
+    if (result == SOCKET_ERROR) {
+            std::cerr << "recvfrom failed. Windows Error: " << WSAGetLastError() << std::endl;
+            exit(EXIT_FAILURE);
+    }
+#else
+    if (result < 0) {
+            perror("recvfrom failed");
+            exit(EXIT_FAILURE);
+    }
+#endif
+}
+// Small wrapper function around bind
+void bind_socket(const int sockfd, const struct sockaddr * client_addr) {
+        // Bind to socket - necessary for receiver to get the data from the socket
+    auto result = bind(sockfd, client_addr, sizeof(struct sockaddr_in));
+#ifdef _WIN32
+    if (result == SOCKET_ERROR) {
+        std::cerr << "Bind failed. Windows Error: " << WSAGetLastError() << std::endl;
+        closesocket(sockfd);
+        WSACleanup();
+        exit(EXIT_FAILURE);
+    }
+#else
+    if (result < 0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+#endif
 }
 
 // Continuously receive data via UDP.
@@ -34,12 +64,9 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr) {
     unsigned int last_time_stamp = 0;
     while (running) {
         struct fh6_data data_out;
-        
+
         // Call wrapper, exit if data could not be received.
-        if (receive_message(sockfd, ((void*) &data_out), (const struct sockaddr*)&client_addr) < 0) {
-            perror("recvfrom failed");
-            exit(EXIT_FAILURE);
-        }
+        receive_message(sockfd, ((void*) &data_out), (const struct sockaddr*)&client_addr);
 
         if(last_time_stamp < data_out.TimestampMS) {
             last_time_stamp = data_out.TimestampMS;
@@ -60,6 +87,7 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr) {
     }
 #ifdef _WIN32
     closesocket(sockfd);
+    WSACleanup();
 #else
     close(sockfd);
 #endif
@@ -83,14 +111,7 @@ int main(int argc, const char* argv[]) {
 
     // setup everything socket related as well as the ctrl-c handler
     auto [sockfd, client_addr] = setup(std::stoi(argv[1]));
-
-    // Bind to socket - necessary for receiver to get the data from the socket
-    if (bind(sockfd, (const struct sockaddr *)&client_addr, sizeof(struct sockaddr)) < 0) {
-        perror("bind failed");
-        exit(EXIT_FAILURE);
-    }
-
-    // start receiving data
+    bind_socket(sockfd, (const struct sockaddr*)&client_addr);
     receive_loop(sockfd, (const struct sockaddr*)&client_addr);
 
     engine_rpm::close();
