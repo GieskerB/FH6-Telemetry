@@ -38,7 +38,7 @@ clean:
 # Windows target for cross compilation:
 
 WIN_CXX := x86_64-w64-mingw32-g++
-WIN_SDL := deps/SDL3-3.4.8/x86_64-w64-mingw32
+WIN_SDL := deps/SDL3-3.4.10/x86_64-w64-mingw32
 WIN_TTF := deps/SDL3_ttf-3.2.2/x86_64-w64-mingw32
 
 fh6_telemetry_WIN_OBJS := $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%_win.o, $(fh6_telemetry_SRCS))
@@ -47,6 +47,7 @@ SHIP_DIR    := $(BUILDDIR)/fh6_telemetry_windows
 ZIP_NAME    := fh6_telemetry_windows.zip
 
 windows: $(BUILDDIR) $(BUILDDIR)/fh6_telemetry.exe
+	cp -r assets $(BUILDDIR)
 	cp $(WIN_SDL)/bin/SDL3.dll $(BUILDDIR)
 	cp $(WIN_TTF)/bin/SDL3_ttf.dll $(BUILDDIR)
 
@@ -56,16 +57,16 @@ ship-windows: windows
 	mv $(BUILDDIR)/fh6_telemetry.exe $(SHIP_DIR)
 	mv $(BUILDDIR)/SDL3.dll $(SHIP_DIR)
 	mv $(BUILDDIR)/SDL3_ttf.dll $(SHIP_DIR)
-	
+
 	cp -r assets/ $(SHIP_DIR)
 
 	cd $(BUILDDIR) && zip -r $(ZIP_NAME) fh6_telemetry_windows
 	rm -rf $(SHIP_DIR)
-	
+
 $(BUILDDIR)/fh6_telemetry.exe: $(fh6_telemetry_WIN_OBJS)
 	$(WIN_CXX) -o $@ $^ \
-		-Ldeps/SDL3-3.4.8/x86_64-w64-mingw32/lib \
-		-Ldeps/SDL3_ttf-3.2.2/x86_64-w64-mingw32/lib \
+		-L$(WIN_SDL)/lib \
+		-L$(WIN_TTF)/lib \
 		-lSDL3_ttf -lSDL3 \
 		-static-libgcc -static-libstdc++ \
 		-lws2_32
