@@ -24,7 +24,14 @@ void set_data(fh6_data& data, test_mode tm) {
         data.EngineIdleRpm = 1650;
         if (data.CurrentEngineRpm == 0) data.CurrentEngineRpm = data.EngineIdleRpm;
         data.CurrentEngineRpm = data.CurrentEngineRpm * 1.0005;
-        if(data.CurrentEngineRpm > data.EngineMaxRpm) data.CurrentEngineRpm = data.EngineIdleRpm;
+        if(data.CurrentEngineRpm > data.EngineMaxRpm) {
+            data.CurrentEngineRpm = data.EngineIdleRpm;
+            if (++data.Gear > 11) data.Gear = 0;
+        } 
+        data.VelocityZ += 0.01;
+        if(data.VelocityZ > 999 / 3.6) {
+            data.VelocityZ = 0;
+        }
         break;
     case NONE: 
         return;

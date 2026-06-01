@@ -34,7 +34,7 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr) {
     unsigned int last_time_stamp = 0;
     while (running) {
         struct fh6_data data_out;
-
+        
         // Call wrapper, exit if data could not be received.
         if (receive_message(sockfd, ((void*) &data_out), (const struct sockaddr*)&client_addr) < 0) {
             perror("recvfrom failed");
@@ -52,7 +52,11 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr) {
         engine_rpm::update(data_out);
 
         SDL_Event event;
-        SDL_PollEvent(&event);
+        while (SDL_PollEvent(&event)) {
+            if(event.type == SDL_EventType::SDL_EVENT_QUIT) {
+                running = false;
+            }
+        }
     }
 #ifdef _WIN32
     closesocket(sockfd);
