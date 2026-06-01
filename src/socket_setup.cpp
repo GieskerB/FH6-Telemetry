@@ -1,7 +1,17 @@
-#include "../include/socket_setup.hpp"
-
 #include <bits/stdc++.h>
-#include <arpa/inet.h>
+
+#ifdef _WIN32
+    #define WIN32_LEAN_AND_MEAN
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+#endif
+
+#include "../include/socket_setup.hpp"
 
 // When program is ended with ctrl-c the socket gets closed and the loop ended.
 void handle(int) {
@@ -16,11 +26,13 @@ sock_info setup(const int port) {
         exit(EXIT_FAILURE);
     }
 
+#ifndef _WIN32
     // setup handle function
     struct sigaction ctrl_c_handler;
     ctrl_c_handler.sa_handler = handle;
     sigemptyset(&ctrl_c_handler.sa_mask);
     sigaction(SIGINT, &ctrl_c_handler, NULL);
+#endif
 
     // setup client connection
     struct sockaddr_in client_addr;

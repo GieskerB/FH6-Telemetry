@@ -1,12 +1,23 @@
+
 #include <bits/stdc++.h>
-#include <arpa/inet.h>
 #include <iostream>
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
+#ifdef _WIN32
+    #define WIN32_LEAN_AND_MEAN
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+#endif
+
+
 #include "../include/fh6_data.hpp"
 #include "../include/socket_setup.hpp"
-
 #include "../include/engine_rpm.hpp"
 
 // Running variable to stop loop when program ends.
@@ -15,7 +26,7 @@ volatile bool running = true;
 // Small wrapper around recvfrom
 ssize_t receive_message(int sockfd, void* message, const struct sockaddr* client_addr) {
     static socklen_t len = sizeof(struct sockaddr);
-    return recvfrom(sockfd, message, TELEMETRY_SIZE, MSG_WAITALL, (struct sockaddr *)&client_addr, &len);
+    return recvfrom(sockfd, static_cast<char*>(message), TELEMETRY_SIZE, MSG_WAITALL, (struct sockaddr *)&client_addr, &len);
 }
 
 // Continuously receive data via UDP.
@@ -43,12 +54,16 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr) {
         SDL_Event event;
         SDL_PollEvent(&event);
     }
+#ifdef _WIN32
+    closesocket(sockfd);
+#else
     close(sockfd);
+#endif
 }
 int main(int argc, const char* argv[]) {
 
     if(argc != 2) {
-        perror("UPD test server requires one argument:\n\tmessage port\n");
+        perror("FH6 telemetry requires one argument:\n\tmessage port\n");
         exit(EXIT_FAILURE);
     }
 
