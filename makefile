@@ -12,7 +12,8 @@ BUILDDIR := build
 
 
 PROGS := fh6_telemetry udp_test
-fh6_telemetry_SRCS := $(SRCDIR)/main.cpp $(SRCDIR)/socket_setup.cpp $(SRCDIR)/engine_rpm.cpp
+
+fh6_telemetry_SRCS := $(SRCDIR)/main.cpp $(SRCDIR)/socket_setup.cpp $(SRCDIR)/engine_rpm.cpp $(SRCDIR)/gforce.cpp
 udp_test_SRCS := $(SRCDIR)/test_udp.cpp $(SRCDIR)/socket_setup.cpp
 
 fh6_telemetry_OBJS := $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%.o, $(fh6_telemetry_SRCS))

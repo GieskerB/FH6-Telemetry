@@ -1,11 +1,10 @@
 #include <cstdio>
 #include <stdlib.h>
 #include <SDL3_ttf/SDL_ttf.h>
-
-#include "../include/engine_rpm.hpp"
 #include <iostream>
 #include <algorithm>
 
+#include "../include/engine_rpm.hpp"
 namespace engine_rpm {
 
     static constexpr short WIDTH = 400;
