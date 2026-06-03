@@ -27,13 +27,13 @@ void set_data(fh6_data& data, test_mode tm) {
         if(data.CurrentEngineRpm > data.EngineMaxRpm) {
             data.CurrentEngineRpm = data.EngineIdleRpm;
             if (++data.Gear > 11) data.Gear = 0;
-        } 
+        }
         data.VelocityZ += 0.01;
         if(data.VelocityZ > 999 / 3.6) {
             data.VelocityZ = 0;
         }
         break;
-    case NONE: 
+    case NONE:
         return;
     }
 }
