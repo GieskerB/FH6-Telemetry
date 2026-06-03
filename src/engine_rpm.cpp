@@ -1,7 +1,6 @@
 #include <cstdio>
 #include <stdlib.h>
 #include <SDL3_ttf/SDL_ttf.h>
-#include <iostream>
 #include <algorithm>
 
 #include "../include/engine_rpm.hpp"
@@ -126,7 +125,7 @@ namespace engine_rpm {
         SDL_RenderClear(renderer);
 
         // Calculate relevant data form data_out.
-        const int speed_kmh = std::clamp(static_cast<int>(std::abs(data_out.VelocityZ * 3.6f)), 0, 999);
+        const int speed_kmh = std::clamp(static_cast<int>(std::abs(data_out.Speed * 3.6f)), 0, 999);
         const float rpm_pct = std::clamp(data_out.CurrentEngineRpm / data_out.EngineMaxRpm, 0.0f, 1.0f);
 
         char gear_buffer[3]{0};

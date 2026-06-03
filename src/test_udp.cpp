@@ -6,7 +6,8 @@
 
 enum test_mode {
     NONE,
-    ENGINE
+    ENGINE,
+    GFORCE
 };
 
 // Running variable to stop loop when program ends.
@@ -33,6 +34,16 @@ void set_data(fh6_data& data, test_mode tm) {
             data.VelocityZ = 0;
         }
         break;
+    case GFORCE:
+        data.AccelerationX += 0.5;
+        data.AccelerationZ += 0.1;
+        if (data.AccelerationX > 5 * 9.81) {
+            data.AccelerationX *= -1;
+        }
+        if (data.AccelerationZ > 5 * 9.81) {
+            data.AccelerationZ *= -1;
+        }
+        break;
     case NONE:
         return;
     }
@@ -55,7 +66,7 @@ void send_loop(int sockfd, const struct sockaddr* client_addr, test_mode tm) {
         }
 
         // Sleep for a small duration.
-        usleep(1000);
+        usleep(5000);
     }
     close(sockfd);
 }
@@ -63,6 +74,9 @@ void send_loop(int sockfd, const struct sockaddr* client_addr, test_mode tm) {
 test_mode determine_test_mode (const char * test_mode_str) {
     if(strncmp("engine",test_mode_str,6) == 0) {
         return ENGINE;
+    }
+    if(strncmp("gforce",test_mode_str,6) == 0) {
+        return GFORCE;
     }
 
     return NONE;
