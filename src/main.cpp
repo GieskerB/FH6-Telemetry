@@ -26,7 +26,7 @@ volatile bool running = true;
 // Small wrapper around recvfrom
 void receive_message(int sockfd, void* message, const struct sockaddr* client_addr) {
     static socklen_t len = sizeof(struct sockaddr);
-    auto result = recvfrom(sockfd, static_cast<char*>(message), TELEMETRY_SIZE, MSG_WAITALL, (struct sockaddr *)&client_addr, &len);
+    auto result = recvfrom(sockfd, static_cast<char*>(message), TELEMETRY_SIZE, 0, (struct sockaddr *)&client_addr, &len);
 
 #ifdef _WIN32
     if (result == SOCKET_ERROR) {
