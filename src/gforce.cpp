@@ -54,7 +54,7 @@ namespace gforce {
     static void static_texture() {
         static SDL_Texture* static_gforce_tex = nullptr;
         if (!static_gforce_tex) {
-            SDL_Surface* surf = SDL_LoadPNG("assets/gforce_background_trans.png");
+            SDL_Surface* surf = SDL_LoadPNG("assets/sprites/gforce_background_trans.png");
             if (surf) {
                 static_gforce_tex = SDL_CreateTextureFromSurface(renderer, surf);
                 SDL_DestroySurface(surf);
@@ -71,7 +71,7 @@ namespace gforce {
         SDL_SetRenderDrawColor(renderer, 69, 69, 69, 69);
         SDL_RenderClear(renderer);
 
-        float gforce_z = -data_out.AccelerationZ / 9.81f;
+        float gforce_z = data_out.AccelerationZ / 9.81f;
         float gforce_x = -data_out.AccelerationX / 9.81f;
         const float gforce_total = std::sqrt(gforce_z * gforce_z + gforce_x * gforce_x);
 

@@ -29,7 +29,7 @@ namespace engine_rpm {
             perror(SDL_GetError());
             exit(EXIT_FAILURE);
         }
-        font = TTF_OpenFont("assets/digital-7.ttf",255);
+        font = TTF_OpenFont("assets/fonts/digital-7.ttf",255);
         if(font == nullptr) {
             perror(SDL_GetError());
             exit(EXIT_FAILURE);
