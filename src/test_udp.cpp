@@ -64,7 +64,6 @@ void send_loop(int sockfd, const struct sockaddr* client_addr, test_mode tm) {
             perror("sendto failed");
             exit(EXIT_FAILURE);;
         }
-
         // Sleep for a small duration.
         usleep(5000);
     }

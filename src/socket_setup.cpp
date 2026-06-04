@@ -12,6 +12,44 @@
 #endif
 
 #include "../include/socket_setup.hpp"
+#include "../include/fh6_data.hpp"
+
+// Small wrapper around recvfrom
+void receive_message(int sockfd, void* message, const struct sockaddr* client_addr) {
+    static socklen_t len = sizeof(struct sockaddr);
+    auto result = recvfrom(sockfd, static_cast<char*>(message), TELEMETRY_SIZE, 0, (struct sockaddr *)&client_addr, &len);
+
+#ifdef _WIN32
+    if (result == SOCKET_ERROR) {
+            std::cerr << "recvfrom failed. Windows Error: " << WSAGetLastError() << std::endl;
+            exit(EXIT_FAILURE);
+    }
+#else
+    if (result < 0) {
+            perror("recvfrom failed");
+            exit(EXIT_FAILURE);
+    }
+#endif
+}
+
+// Small wrapper function around bind
+void bind_socket(const int sockfd, const struct sockaddr * client_addr) {
+        // Bind to socket - necessary for receiver to get the data from the socket
+    auto result = bind(sockfd, client_addr, sizeof(struct sockaddr_in));
+#ifdef _WIN32
+    if (result == SOCKET_ERROR) {
+        std::cerr << "Bind failed. Windows Error: " << WSAGetLastError() << std::endl;
+        closesocket(sockfd);
+        WSACleanup();
+        exit(EXIT_FAILURE);
+    }
+#else
+    if (result < 0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+#endif
+}
 
 // When program is ended with ctrl-c the socket gets closed and the loop ended.
 void handle(int) {

@@ -3,11 +3,8 @@
 #include <SDL3/SDL.h>
 #include <algorithm>
 
+#include "../include/map.hpp"
 #include <iostream>
-#include <cmath>
-#include <vector>
-
-#include "../include/tires.hpp"
 
 namespace tires{
 
@@ -30,14 +27,15 @@ namespace tires{
         }
     }
 
-    static void draw_tire(float temperature) {
-        if (temperature > 0) asm("nop");
-    }
-
     void update(const fh6_data& data_out) {
         SDL_SetRenderDrawColor(renderer, 15, 15, 20, 255); 
         SDL_RenderClear(renderer);
-        draw_tire(data_out.TireTempFrontLeft);
+
+        float pos_x = data_out.PositionX;
+        float pos_y = data_out.PositionZ;
+
+        std::cout << pos_x << " " << pos_y << "\n";
+
         SDL_RenderPresent(renderer);
     }
 

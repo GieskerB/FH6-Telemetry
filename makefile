@@ -5,19 +5,21 @@ SDL_TTF_CFLAGS := $(shell pkg-config --cflags sdl3-ttf)
 SDL_TTF_LIBS   := $(shell pkg-config --libs sdl3-ttf)
 
 CXX := g++
-CXXFLAGS := -Wall -Wextra -Werror -O3 -std=c++17 -lSDL3 $(SDL_CFLAGS) $(SDL__TTF_CFLAGS)
+CXXFLAGS := -Wall -Wextra -Werror -O3 -std=c++20 -lSDL3 $(SDL_CFLAGS) $(SDL__TTF_CFLAGS)
 LDFLAGS = $(SDL_LIBS) $(SDL_TTF_LIBS)
 SRCDIR := src
 BUILDDIR := build
 
 
-PROGS := fh6_telemetry udp_test
+PROGS := fh6_telemetry udp_test udp_capture
 
-fh6_telemetry_SRCS := $(SRCDIR)/main.cpp $(SRCDIR)/socket_setup.cpp $(SRCDIR)/engine_rpm.cpp $(SRCDIR)/gforce.cpp $(SRCDIR)/tires.cpp
+fh6_telemetry_SRCS := $(SRCDIR)/main.cpp $(SRCDIR)/socket_setup.cpp $(SRCDIR)/engine_rpm.cpp $(SRCDIR)/gforce.cpp $(SRCDIR)/map.cpp
 udp_test_SRCS := $(SRCDIR)/test_udp.cpp $(SRCDIR)/socket_setup.cpp
+udp_capture_SRCS := $(SRCDIR)/capture_udp.cpp $(SRCDIR)/socket_setup.cpp
 
 fh6_telemetry_OBJS := $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%.o, $(fh6_telemetry_SRCS))
 udp_test_OBJS := $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%.o, $(udp_test_SRCS))
+udp_capture_OBJS := $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%.o, $(udp_capture_SRCS))
 
 all: $(BUILDDIR) $(PROGS)
 
@@ -28,6 +30,9 @@ fh6_telemetry: $(fh6_telemetry_OBJS)
 	$(CXX) $(CXXFLAGS) -o $(BUILDDIR)/$@ $^ $(LDFLAGS)
 
 udp_test: $(udp_test_OBJS)
+	$(CXX) $(CXXFLAGS) -o $(BUILDDIR)/$@ $^ $(LDFLAGS)
+
+udp_capture: $(udp_capture_OBJS)
 	$(CXX) $(CXXFLAGS) -o $(BUILDDIR)/$@ $^ $(LDFLAGS)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
