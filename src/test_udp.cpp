@@ -3,12 +3,7 @@
 
 #include "../include/fh6_data.hpp"
 #include "../include/socket_setup.hpp"
-
-enum test_mode {
-    NONE,
-    ENGINE,
-    GFORCE
-};
+#include "../include/data_per_file.hpp"
 
 // Running variable to stop loop when program ends.
 volatile bool running = true;
@@ -18,46 +13,97 @@ ssize_t send_message(int sockfd, const void* message, const struct sockaddr* cli
     return sendto(sockfd, message, sizeof(struct fh6_data), 0, client_addr, sizeof(struct sockaddr));
 }
 
-void set_data(fh6_data& data, test_mode tm) {
-    switch (tm) {
-    case ENGINE:
-        data.EngineMaxRpm = 8500;
-        data.EngineIdleRpm = 1650;
-        if (data.CurrentEngineRpm == 0) data.CurrentEngineRpm = data.EngineIdleRpm;
-        data.CurrentEngineRpm = data.CurrentEngineRpm * 1.0005;
-        if(data.CurrentEngineRpm > data.EngineMaxRpm) {
-            data.CurrentEngineRpm = data.EngineIdleRpm;
-            if (++data.Gear > 11) data.Gear = 0;
+void read_data(fh6_data& data) {
+
+    static unsigned int current_file = 0;
+    static unsigned int current_blob = 0;
+    static unsigned int timestamp_override = 0;
+    static std::ifstream file;
+
+    // Open file
+    if (!file.is_open()) {
+
+        std::string filename = std::format("{}/{}-{}.data_out",data_folder,DATA_PER_FILE,current_file); 
+        file.open(filename, std::ios::binary);
+        
+        // If failed, it just wraps around.
+        if (!file) {
+            std::cout << "Reached the end of data files. Wrapping back to file 0.\n";
+            current_file = 0;
+            filename = std::format("{}/{}-{}.data_out",data_folder,DATA_PER_FILE,current_file); 
+            file.open(filename, std::ios::binary);
+            
+            // If wrap around does not work. exit with error.
+            if (!file) {
+                perror(std::format("Could not open file '{}'", filename).c_str());
+                exit(EXIT_FAILURE);
+            }
         }
-        data.VelocityZ += 0.01;
-        if(data.VelocityZ > 999 / 3.6) {
-            data.VelocityZ = 0;
-        }
-        break;
-    case GFORCE:
-        data.AccelerationX += 0.5;
-        data.AccelerationZ += 0.1;
-        if (data.AccelerationX > 5 * 9.81) {
-            data.AccelerationX *= -1;
-        }
-        if (data.AccelerationZ > 5 * 9.81) {
-            data.AccelerationZ *= -1;
-        }
-        break;
-    case NONE:
-        return;
+
+        current_blob = 0;
+    }
+
+    // read from file.
+    file.read(reinterpret_cast<char*>(&data), TELEMETRY_SIZE);
+    current_blob++;
+
+    if (!file) {
+        perror("Could not read data from file");
+        file.close();
+        exit(EXIT_FAILURE);
+    }
+
+    // once all blobs form a file has been read, close it and move to the next!
+    if (current_blob >= DATA_PER_FILE) {
+        file.close();
+        current_file++;
+    }
+
+    // fh6_telemetry drops udp packages when not in order. Override Timestamp to prevent this.
+    data.TimestampMS = timestamp_override++;
+    if(timestamp_override == std::numeric_limits<unsigned int>::max()) {
+        timestamp_override = 0;
+    }
+}
+
+void set_data(fh6_data& data) {
+    // EngineRPM
+    data.EngineMaxRpm = 8500;
+    data.EngineIdleRpm = 1650;
+    if (data.CurrentEngineRpm == 0) data.CurrentEngineRpm = data.EngineIdleRpm;
+    data.CurrentEngineRpm = data.CurrentEngineRpm * 1.0005;
+    if(data.CurrentEngineRpm > data.EngineMaxRpm) {
+        data.CurrentEngineRpm = data.EngineIdleRpm;
+        if (++data.Gear > 11) data.Gear = 0;
+    }
+    data.VelocityZ += 0.01;
+    if(data.VelocityZ > 999 / 3.6) {
+        data.VelocityZ = 0;
+    }
+    //GForce
+    data.AccelerationX += 0.5;
+    data.AccelerationZ += 0.1;
+    if (data.AccelerationX > 5 * 9.81) {
+        data.AccelerationX *= -1;
+    }
+    if (data.AccelerationZ > 5 * 9.81) {
+        data.AccelerationZ *= -1;
     }
 }
 
 // Continuously sends data via UDP.
-void send_loop(int sockfd, const struct sockaddr* client_addr, test_mode tm) {
+void send_loop(int sockfd, const struct sockaddr* client_addr, bool use_recorded) {
     while (running) {
 
         // Dummy data for now...
         static struct fh6_data data_out;
         data_out.TimestampMS++;
 
-        set_data(data_out,tm);
+        if(use_recorded) {
+            read_data(data_out);
+        } else {    
+            set_data(data_out);
+        }
 
         // Call wrapper, exit if data could not be send.
         if (send_message(sockfd, ((const void*) &data_out), client_addr) < 0) {
@@ -70,30 +116,23 @@ void send_loop(int sockfd, const struct sockaddr* client_addr, test_mode tm) {
     close(sockfd);
 }
 
-test_mode determine_test_mode (const char * test_mode_str) {
-    if(strncmp("engine",test_mode_str,6) == 0) {
-        return ENGINE;
-    }
-    if(strncmp("gforce",test_mode_str,6) == 0) {
-        return GFORCE;
-    }
-
-    return NONE;
+bool run_recorded(const char * test_mode_str) {
+    return strncmp("recorded",test_mode_str,9) == 0;
 }
 
 int main(int argc, const char* argv[]) {
 
     if(argc < 2 or argc > 3) {
-        perror("UPD test server requires one argument:\n\tMESSAGE port\n");
+        perror("UPD test server requires one argument:\n\tMESSAGE PORT\n\tTEST DATA (synthetic | recorded)\n");
         exit(EXIT_FAILURE);
     }
 
     // setup everything socket related as well as the ctrl-c handler
     auto [sockfd, client_addr] = setup(std::stoi(argv[1]));
 
-    test_mode tm = argc == 3 ? determine_test_mode(argv[2]) : NONE;
+    bool use_recorded = argc == 3 ? run_recorded(argv[2]) : false;
 
     // start sending data
-    send_loop(sockfd, (const struct sockaddr*)&client_addr, tm);
+    send_loop(sockfd, (const struct sockaddr*)&client_addr, use_recorded);
     return 0;
 }

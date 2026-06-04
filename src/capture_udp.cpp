@@ -5,18 +5,15 @@
 
 #include "../include/socket_setup.hpp"
 #include "../include/fh6_data.hpp"
+#include "../include/data_per_file.hpp"
 
 static std::vector<fh6_data> data_vector;
-
-static constexpr unsigned short DATA_PER_FILE = 2048;
-
-static constexpr char* data_folder = "data_out";
 
 volatile bool running = true;
 
 void capture_loop(int sockfd, const struct sockaddr* client_addr) {
     std::filesystem::create_directory(data_folder);
-    int file_counter = 1;
+    unsigned int file_counter = 0;
     while (running) {
         struct fh6_data data_out;
 
@@ -27,13 +24,12 @@ void capture_loop(int sockfd, const struct sockaddr* client_addr) {
 
         if (data_vector.size() >= DATA_PER_FILE) {
             std::ofstream output_file;
-            output_file.open(std::format("{}/collected_data_({})_{}.data_out",data_folder,file_counter++,DATA_PER_FILE), std::ios::out|std::ios::binary);
+            output_file.open(std::format("{}/{}-{}.data_out",data_folder,DATA_PER_FILE,file_counter++), std::ios::out|std::ios::binary);
             for(const auto & data: data_vector) {
                 output_file.write((char*) &data, TELEMETRY_SIZE);
             }
             output_file.close();
             data_vector.clear();
-            std::cout << "Wrote data" << (file_counter -1) << "\n";
         }
     }
     close(sockfd);
