@@ -5,7 +5,7 @@ SDL_TTF_CFLAGS := $(shell pkg-config --cflags sdl3-ttf)
 SDL_TTF_LIBS   := $(shell pkg-config --libs sdl3-ttf)
 
 CXX := g++
-CXXFLAGS := -Wall -Wextra -Werror -O3 -std=c++20 -lSDL3 $(SDL_CFLAGS) $(SDL__TTF_CFLAGS)
+CXXFLAGS := -Wall -Wextra -Werror -O3 -std=c++20 -lSDL3 $(SDL_CFLAGS) $(SDL__TTF_CFLAGS) 
 LDFLAGS = $(SDL_LIBS) $(SDL_TTF_LIBS)
 SRCDIR := src
 BUILDDIR := build
@@ -48,11 +48,12 @@ WIN_SDL := deps/SDL3-3.4.10/x86_64-w64-mingw32
 WIN_TTF := deps/SDL3_ttf-3.2.2/x86_64-w64-mingw32
 
 fh6_telemetry_WIN_OBJS := $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%_win.o, $(fh6_telemetry_SRCS))
+udp_capture_WIN_OBJS := $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%_win.o, $(udp_capture_SRCS))
 
 SHIP_DIR    := $(BUILDDIR)/fh6_telemetry_windows
 ZIP_NAME    := fh6_telemetry_windows.zip
 
-windows: $(BUILDDIR) $(BUILDDIR)/fh6_telemetry.exe
+windows: $(BUILDDIR) $(BUILDDIR)/fh6_telemetry.exe $(BUILDDIR)/capture_data.exe 
 	cp -r assets $(BUILDDIR)
 	cp $(WIN_SDL)/bin/SDL3.dll $(BUILDDIR)
 	cp $(WIN_TTF)/bin/SDL3_ttf.dll $(BUILDDIR)
@@ -60,14 +61,14 @@ windows: $(BUILDDIR) $(BUILDDIR)/fh6_telemetry.exe
 ship-windows: windows
 	mkdir -p $(SHIP_DIR)
 
-	mv $(BUILDDIR)/fh6_telemetry.exe $(SHIP_DIR)
-	mv $(BUILDDIR)/SDL3.dll $(SHIP_DIR)
-	mv $(BUILDDIR)/SDL3_ttf.dll $(SHIP_DIR)
+	cp $(BUILDDIR)/fh6_telemetry.exe $(SHIP_DIR)
+	cp $(BUILDDIR)/capture_data.exe $(SHIP_DIR)
+	cp $(BUILDDIR)/SDL3.dll $(SHIP_DIR)
+	cp $(BUILDDIR)/SDL3_ttf.dll $(SHIP_DIR)
 
 	cp -r assets/ $(SHIP_DIR)
 
 	cd $(BUILDDIR) && zip -r $(ZIP_NAME) fh6_telemetry_windows
-	rm -rf $(SHIP_DIR)
 
 $(BUILDDIR)/fh6_telemetry.exe: $(fh6_telemetry_WIN_OBJS)
 	$(WIN_CXX) -o $@ $^ \
@@ -77,8 +78,14 @@ $(BUILDDIR)/fh6_telemetry.exe: $(fh6_telemetry_WIN_OBJS)
 		-static-libgcc -static-libstdc++ \
 		-lws2_32
 
+
+$(BUILDDIR)/capture_data.exe: $(udp_capture_WIN_OBJS)
+	$(WIN_CXX) -o $@ $^ \
+		-static-libgcc -static-libstdc++ \
+		-lws2_32
+
 $(BUILDDIR)/%_win.o: $(SRCDIR)/%.cpp
-	$(WIN_CXX) -Wall -Wextra -Werror -O3 -std=c++17 \
+	$(WIN_CXX) -Wall -Wextra -Werror -O3 -std=c++20 \
 		-I$(WIN_SDL)/include \
 		-I$(WIN_TTF)/include \
 		-c $< -o $@
