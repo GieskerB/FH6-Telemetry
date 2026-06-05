@@ -1,7 +1,13 @@
 #include <bits/stdc++.h>
-#include <arpa/inet.h>
 #include <filesystem>
 #include <format>
+
+#ifdef _WIN32
+    #define WIN32_LEAN_AND_MEAN
+    #include <winsock2.h>
+#else
+    #include <arpa/inet.h>
+#endif
 
 #include "../include/socket_setup.hpp"
 #include "../include/fh6_data.hpp"
@@ -32,7 +38,12 @@ void capture_loop(int sockfd, const struct sockaddr* client_addr) {
             data_vector.clear();
         }
     }
+#ifdef _WIN32
+    closesocket(sockfd);
+    WSACleanup();
+#else
     close(sockfd);
+#endif
 }
 
 int main(int argc, char* argv[]) {

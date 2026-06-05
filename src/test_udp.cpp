@@ -58,7 +58,7 @@ void read_data(fh6_data& data) {
         file.close();
         current_file++;
     }
-
+    
     // fh6_telemetry drops udp packages when not in order. Override Timestamp to prevent this.
     data.TimestampMS = timestamp_override++;
     if(timestamp_override == std::numeric_limits<unsigned int>::max()) {
@@ -110,8 +110,8 @@ void send_loop(int sockfd, const struct sockaddr* client_addr, bool use_recorded
             perror("sendto failed");
             exit(EXIT_FAILURE);;
         }
-        // Sleep for a small duration.
-        usleep(5000);
+        // Sleep for small duration to roughly match 60 Hz.
+        usleep(16500);
     }
     close(sockfd);
 }
