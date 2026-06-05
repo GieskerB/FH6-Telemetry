@@ -78,10 +78,6 @@ float SmashableVelDiff
 
 float SmashableMass
 
-float PositionX
-float PositionY
-float PositionZ
-
 float Power
 
 float Torque
@@ -136,3 +132,9 @@ char NormalizedAIBrakeDifference
 - ```float AccelerationX```
 - (```float AccelerationY```)
 - ```float AccelerationZ```
+
+### Map
+
+- ```float PositionX```
+- (```float PositionY```)
+- ```float PositionZ```
