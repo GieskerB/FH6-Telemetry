@@ -28,6 +28,8 @@ void capture_loop(int sockfd, const struct sockaddr* client_addr) {
 
         data_vector.push_back(data_out);
 
+        std::cout << "Pos: " << data_out.PositionX << " " << data_out.PositionZ<< '\n';
+
         if (data_vector.size() >= DATA_PER_FILE) {
             std::ofstream output_file;
             output_file.open(std::format("{}/{}-{}.data_out",data_folder,DATA_PER_FILE,file_counter++), std::ios::out|std::ios::binary);
