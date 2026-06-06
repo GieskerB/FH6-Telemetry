@@ -47,9 +47,8 @@ namespace map{
         static SDL_Texture* static_map_tex = nullptr;
         if (!static_map_tex) {
             const date first_season_start {21,5,2026};
-            // const date today = get_today();
-            const date today = {12,6,2026};
-
+            const date today = get_today();
+            
             unsigned int weeks_since_start = (date_to_int(today) - date_to_int(first_season_start)) / 7;
 
             SDL_Surface* surf;
