@@ -23,19 +23,18 @@ void read_data(fh6_data& data) {
     // Open file
     if (!file.is_open()) {
 
-        std::string filename = std::format("{}/{}-{}.data_out",data_folder,DATA_PER_FILE,current_file); 
-        file.open(filename, std::ios::binary);
+        file.open(make_filename(current_file), std::ios::binary);
         
         // If failed, it just wraps around.
         if (!file) {
             std::cout << "Reached the end of data files. Wrapping back to file 0.\n";
             current_file = 0;
-            filename = std::format("{}/{}-{}.data_out",data_folder,DATA_PER_FILE,current_file); 
-            file.open(filename, std::ios::binary);
+            file.open(make_filename(current_file), std::ios::binary);
             
             // If wrap around does not work. exit with error.
             if (!file) {
-                perror(std::format("Could not open file '{}'", filename).c_str());
+                // Replaced perror with std::cerr to easily print the std::string
+                std::cerr << "Could not open file '" << make_filename(current_file) << "': " << strerror(errno) << "\n";
                 exit(EXIT_FAILURE);
             }
         }
@@ -71,24 +70,18 @@ void set_data(fh6_data& data) {
     data.EngineMaxRpm = 8500;
     data.EngineIdleRpm = 1650;
     if (data.CurrentEngineRpm == 0) data.CurrentEngineRpm = data.EngineIdleRpm;
-    data.CurrentEngineRpm = data.CurrentEngineRpm * 1.0005;
+    data.CurrentEngineRpm = data.CurrentEngineRpm * 1.005;
     if(data.CurrentEngineRpm > data.EngineMaxRpm) {
         data.CurrentEngineRpm = data.EngineIdleRpm;
         if (++data.Gear > 11) data.Gear = 0;
     }
-    data.VelocityZ += 0.01;
+    data.VelocityZ += 0.1;
     if(data.VelocityZ > 999 / 3.6) {
         data.VelocityZ = 0;
     }
     //GForce
-    data.AccelerationX += 0.5;
-    data.AccelerationZ += 0.1;
-    if (data.AccelerationX > 5 * 9.81) {
-        data.AccelerationX *= -1;
-    }
-    if (data.AccelerationZ > 5 * 9.81) {
-        data.AccelerationZ *= -1;
-    }
+    data.AccelerationX = 1 * 9.81;
+    data.AccelerationZ = 2 * 9.81;
 }
 
 // Continuously sends data via UDP.

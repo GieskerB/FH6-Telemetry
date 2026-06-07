@@ -39,13 +39,13 @@ namespace map{
 
     static void draw_point(const SDL_Point& point) {
         SDL_SetRenderDrawColor(renderer, 255, 127, 0, 255);
-        const SDL_FRect rect {point.x -3.f , point.y - 3.f,7,7};
+        const SDL_FRect rect {point.x -4.f , point.y - 4.f,7,7};
         SDL_RenderFillRect(renderer, &rect);
     }
 
     static void map_texture() {
-        static SDL_Texture* static_map_tex = nullptr;
-        if (!static_map_tex) {
+        static SDL_Texture* map_tex = nullptr;
+        if (!map_tex) {
             const date first_season_start {21,5,2026};
             const date today = get_today();
             
@@ -67,13 +67,13 @@ namespace map{
                     break;
             }
             if (surf) {
-                static_map_tex = SDL_CreateTextureFromSurface(renderer, surf);
+                map_tex = SDL_CreateTextureFromSurface(renderer, surf);
                 SDL_DestroySurface(surf);
             } 
         }
-        if (static_map_tex) {
+        if (map_tex) {
             static const SDL_FRect unit_rect = {0,0,WIDTH,HEIGHT };
-            SDL_RenderTexture(renderer, static_map_tex, nullptr, &unit_rect);
+            SDL_RenderTexture(renderer, map_tex, nullptr, &unit_rect);
         }
     }
 

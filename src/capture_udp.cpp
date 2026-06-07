@@ -32,7 +32,8 @@ void capture_loop(int sockfd, const struct sockaddr* client_addr) {
 
         if (data_vector.size() >= DATA_PER_FILE) {
             std::ofstream output_file;
-            output_file.open(std::format("{}/{}-{}.data_out",data_folder,DATA_PER_FILE,file_counter++), std::ios::out|std::ios::binary);
+
+            output_file.open(make_filename(file_counter++), std::ios::out|std::ios::binary);
             for(const auto & data: data_vector) {
                 output_file.write((char*) &data, TELEMETRY_SIZE);
             }

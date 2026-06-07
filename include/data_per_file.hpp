@@ -4,4 +4,11 @@
 static const char* data_folder = "data_out";
 constexpr unsigned int DATA_PER_FILE = 2048;
 
+// Helper lambda to create name of file.
+inline std::string make_filename(int file_num) {
+    std::ostringstream ss;
+    ss << data_folder << "/" << DATA_PER_FILE << "-" << file_num << ".data_out";
+    return ss.str();
+};
+
 #endif

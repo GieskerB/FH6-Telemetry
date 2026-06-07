@@ -75,17 +75,17 @@ namespace engine_rpm {
     }
 
     static void static_texture() {
-        static SDL_Texture* static_kmh_tex = nullptr;
-        if (!static_kmh_tex) {
+        static SDL_Texture* kmh_tex = nullptr;
+        if (!kmh_tex) {
             SDL_Surface* surf = TTF_RenderText_Blended(font, "KM/H", 0, WHITE);
             if (surf) {
-                static_kmh_tex = SDL_CreateTextureFromSurface(renderer, surf);
+                kmh_tex = SDL_CreateTextureFromSurface(renderer, surf);
                 SDL_DestroySurface(surf);
             }
         }
-        if (static_kmh_tex) {
+        if (kmh_tex) {
             static const SDL_FRect unit_rect = { WIDTH * 0.75f, HEIGHT * 0.5f, WIDTH * 0.225f, HEIGHT * 0.2f };
-            SDL_RenderTexture(renderer, static_kmh_tex, nullptr, &unit_rect);
+            SDL_RenderTexture(renderer, kmh_tex, nullptr, &unit_rect);
         }
     }
 
