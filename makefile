@@ -68,6 +68,7 @@ ship-windows: windows
 
 	cp -r assets/ $(SHIP_DIR)
 
+zip-windows: ship-windows
 	cd $(BUILDDIR) && zip -r $(ZIP_NAME) fh6_telemetry_windows
 
 $(BUILDDIR)/fh6_telemetry.exe: $(fh6_telemetry_WIN_OBJS)
@@ -90,4 +91,4 @@ $(BUILDDIR)/%_win.o: $(SRCDIR)/%.cpp
 		-I$(WIN_TTF)/include \
 		-c $< -o $@
 
-.PHONY: all windows ship-windows clean
+.PHONY: all windows ship-windows zip-windows clean
