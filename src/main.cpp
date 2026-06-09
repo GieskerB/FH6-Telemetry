@@ -21,6 +21,7 @@
 #include "../include/engine_rpm.hpp"
 #include "../include/gforce.hpp"
 #include "../include/map.hpp"
+#include "../include/car_info.hpp"
 
 // Running variable to stop loop when program ends.
 volatile bool running = true;
@@ -45,6 +46,7 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr) {
         engine_rpm::update(data_out);
         gforce::update(data_out);
         map::update(data_out);
+        car_info::update(data_out);
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -78,6 +80,7 @@ int main(int argc, const char* argv[]) {
     engine_rpm::init();
     gforce::init();
     map::init();
+    car_info::init();
 
     // setup everything socket related as well as the ctrl-c handler
     auto [sockfd, client_addr] = setup(std::stoi(argv[1]));
@@ -87,6 +90,7 @@ int main(int argc, const char* argv[]) {
     engine_rpm::close();
     gforce::close();
     map::close();
+    car_info::close();
 
     SDL_Quit();
     TTF_Quit();

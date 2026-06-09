@@ -127,7 +127,7 @@ char NormalizedAIBrakeDifference
 - ```float Speed```
 - ```unsigned char Gear```
 
-### GForce
+### G-Force
 
 - ```float AccelerationX```
 - (```float AccelerationY```)
@@ -138,3 +138,9 @@ char NormalizedAIBrakeDifference
 - ```float PositionX```
 - (```float PositionY```)
 - ```float PositionZ```
+
+### Car Info
+
+- ```int CarClass```
+- ```int CarPerformanceIndex```
+- ```int DrivetrainType```

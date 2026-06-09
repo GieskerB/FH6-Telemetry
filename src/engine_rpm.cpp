@@ -36,17 +36,17 @@ namespace engine_rpm {
         }
     }
 
-    static void gear_texture(const char gear_buffer[]) {
+    static void gear_texture(const char buffer[]) {
         static SDL_Texture* cached_gear_tex = nullptr;
         static char last_gear_str[3]{0};
-        if (!cached_gear_tex || SDL_strcmp(last_gear_str, gear_buffer) != 0) {
+        if (!cached_gear_tex || SDL_strcmp(last_gear_str, buffer) != 0) {
             if (cached_gear_tex) SDL_DestroyTexture(cached_gear_tex);
 
-            SDL_Surface* surf = TTF_RenderText_Blended(font, gear_buffer, 0, ORANGE);
+            SDL_Surface* surf = TTF_RenderText_Blended(font, buffer, 0, ORANGE);
             if (surf) {
                 cached_gear_tex = SDL_CreateTextureFromSurface(renderer, surf);
                 SDL_DestroySurface(surf);
-                SDL_strlcpy(last_gear_str, gear_buffer, sizeof(last_gear_str));
+                SDL_strlcpy(last_gear_str, buffer, sizeof(last_gear_str));
             }
         }
         if (cached_gear_tex) {

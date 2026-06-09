@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <cmath>
-#include <format>
 #include <iostream>
 #include <SDL3/SDL_surface.h>
 #include <SDL3_ttf/SDL_ttf.h>
