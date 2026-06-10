@@ -13,13 +13,12 @@ namespace gforce {
     static constexpr unsigned short HEIGHT = 300;
     
     static constexpr unsigned char HISTORY_SIZE = 69;
-    static constexpr float G_MAX = 4.f;
+    static constexpr int G_MAX = 4;
+    static constexpr int SPEED_MAX = G_MAX * 100;
 
     static SDL_Window * window = nullptr;
     static SDL_Renderer* renderer = nullptr;
     static TTF_Font* font = nullptr;
-
-    static SDL_Point history[HISTORY_SIZE]{0,0};
 
     void init() {
         window = SDL_CreateWindow("GForce",WIDTH,HEIGHT,SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_TRANSPARENT);
@@ -40,22 +39,30 @@ namespace gforce {
         }
     }
 
-    static void draw_points(const SDL_Point& point) {
-        static short head = 0;
-        history[head] = point;
-
+    static void draw_points(short head, const SDL_Point point, SDL_Point hist[], const SDL_Color& color) {
+        hist[head] = point;
         int index = head--;
-        if(head < 0) head = HISTORY_SIZE-1;
         for(int i = 0; i < HISTORY_SIZE; ++i) {
-            auto & p = history[index++];
+            auto & p = hist[index++];
             if(index >= HISTORY_SIZE) index = 0;;
-            SDL_SetRenderDrawColor(renderer, 255, 127, 0, 255 - i * (255.f / HISTORY_SIZE));
+            SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255 - i * (255.f / HISTORY_SIZE));
             const SDL_FRect rect {p.x -3.f , p.y - 3.f,5,5};
             SDL_RenderFillRect(renderer, &rect);
         }
     }
 
-    static void draw_background_texture() {
+    static void draw_points(const SDL_Point& gforce_point, const SDL_Point& speed_point) {
+        static short head = 0;
+        static SDL_Point g_history[HISTORY_SIZE]{0,0};
+        static SDL_Point s_history[HISTORY_SIZE]{0,0};
+
+        draw_points(head, gforce_point, g_history, ORANGE);
+        draw_points(head, speed_point, s_history, BLUE);
+
+        if(--head < 0) head = HISTORY_SIZE-1;
+    }
+
+    static void draw_background() {
         static SDL_Texture* background_tex = nullptr;
         if (!background_tex) {
             SDL_Surface* surf = SDL_LoadPNG("assets/sprites/gforce_background.png");
@@ -68,73 +75,127 @@ namespace gforce {
             static const SDL_FRect unit_rect = { 0,0,WIDTH,HEIGHT };
             SDL_RenderTexture(renderer, background_tex, nullptr, &unit_rect);
         }
+    }
 
-        static SDL_Texture* texts_tex[4];
-        if (!texts_tex[0]) {
-            for(int i = 0 ; i < 4; ++i) {
+    static void draw_labels() {
+        static SDL_Texture* gforce_labels[G_MAX];
+        if (!gforce_labels[0]) {
+            for(int i = 0 ; i < G_MAX; ++i) {
                 // for each ring of the the gforce meter
                 char buffer[3];
-                SDL_snprintf(buffer, sizeof(buffer), "%dG", i);
+                SDL_snprintf(buffer, sizeof(buffer), "%dG", i+1);
                 SDL_Surface* surf = TTF_RenderText_Blended(font, buffer, 0, ORANGE);
                 if (surf) {
-                    texts_tex[i] = SDL_CreateTextureFromSurface(renderer, surf);
+                    gforce_labels[i] = SDL_CreateTextureFromSurface(renderer, surf);
                     SDL_DestroySurface(surf);
                 }
             }
-
         }
-        if (texts_tex[0]) {
-            for(int i = 0 ; i < 4; ++i) {
+        if (gforce_labels[0]) {
+            for(int i = 0 ; i < G_MAX; ++i) {
                 const SDL_FRect unit_rect = { WIDTH /2.f + (i+0.5f) * WIDTH / 8.f, HEIGHT / 2, WIDTH * 0.05f, WIDTH * 0.05f };
-                SDL_RenderTexture(renderer, texts_tex[i], nullptr, &unit_rect);
+                SDL_RenderTexture(renderer, gforce_labels[i], nullptr, &unit_rect);
+            }
+        }
+
+
+        static SDL_Texture* speed_labels[G_MAX];
+        if (!speed_labels[0]) {
+            for(int i = 0 ; i < G_MAX; ++i) {
+                // for each ring of the the speed meter
+                char buffer[G_MAX]{0};
+                SDL_snprintf(buffer, sizeof(buffer), "%d", SPEED_MAX - i * 100);
+                SDL_Surface* surf = TTF_RenderText_Blended(font, buffer, 0, BLUE);
+                if (surf) {
+                    speed_labels[i] = SDL_CreateTextureFromSurface(renderer, surf);
+                    SDL_DestroySurface(surf);
+                }
+            }
+        }
+        if (speed_labels[0]) {
+            for(int i = 0 ; i < G_MAX; ++i) {
+                const SDL_FRect unit_rect = { (i) * WIDTH / 8.f, HEIGHT / 2, WIDTH * 0.075f, WIDTH * 0.05f };
+                SDL_RenderTexture(renderer, speed_labels[i], nullptr, &unit_rect);
             }
         }
     }
 
-    static void draw_gforce(const char gforce_buffer[]) {
+    static void draw_gforce(float gforce) {
         static SDL_Texture* cached_gforce_tex = nullptr;
-        static char last_gforce_str[3]{0};
-        if (!cached_gforce_tex || SDL_strcmp(last_gforce_str, gforce_buffer) != 0) {
+        static float last_gforce = gforce;
+        if (!cached_gforce_tex || last_gforce != gforce) {
             if (cached_gforce_tex) SDL_DestroyTexture(cached_gforce_tex);
 
-            SDL_Surface* surf = TTF_RenderText_Blended(font, gforce_buffer, 0, ORANGE);
+            char buffer[6]{0};
+            SDL_snprintf(buffer, sizeof(buffer), "%.2fG", std::clamp(gforce,0.f,9.99f));
+
+            SDL_Surface* surf = TTF_RenderText_Blended(font, buffer, 0, ORANGE);
             if (surf) {
                 cached_gforce_tex = SDL_CreateTextureFromSurface(renderer, surf);
                 SDL_DestroySurface(surf);
-                SDL_strlcpy(last_gforce_str, gforce_buffer, sizeof(last_gforce_str));
+                last_gforce = gforce;
             }
         }
         if (cached_gforce_tex) {
             const SDL_FRect unit_rect = { WIDTH * 0.7f, HEIGHT * 0.92f, WIDTH * 0.3f, WIDTH * 0.08f };
             SDL_RenderTexture(renderer, cached_gforce_tex, nullptr, &unit_rect);
         }
-
     }
 
+    static void draw_speed(float speed) {
+        static SDL_Texture* cached_speed_tex = nullptr;
+        static float last_speed = speed;
+        if (!cached_speed_tex || last_speed != speed) {
+            if (cached_speed_tex) SDL_DestroyTexture(cached_speed_tex);
+
+            char buffer[8]{0};
+            SDL_snprintf(buffer, sizeof(buffer), "%03dKM/H", std::clamp(static_cast<int>(speed),0,999));
+
+            SDL_Surface* surf = TTF_RenderText_Blended(font, buffer, 0, BLUE);
+            if (surf) {
+                cached_speed_tex = SDL_CreateTextureFromSurface(renderer, surf);
+                SDL_DestroySurface(surf);
+                last_speed = speed;
+            }
+        }
+        if (cached_speed_tex) {
+            const SDL_FRect unit_rect = { 0, HEIGHT * 0.92f, WIDTH * 0.3f, WIDTH * 0.08f };
+            SDL_RenderTexture(renderer, cached_speed_tex, nullptr, &unit_rect);
+        }
+    }
     void update(const fh6_data& data_out) {
         // Clear screen
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
 
-        float gforce_z = data_out.AccelerationZ / 9.81f;
-        float gforce_x = -data_out.AccelerationX / 9.81f;
-        const float gforce_total = std::sqrt(gforce_z * gforce_z + gforce_x * gforce_x);
+        draw_background();
+        draw_labels();
 
-        if(gforce_total > G_MAX) {
-            gforce_z = gforce_z / gforce_total * G_MAX;
-            gforce_x = gforce_x / gforce_total * G_MAX;
+        float z = data_out.AccelerationZ / 9.81f;
+        float x = -data_out.AccelerationX / 9.81f;
+        float combined = std::sqrt(z * z + x * x);
+
+        if(combined > G_MAX) {
+            z = z / combined * G_MAX;
+            x = x / combined * G_MAX;
         }
 
-        SDL_Point gforce_point;
-        gforce_point.x = WIDTH /2 + static_cast<int>((gforce_x / G_MAX) * WIDTH /2);
-        gforce_point.y =  HEIGHT /2 + static_cast<int>((gforce_z / G_MAX) * HEIGHT /2);
+        const SDL_Point gforce_point {WIDTH /2 + static_cast<int>((x / G_MAX) * WIDTH /2), HEIGHT /2 + static_cast<int>((z / G_MAX) * HEIGHT /2)};
+        draw_gforce(combined);
+        
+        z = -data_out.VelocityZ * 3.6f;
+        x = data_out.VelocityX * 3.6f;
+        combined = std::sqrt(z * z + x * x);
 
-        char gforce_buffer[6]{0};
-        SDL_snprintf(gforce_buffer, sizeof(gforce_buffer), "%.2fG", std::clamp(gforce_total,0.f,9.99f));
+        if(combined > G_MAX * 100) {
+            z = z / combined * SPEED_MAX;
+            x = x / combined * SPEED_MAX;
+        }
 
-        draw_background_texture();
-        draw_gforce(gforce_buffer);
-        draw_points(gforce_point);
+        const SDL_Point speed_point {WIDTH /2 + static_cast<int>((x / SPEED_MAX) * WIDTH /2),HEIGHT /2 + static_cast<int>((z / SPEED_MAX) * HEIGHT /2)};
+
+        draw_speed(combined);
+        draw_points(gforce_point, speed_point);
 
         SDL_RenderPresent(renderer);
     }

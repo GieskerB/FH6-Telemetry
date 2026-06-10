@@ -5,10 +5,6 @@
 ``` cpp
 int IsRaceOn
 
-float VelocityX
-float VelocityY
-float VelocityZ
-
 float AngularVelocityX
 float AngularVelocityY
 float AngularVelocityZ
@@ -126,6 +122,9 @@ char NormalizedAIBrakeDifference
 - ```float AccelerationX```
 - (```float AccelerationY```)
 - ```float AccelerationZ```
+- ```float VelocityX```
+- (```float VelocityY```)
+- ```float VelocityZ```
 
 ### Map
 
