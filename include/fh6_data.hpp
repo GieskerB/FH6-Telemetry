@@ -3,7 +3,7 @@
 
 // https://support.forza.net/hc/en-us/articles/51744149102611-Forza-Horizon-6-Data-Out-Documentation
 // Total packet size: 324 bytes.
-#define TELEMETRY_SIZE 324
+constexpr unsigned short TELEMETRY_SIZE = 324;
 
 struct fh6_data {
 

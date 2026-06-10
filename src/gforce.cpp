@@ -115,7 +115,7 @@ namespace gforce {
 
     void update(const fh6_data& data_out) {
         // Clear screen
-        SDL_SetRenderDrawColor(renderer, 69, 69, 69, 69);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
 
         float gforce_z = data_out.AccelerationZ / 9.81f;
@@ -131,11 +131,11 @@ namespace gforce {
         gforce_point.x = WIDTH /2 + static_cast<int>((gforce_x / G_MAX) * WIDTH /2);
         gforce_point.y =  HEIGHT /2 + static_cast<int>((gforce_z / G_MAX) * HEIGHT /2);
 
-        char geforce_buffer[6]{0};
-        SDL_snprintf(geforce_buffer, sizeof(geforce_buffer), "%.2fG", std::clamp(gforce_total,0.f,9.99f));
+        char gforce_buffer[6]{0};
+        SDL_snprintf(gforce_buffer, sizeof(gforce_buffer), "%.2fG", std::clamp(gforce_total,0.f,9.99f));
 
         static_texture();
-        gforce_texture(geforce_buffer);
+        gforce_texture(gforce_buffer);
         draw_point(gforce_point);
 
         SDL_RenderPresent(renderer);

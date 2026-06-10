@@ -12,7 +12,7 @@ namespace engine_rpm {
     static constexpr float RED_LINE_PERCENT = 0.9f;
 
     static constexpr SDL_Color ORANGE = {255, 127, 0, 255};
-    static constexpr SDL_Color WHITE = {200, 200, 200, 255};
+    static constexpr SDL_Color WHITE = {222, 222, 222, 255};
 
     static SDL_Window * window = nullptr;
     static SDL_Renderer* renderer = nullptr;
@@ -121,7 +121,7 @@ namespace engine_rpm {
 
     void update(const fh6_data & data_out) {
         // Clear screen
-        SDL_SetRenderDrawColor(renderer, 69, 69, 69, 69);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
 
         // Calculate relevant data form data_out.

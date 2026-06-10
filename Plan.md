@@ -64,12 +64,6 @@ float SuspensionTravelMetersRearRight
 
 int CarOrdinal
 
-int CarClass
-
-int CarPerformanceIndex
-
-int DrivetrainType
-
 int NumCylinders
 
 unsigned int CarGroup
