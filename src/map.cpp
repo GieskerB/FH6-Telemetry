@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <SDL3/SDL.h>
 #include <algorithm>
+#include <math.h>
 
 #include "../include/map.hpp"
 #include "../include/date.hpp"
@@ -18,6 +19,8 @@ namespace map{
 
     static constexpr unsigned short MAX_ORIGIN_X = 420;
     static constexpr unsigned short MAX_ORIGIN_Y = 499;
+
+    static constexpr unsigned char ARROW_SIZE = 13;
 
     static constexpr float SCALE_FACTOR = (0.051509 + 0.051842 + 0.052109 + 0.051713) / 4.f;
 
@@ -38,10 +41,34 @@ namespace map{
         }
     }
 
-    static void draw_point(const SDL_Point& point) {
-        SDL_SetRenderDrawColor(renderer, 255, 127, 0, 255);
-        const SDL_FRect rect {point.x -4.f , point.y - 4.f,7,7};
-        SDL_RenderFillRect(renderer, &rect);
+    static int rotate_correctly(int rotation) {
+        if (rotation < 0) {
+            return 360 + rotation;
+        }
+        return rotation;
+    }
+
+    static void draw_nav_arrow(const SDL_Point& point, float rotation) {
+        const int rotation_step = (std::round(rotation / 5)) * 5;
+        static SDL_Texture* arrow_tex = nullptr;
+        static int last_rotation = rotation_step;
+        if (!arrow_tex or last_rotation != rotation_step) {
+            if (arrow_tex) SDL_DestroyTexture(arrow_tex);
+            
+            char buffer[26]{0};
+            SDL_snprintf(buffer, sizeof(buffer), "assets/arrows/nav-%03d.png", rotate_correctly(rotation_step));
+
+            SDL_Surface* surf  = SDL_LoadPNG(buffer);
+            if (surf) {
+                arrow_tex = SDL_CreateTextureFromSurface(renderer, surf);
+                last_rotation = rotation_step;
+                SDL_DestroySurface(surf);
+            }
+        }
+        if (arrow_tex) {
+            const SDL_FRect rect = {point.x - (ARROW_SIZE / 2 +1.f) , point.y - ARROW_SIZE / 2 +1.f, ARROW_SIZE, ARROW_SIZE};
+            SDL_RenderTexture(renderer, arrow_tex, nullptr, &rect);
+        }
     }
 
     static void draw_map() {
@@ -73,8 +100,8 @@ namespace map{
             }
         }
         if (map_tex) {
-            static const SDL_FRect unit_rect = {0,0,WIDTH,HEIGHT };
-            SDL_RenderTexture(renderer, map_tex, nullptr, &unit_rect);
+            static const SDL_FRect rect = {0,0,WIDTH,HEIGHT };
+            SDL_RenderTexture(renderer, map_tex, nullptr, &rect);
         }
     }
 
@@ -82,20 +109,24 @@ namespace map{
         SDL_SetRenderDrawColor(renderer, 15, 15, 20, 255);
         SDL_RenderClear(renderer);
 
-        // reduce from 3 to 2 dimension
-        float pos_x = data_out.PositionX;
-        float pos_y = data_out.PositionZ;
-
-        SDL_Point position {static_cast<int>(pos_x * SCALE_FACTOR) + MAX_ORIGIN_X, static_cast<int>(pos_y * (-SCALE_FACTOR)) + MAX_ORIGIN_Y};
-        static SDL_Point last_position = position;
-
         draw_map();
 
+        // reduce from 3 to 2 dimension
+        const float pos_x = data_out.PositionX;
+        const float pos_y = data_out.PositionZ;
+        SDL_Point position {static_cast<int>(pos_x * SCALE_FACTOR) + MAX_ORIGIN_X, static_cast<int>(pos_y * (-SCALE_FACTOR)) + MAX_ORIGIN_Y};
+        static SDL_Point last_position = position;
+        
+        const float rotation = data_out.Yaw * 180 / M_PI;
+        static float last_rotation = rotation;
+
+        // Stops jumping to (0,0) when paused.
         if(!(pos_x == 0.f and pos_x == 0.f)) {
-            // Stops jumping to (0,0) when paused.
             last_position = position;
+            last_rotation = rotation;
         }
-        draw_point(last_position);
+
+        draw_nav_arrow(last_position, last_rotation);
         SDL_RenderPresent(renderer);
     }
 

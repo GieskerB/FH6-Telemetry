@@ -9,10 +9,6 @@ float AngularVelocityX
 float AngularVelocityY
 float AngularVelocityZ
 
-float Yaw
-float Pitch
-float Roll
-
 float NormalizedSuspensionTravelFrontLeft
 float NormalizedSuspensionTravelFrontRight
 float NormalizedSuspensionTravelRearLeft
@@ -131,6 +127,9 @@ char NormalizedAIBrakeDifference
 - ```float PositionX```
 - (```float PositionY```)
 - ```float PositionZ```
+- ```float Yaw```
+- (```float Pitch```)
+- (```float Roll```)
 
 ### Car Info
 

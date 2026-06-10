@@ -40,7 +40,7 @@ namespace engine_rpm {
     static void draw_gear(int gear) {
         static SDL_Texture* cached_gear_tex = nullptr;
         static int last_gear = gear;
-        if (!cached_gear_tex || last_gear != gear) {
+        if (!cached_gear_tex or last_gear != gear) {
             if (cached_gear_tex) SDL_DestroyTexture(cached_gear_tex);
 
             char buffer[3]{0};
@@ -67,7 +67,7 @@ namespace engine_rpm {
         const int speed_kmh = std::clamp(static_cast<int>(std::abs(speed * 3.6f)), 0, 999);
         static SDL_Texture* cached_speed_tex = nullptr;
         static int last_speed = speed_kmh;
-        if (!cached_speed_tex ||last_speed != speed_kmh) {
+        if (!cached_speed_tex or last_speed != speed_kmh) {
             if (cached_speed_tex) SDL_DestroyTexture(cached_speed_tex);
 
             char buffer[4]{0};

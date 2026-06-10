@@ -50,7 +50,7 @@ namespace car_info {
     static void draw_drivetrain(int drivetrain) {
         static SDL_Texture* cached_drivetrain_tex = nullptr;
         static int last_drivetrain = drivetrain;
-        if (!cached_drivetrain_tex || last_drivetrain != drivetrain) {
+        if (!cached_drivetrain_tex or last_drivetrain != drivetrain) {
             if (cached_drivetrain_tex) SDL_DestroyTexture(cached_drivetrain_tex);
 
             SDL_Surface* surf;
@@ -86,7 +86,7 @@ namespace car_info {
     static void draw_class_id(int id) {
         static SDL_Texture* cached_id_tex = nullptr;
         static int last_id = id;
-        if (!cached_id_tex || last_id !=  id) {
+        if (!cached_id_tex or last_id !=  id) {
             if (cached_id_tex) SDL_DestroyTexture(cached_id_tex);
             
             char buffer [3]{0};
@@ -138,7 +138,7 @@ namespace car_info {
         performance = std::clamp(performance,100,999); // Clamping only for g++. Value is always between 100,999
         static int last_performance = performance;
 
-        if (!cached_performance_tex || last_performance !=  performance) {
+        if (!cached_performance_tex or last_performance !=  performance) {
             if (cached_performance_tex) SDL_DestroyTexture(cached_performance_tex);
 
             char buffer [4]{0};

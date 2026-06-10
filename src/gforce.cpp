@@ -123,7 +123,7 @@ namespace gforce {
     static void draw_gforce(float gforce) {
         static SDL_Texture* cached_gforce_tex = nullptr;
         static float last_gforce = gforce;
-        if (!cached_gforce_tex || last_gforce != gforce) {
+        if (!cached_gforce_tex or last_gforce != gforce) {
             if (cached_gforce_tex) SDL_DestroyTexture(cached_gforce_tex);
 
             char buffer[6]{0};
@@ -145,7 +145,7 @@ namespace gforce {
     static void draw_speed(float speed) {
         static SDL_Texture* cached_speed_tex = nullptr;
         static float last_speed = speed;
-        if (!cached_speed_tex || last_speed != speed) {
+        if (!cached_speed_tex or last_speed != speed) {
             if (cached_speed_tex) SDL_DestroyTexture(cached_speed_tex);
 
             char buffer[8]{0};
