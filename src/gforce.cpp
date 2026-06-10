@@ -2,20 +2,18 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 #include <SDL3/SDL_surface.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
 #include "../include/gforce.hpp"
+#include "../include/colors.hpp"
 namespace gforce {
 
     static constexpr unsigned short WIDTH = 300;
     static constexpr unsigned short HEIGHT = 300;
+    
     static constexpr unsigned char HISTORY_SIZE = 69;
     static constexpr float G_MAX = 4.f;
-
-    static constexpr SDL_Color ORANGE = {255, 127, 0, 255};
-    static constexpr SDL_Color WHITE = {200, 200, 200, 255};
 
     static SDL_Window * window = nullptr;
     static SDL_Renderer* renderer = nullptr;

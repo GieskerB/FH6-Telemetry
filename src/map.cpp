@@ -5,6 +5,7 @@
 
 #include "../include/map.hpp"
 #include "../include/date.hpp"
+#include "../include/colors.hpp"
 
 namespace map{
 
@@ -48,7 +49,7 @@ namespace map{
         if (!map_tex) {
             const date first_season_start {21,5,2026};
             const date today = get_today();
-            
+
             unsigned int weeks_since_start = (date_to_int(today) - date_to_int(first_season_start)) / 7;
 
             SDL_Surface* surf;
@@ -69,7 +70,7 @@ namespace map{
             if (surf) {
                 map_tex = SDL_CreateTextureFromSurface(renderer, surf);
                 SDL_DestroySurface(surf);
-            } 
+            }
         }
         if (map_tex) {
             static const SDL_FRect unit_rect = {0,0,WIDTH,HEIGHT };
@@ -78,7 +79,7 @@ namespace map{
     }
 
     void update(const fh6_data& data_out) {
-        SDL_SetRenderDrawColor(renderer, 15, 15, 20, 255); 
+        SDL_SetRenderDrawColor(renderer, 15, 15, 20, 255);
         SDL_RenderClear(renderer);
 
         // reduce from 3 to 2 dimension

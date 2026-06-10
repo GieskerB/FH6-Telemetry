@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <SDL3/SDL_surface.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <algorithm>
 
 #include "../include/car_info.hpp"
-#include <iostream>
-#include <algorithm>
+#include "../include/colors.hpp"
 
 namespace car_info {
 
@@ -104,7 +104,7 @@ namespace car_info {
             // Left side takes up 40% width, 100% height
             SDL_FRect class_bg = { 0, 0, WIDTH * 0.4f, HEIGHT};
             SDL_FRect rest_bg = {WIDTH * 0.4f,0,WIDTH * 0.6f + SPRITE_WIDTH,HEIGHT};
-            
+
             SDL_SetRenderDrawColor(renderer, COLORS[id].r, COLORS[id].g, COLORS[id].b, COLORS[id].a);
             SDL_RenderFillRect(renderer, &class_bg);
             SDL_RenderFillRect(renderer, &rest_bg);
@@ -116,7 +116,7 @@ namespace car_info {
             // Calculate bounding box constraint (give it 25% padding inside the box)
             constexpr float max_w = WIDTH * 0.4f * 0.75f;
             constexpr float max_h = HEIGHT * 0.75f;
-            
+
             // Proportional Scale Factor calculation
             const float scale = std::min(max_w / tex_w, max_h / tex_h);
             const float final_w = tex_w * scale;
@@ -129,7 +129,7 @@ namespace car_info {
                 final_w,
                 final_h
             };
-            
+
             SDL_RenderTexture(renderer, cached_id_tex, nullptr, &text_rect);
         }
     }
@@ -153,8 +153,8 @@ namespace car_info {
             // Right side takes up 60% width, 100% height
             SDL_FRect class_bg = {WIDTH * 0.4f + PADDING, PADDING,
                                  WIDTH * 0.6f -2* PADDING, HEIGHT - 2 * PADDING};
-            
-            SDL_SetRenderDrawColor(renderer, 15, 15, 15, 255); 
+
+            SDL_SetRenderDrawColor(renderer, 15, 15, 15, 255);
             SDL_RenderFillRect(renderer, &class_bg);
 
             // Get original text dimensions
@@ -164,7 +164,7 @@ namespace car_info {
             // Calculate bounding box constraint (give it 25% padding inside the box)
             float max_w = class_bg.w * 0.75f;
             float max_h = class_bg.h * 0.75f;
-            
+
             // Proportional Scale Factor calculation
             float scale = std::min(max_w / tex_w, max_h / tex_h);
             float final_w = tex_w * scale;
@@ -177,7 +177,7 @@ namespace car_info {
                 final_w,
                 final_h
             };
-            
+
             SDL_RenderTexture(renderer, cached_performance_tex, nullptr, &text_rect);
         }
     }
@@ -190,7 +190,7 @@ namespace car_info {
         // Clear screen
         SDL_SetRenderDrawColor(renderer, 69, 69, 69, 69);
         SDL_RenderClear(renderer);
-        
+
         class_id_texture(data_out.CarClass);
         class_ranking_texture(data_out.CarPerformanceIndex);
         drivetrain_texture(data_out.DrivetrainType);
