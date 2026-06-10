@@ -1,7 +1,6 @@
 #ifndef DATE_HPP
 #define DATE_HPP
 
-
 typedef struct {
     unsigned char day, month;
     unsigned short year;

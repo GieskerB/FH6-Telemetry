@@ -40,7 +40,7 @@ namespace gforce {
         }
     }
 
-    static void draw_point(const SDL_Point& point) {
+    static void draw_points(const SDL_Point& point) {
         static short head = 0;
         history[head] = point;
 
@@ -55,7 +55,7 @@ namespace gforce {
         }
     }
 
-    static void static_texture() {
+    static void draw_background_texture() {
         static SDL_Texture* background_tex = nullptr;
         if (!background_tex) {
             SDL_Surface* surf = SDL_LoadPNG("assets/sprites/gforce_background.png");
@@ -91,7 +91,7 @@ namespace gforce {
         }
     }
 
-    static void gforce_texture(const char gforce_buffer[]) {
+    static void draw_gforce(const char gforce_buffer[]) {
         static SDL_Texture* cached_gforce_tex = nullptr;
         static char last_gforce_str[3]{0};
         if (!cached_gforce_tex || SDL_strcmp(last_gforce_str, gforce_buffer) != 0) {
@@ -132,9 +132,9 @@ namespace gforce {
         char gforce_buffer[6]{0};
         SDL_snprintf(gforce_buffer, sizeof(gforce_buffer), "%.2fG", std::clamp(gforce_total,0.f,9.99f));
 
-        static_texture();
-        gforce_texture(gforce_buffer);
-        draw_point(gforce_point);
+        draw_background_texture();
+        draw_gforce(gforce_buffer);
+        draw_points(gforce_point);
 
         SDL_RenderPresent(renderer);
     }

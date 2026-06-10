@@ -27,7 +27,6 @@ void read_data(fh6_data& data) {
         
         // If failed, it just wraps around.
         if (!file) {
-            std::cout << "Reached the end of data files. Wrapping back to file 0.\n";
             current_file = 0;
             file.open(make_filename(current_file), std::ios::binary);
             
@@ -87,8 +86,6 @@ void set_data(fh6_data& data) {
 // Continuously sends data via UDP.
 void send_loop(int sockfd, const struct sockaddr* client_addr, bool use_recorded) {
     while (running) {
-
-        // Dummy data for now...
         static struct fh6_data data_out;
         data_out.TimestampMS++;
 

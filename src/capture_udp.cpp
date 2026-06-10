@@ -1,7 +1,6 @@
 #include <bits/stdc++.h>
 #include <filesystem>
 #include <format>
-
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
     #include <winsock2.h>

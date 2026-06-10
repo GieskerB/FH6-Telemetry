@@ -44,7 +44,7 @@ namespace map{
         SDL_RenderFillRect(renderer, &rect);
     }
 
-    static void map_texture() {
+    static void draw_map() {
         static SDL_Texture* map_tex = nullptr;
         if (!map_tex) {
             const date first_season_start {21,5,2026};
@@ -89,7 +89,7 @@ namespace map{
         SDL_Point position {static_cast<int>(pos_x * SCALE_FACTOR) + MAX_ORIGIN_X, static_cast<int>(pos_y * (-SCALE_FACTOR)) + MAX_ORIGIN_Y};
         static SDL_Point last_position = position;
 
-        map_texture();
+        draw_map();
 
         if(!(pos_x == 0.f and pos_x == 0.f)) {
             // Stops jumping to (0,0) when paused.

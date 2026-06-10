@@ -17,13 +17,12 @@ namespace car_info {
 
     static constexpr unsigned short PADDING = HEIGHT * 0.05;
 
-    static constexpr SDL_Color WHITE = {250, 250, 250, 255};
-    static constexpr SDL_Color BLACK = {5, 5, 5, 255};
-    //Currently placeholder...
-    static constexpr SDL_Color COLORS[8] = {{103, 185, 238, 255}, {246, 198, 85,255},
+    static constexpr SDL_Color CLASS_COLORS[8] = {{103, 185, 238, 255}, {246, 198, 85,255},
                                                   {236, 109, 65, 255}, {233, 61, 78, 255},
                                                   {172, 100, 224, 255}, {49, 93, 210, 255},
                                                   {195, 53, 151, 255}, {101, 212, 104, 255}};
+
+    static const char* CLASS_IDS[] = {"D", "C", "B", "A", "S1", "S2", "R", "X"};
 
     static SDL_Window * window = nullptr;
     static SDL_Renderer* renderer = nullptr;
@@ -48,15 +47,15 @@ namespace car_info {
         }
     }
 
-    static void drivetrain_texture(int drivetrain) {
+    static void draw_drivetrain(int drivetrain) {
         static SDL_Texture* cached_drivetrain_tex = nullptr;
         static int last_drivetrain = drivetrain;
         if (!cached_drivetrain_tex || last_drivetrain != drivetrain) {
             if (cached_drivetrain_tex) SDL_DestroyTexture(cached_drivetrain_tex);
 
             SDL_Surface* surf;
-            switch (drivetrain)
-            {
+            // Pick corresponding PNG
+            switch (drivetrain) {
             case 0:
                 surf = SDL_LoadPNG("assets/sprites/FWD.png");
                 break;
@@ -84,14 +83,14 @@ namespace car_info {
         }
     }
 
-    static void class_id_texture(int id) {
+    static void draw_class_id(int id) {
         static SDL_Texture* cached_id_tex = nullptr;
         static int last_id = id;
         if (!cached_id_tex || last_id !=  id) {
             if (cached_id_tex) SDL_DestroyTexture(cached_id_tex);
-            static const char* class_names[] = {"D", "C", "B", "A", "S1", "S2", "R", "X"};
+            
             char buffer [3]{0};
-            SDL_snprintf(buffer, sizeof(buffer), "%s", class_names[id]);
+            SDL_snprintf(buffer, sizeof(buffer), "%s", CLASS_IDS[id]);
 
             SDL_Surface* surf = TTF_RenderText_Blended(font, buffer, 0, WHITE);
             if (surf) {
@@ -101,11 +100,11 @@ namespace car_info {
             }
         }
         if (cached_id_tex) {
-            // Left side takes up 40% width, 100% height
+            // Let ID take up 40 % of the space on the left
             SDL_FRect class_bg = { 0, 0, WIDTH * 0.4f, HEIGHT};
             SDL_FRect rest_bg = {WIDTH * 0.4f,0,WIDTH * 0.6f + SPRITE_WIDTH,HEIGHT};
 
-            SDL_SetRenderDrawColor(renderer, COLORS[id].r, COLORS[id].g, COLORS[id].b, COLORS[id].a);
+            SDL_SetRenderDrawColor(renderer, CLASS_COLORS[id].r, CLASS_COLORS[id].g, CLASS_COLORS[id].b, CLASS_COLORS[id].a);
             SDL_RenderFillRect(renderer, &class_bg);
             SDL_RenderFillRect(renderer, &rest_bg);
 
@@ -134,14 +133,17 @@ namespace car_info {
         }
     }
 
-    static void class_ranking_texture(int performance) {
+    static void draw_performance_index(int performance) {
         static SDL_Texture* cached_performance_tex = nullptr;
-        performance = std::clamp(performance,100,999);
+        performance = std::clamp(performance,100,999); // Clamping only for g++. Value is always between 100,999
         static int last_performance = performance;
+
         if (!cached_performance_tex || last_performance !=  performance) {
             if (cached_performance_tex) SDL_DestroyTexture(cached_performance_tex);
+
             char buffer [4]{0};
             SDL_snprintf(buffer, sizeof(buffer), "%d", performance);
+            
             SDL_Surface* surf = TTF_RenderText_Blended(font, buffer, 0, WHITE);
             if (surf) {
                 cached_performance_tex = SDL_CreateTextureFromSurface(renderer, surf);
@@ -150,7 +152,7 @@ namespace car_info {
             }
         }
         if (cached_performance_tex) {
-            // Right side takes up 60% width, 100% height
+            // Let PI take up 60 % of the space on the right + some small padding
             SDL_FRect class_bg = {WIDTH * 0.4f + PADDING, PADDING,
                                  WIDTH * 0.6f -2* PADDING, HEIGHT - 2 * PADDING};
 
@@ -188,12 +190,12 @@ namespace car_info {
             return;
         }
         // Clear screen
-        SDL_SetRenderDrawColor(renderer, 69, 69, 69, 69);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
 
-        class_id_texture(data_out.CarClass);
-        class_ranking_texture(data_out.CarPerformanceIndex);
-        drivetrain_texture(data_out.DrivetrainType);
+        draw_class_id(data_out.CarClass);
+        draw_performance_index(data_out.CarPerformanceIndex);
+        draw_drivetrain(data_out.DrivetrainType);
 
         SDL_RenderPresent(renderer);
     }

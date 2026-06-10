@@ -37,7 +37,7 @@ namespace engine_rpm {
         }
     }
 
-    static void gear_texture(int gear) {
+    static void draw_gear(int gear) {
         static SDL_Texture* cached_gear_tex = nullptr;
         static int last_gear = gear;
         if (!cached_gear_tex || last_gear != gear) {
@@ -63,7 +63,7 @@ namespace engine_rpm {
         }
     }
 
-    static void speed_texture(int speed) {
+    static void draw_speed(int speed) {
         const int speed_kmh = std::clamp(static_cast<int>(std::abs(speed * 3.6f)), 0, 999);
         static SDL_Texture* cached_speed_tex = nullptr;
         static int last_speed = speed_kmh;
@@ -86,7 +86,7 @@ namespace engine_rpm {
         }
     }
 
-    static void static_texture() {
+    static void draw_static_text() {
         static SDL_Texture* kmh_tex = nullptr;
         if (!kmh_tex) {
             SDL_Surface* surf = TTF_RenderText_Blended(font, "KM/H", 0, WHITE);
@@ -101,14 +101,14 @@ namespace engine_rpm {
         }
     }
 
-    static void rpm_bar(float idle_rpm, float current_rpm, float max_rpm) {
+    static void draw_rpm(float idle_rpm, float current_rpm, float max_rpm) {
         static  const SDL_FRect full_bar = {WIDTH * 0.05f, HEIGHT * 0.75f, WIDTH * 0.9f, WIDTH * 0.1f};
 
         // Draw the Background
         SDL_SetRenderDrawColor(renderer, GRAY.r, GRAY.g, GRAY.b, 69);
         SDL_RenderFillRect(renderer, &full_bar);
 
-        // 2. Draw the Gradient Filled Bar
+        // Draw the Gradient Filled Bar
         const float rpm_percentage = std::clamp(current_rpm / max_rpm, 0.f,1.f);
 
         const float fill_width = full_bar.w * rpm_percentage;
@@ -147,7 +147,7 @@ namespace engine_rpm {
             SDL_RenderLine(renderer, idle_x, full_bar.y, idle_x, full_bar.y + full_bar.h);
         }
 
-        // 5. Draw the Outer Border Outline (White)
+        // Draw the Outer Border Outline (White)
         SDL_SetRenderDrawColor(renderer, WHITE.r, WHITE.g, WHITE.b, 255);
         SDL_RenderRect(renderer, &full_bar);
 
@@ -159,10 +159,10 @@ namespace engine_rpm {
         SDL_RenderClear(renderer);
 
         // Render all the information
-        static_texture();
-        gear_texture(data_out.Gear);
-        speed_texture(data_out.Speed);
-        rpm_bar(data_out.EngineIdleRpm, data_out.CurrentEngineRpm, data_out.EngineMaxRpm);
+        draw_static_text();
+        draw_gear(data_out.Gear);
+        draw_speed(data_out.Speed);
+        draw_rpm(data_out.EngineIdleRpm, data_out.CurrentEngineRpm, data_out.EngineMaxRpm);
         SDL_RenderPresent(renderer);
     }
 
