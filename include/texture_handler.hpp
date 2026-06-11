@@ -1,0 +1,41 @@
+#ifndef TEXTURE_HANDLER
+#define TEXTURE_HANDLER
+
+#include <SDL3_ttf/SDL_ttf.h>
+#include <SDL3/SDL_pixels.h>
+
+template<int BUFF_SIZE, typename NUM_TYPE>
+void texture_text(SDL_Renderer* renderer, SDL_Texture** texture, const char format_string[], NUM_TYPE value, TTF_Font* font, const SDL_Color &color) {
+    char buffer[BUFF_SIZE]{0};
+    SDL_snprintf(buffer, sizeof(buffer), format_string, value);
+    SDL_Surface* surf = TTF_RenderText_Blended(font, buffer, 0, color);
+    
+    if (!*texture) {
+        *texture = SDL_CreateTexture(renderer, surf->format, SDL_TEXTUREACCESS_STREAMING, surf->w, surf->h);
+    }
+
+    if (surf) {
+        SDL_UpdateTexture(*texture, NULL, surf->pixels, surf->pitch);
+        SDL_DestroySurface(surf);
+    }
+}
+
+template<int BUFF_SIZE, typename NUM_TYPE>
+void texture_text_static(SDL_Renderer* renderer, SDL_Texture** texture, const char format_string[], NUM_TYPE value, TTF_Font* font, const SDL_Color &color) {
+    char buffer[BUFF_SIZE]{0};
+    SDL_snprintf(buffer, sizeof(buffer), format_string, value);
+    SDL_Surface* surf = TTF_RenderText_Blended(font, buffer, 0, color);
+    
+    if (!*texture) {
+        *texture = SDL_CreateTexture(renderer, surf->format, SDL_TEXTUREACCESS_STATIC, surf->w, surf->h);
+    }
+
+    if (surf) {
+        SDL_UpdateTexture(*texture, NULL, surf->pixels, surf->pitch);
+        SDL_DestroySurface(surf);
+    }
+}
+
+
+
+#endif

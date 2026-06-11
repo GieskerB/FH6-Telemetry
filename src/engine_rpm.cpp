@@ -2,10 +2,11 @@
 #include <stdlib.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <algorithm>
-#include <iostream>
 
 #include "../include/engine_rpm.hpp"
 #include "../include/colors.hpp"
+#include "../include/texture_handler.hpp"
+
 namespace engine_rpm {
 
     static constexpr unsigned short WIDTH = 400;
@@ -13,7 +14,7 @@ namespace engine_rpm {
 
     static constexpr unsigned short STEP_SIZE = 1000;
 
-    static constexpr float RPM_FADE = 0.4f;
+    static constexpr float RPM_FADE = 0.6f;
 
     static SDL_Window * window = nullptr;
     static SDL_Renderer* renderer = nullptr;
@@ -39,23 +40,16 @@ namespace engine_rpm {
 
     static void draw_gear(int gear) {
         static SDL_Texture* cached_gear_tex = nullptr;
-        static int last_gear = gear;
-        if (!cached_gear_tex or last_gear != gear) {
-            if (cached_gear_tex) SDL_DestroyTexture(cached_gear_tex);
-
+        static int last_gear = -1;
+        if (last_gear != gear) {
             char buffer[3]{0};
             switch (gear) {
                 case 0:  SDL_snprintf(buffer, sizeof(buffer), " R"); break;
                 case 11: SDL_snprintf(buffer, sizeof(buffer), " N"); break;
                 default: SDL_snprintf(buffer, sizeof(buffer), "%2d", gear); break;
             }
-
-            SDL_Surface* surf = TTF_RenderText_Blended(font, buffer, 0, ORANGE);
-            if (surf) {
-                cached_gear_tex = SDL_CreateTextureFromSurface(renderer, surf);
-                SDL_DestroySurface(surf);
-                last_gear = gear;
-            }
+            texture_text<3,const char*>(renderer, &cached_gear_tex, "%s", buffer, font, ORANGE);
+            last_gear = gear;
         }
         if (cached_gear_tex) {
             static const SDL_FRect gear_rect = { WIDTH * 0.75f, HEIGHT * 0.1f, WIDTH * 0.225f, HEIGHT * 0.4f };
@@ -64,40 +58,27 @@ namespace engine_rpm {
     }
 
     static void draw_speed(int speed) {
-        const int speed_kmh = std::clamp(static_cast<int>(std::abs(speed * 3.6f)), 0, 999);
-        static SDL_Texture* cached_speed_tex = nullptr;
-        static int last_speed = speed_kmh;
-        if (!cached_speed_tex or last_speed != speed_kmh) {
-            if (cached_speed_tex) SDL_DestroyTexture(cached_speed_tex);
-
-            char buffer[4]{0};
-            SDL_snprintf(buffer, sizeof(buffer), "%03d", speed_kmh);
-
-            SDL_Surface* surf = TTF_RenderText_Blended(font, buffer, 0, WHITE);
-            if (surf) {
-                cached_speed_tex = SDL_CreateTextureFromSurface(renderer, surf);
-                SDL_DestroySurface(surf);
-                last_speed = speed_kmh;
-            }
+        speed = std::clamp(static_cast<int>(std::abs(speed * 3.6f)), 0, 999);
+        static SDL_Texture* speed_texture = nullptr;
+        static int last_speed = -1;
+        if (last_speed != speed) {
+            texture_text<4,int>(renderer, &speed_texture, "%03d", speed, font, WHITE);
+            last_speed = speed;
         }
-        if (cached_speed_tex) {
+        if (speed_texture) {
             static const SDL_FRect speed_rect = { HEIGHT * 0.1f, 0.0f, WIDTH * 0.667f, HEIGHT * 0.8f };
-            SDL_RenderTexture(renderer, cached_speed_tex, nullptr, &speed_rect);
+            SDL_RenderTexture(renderer, speed_texture, nullptr, &speed_rect);
         }
     }
 
     static void draw_static_text() {
-        static SDL_Texture* kmh_tex = nullptr;
-        if (!kmh_tex) {
-            SDL_Surface* surf = TTF_RenderText_Blended(font, "KM/H", 0, WHITE);
-            if (surf) {
-                kmh_tex = SDL_CreateTextureFromSurface(renderer, surf);
-                SDL_DestroySurface(surf);
-            }
+        static SDL_Texture* kmh_texture = nullptr;
+        if (!kmh_texture) {
+            texture_text_static<5,const char*>(renderer, &kmh_texture, "%s", "KM/H", font, WHITE);
         }
-        if (kmh_tex) {
+        if (kmh_texture) {
             static const SDL_FRect unit_rect = { WIDTH * 0.75f, HEIGHT * 0.5f, WIDTH * 0.225f, HEIGHT * 0.2f };
-            SDL_RenderTexture(renderer, kmh_tex, nullptr, &unit_rect);
+            SDL_RenderTexture(renderer, kmh_texture, nullptr, &unit_rect);
         }
     }
 

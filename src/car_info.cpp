@@ -6,6 +6,7 @@
 
 #include "../include/car_info.hpp"
 #include "../include/colors.hpp"
+#include "../include/texture_handler.hpp"
 
 namespace car_info {
 
@@ -84,22 +85,25 @@ namespace car_info {
     }
 
     static void draw_class_id(int id) {
-        static SDL_Texture* cached_id_tex = nullptr;
-        static int last_id = id;
-        if (!cached_id_tex or last_id !=  id) {
-            if (cached_id_tex) SDL_DestroyTexture(cached_id_tex);
+        static SDL_Texture* id_texture = nullptr;
+        static int last_id = -1;
+        if (!id_texture or last_id !=  id) {
+            if (id_texture) SDL_DestroyTexture(id_texture);
             
             char buffer [3]{0};
             SDL_snprintf(buffer, sizeof(buffer), "%s", CLASS_IDS[id]);
 
             SDL_Surface* surf = TTF_RenderText_Blended(font, buffer, 0, WHITE);
             if (surf) {
-                cached_id_tex = SDL_CreateTextureFromSurface(renderer, surf);
+                id_texture = SDL_CreateTextureFromSurface(renderer, surf);
                 SDL_DestroySurface(surf);
                 last_id =id;
             }
+            // Texture size changes... need further improvements.
+            // texture_text<3,const char*>(renderer, &id_texture, "%s", CLASS_IDS[id], font, WHITE);
+            // last_id =id;
         }
-        if (cached_id_tex) {
+        if (id_texture) {
             // Let ID take up 40 % of the space on the left
             SDL_FRect class_bg = { 0, 0, WIDTH * 0.4f, HEIGHT};
             SDL_FRect rest_bg = {WIDTH * 0.4f,0,WIDTH * 0.6f + SPRITE_WIDTH,HEIGHT};
@@ -110,7 +114,7 @@ namespace car_info {
 
             // Get original text dimensions
             float tex_w = 0, tex_h = 0;
-            SDL_GetTextureSize(cached_id_tex, &tex_w, &tex_h);
+            SDL_GetTextureSize(id_texture, &tex_w, &tex_h);
 
             // Calculate bounding box constraint (give it 25% padding inside the box)
             constexpr float max_w = WIDTH * 0.4f * 0.75f;
@@ -129,29 +133,32 @@ namespace car_info {
                 final_h
             };
 
-            SDL_RenderTexture(renderer, cached_id_tex, nullptr, &text_rect);
+            SDL_RenderTexture(renderer, id_texture, nullptr, &text_rect);
         }
     }
 
     static void draw_performance_index(int performance) {
-        static SDL_Texture* cached_performance_tex = nullptr;
+        static SDL_Texture* performance_texture = nullptr;
         performance = std::clamp(performance,100,999); // Clamping only for g++. Value is always between 100,999
-        static int last_performance = performance;
+        static int last_performance = -1;
 
-        if (!cached_performance_tex or last_performance !=  performance) {
-            if (cached_performance_tex) SDL_DestroyTexture(cached_performance_tex);
+        if (!performance_texture or last_performance !=  performance) {
+            if (performance_texture) SDL_DestroyTexture(performance_texture);
 
             char buffer [4]{0};
             SDL_snprintf(buffer, sizeof(buffer), "%d", performance);
             
             SDL_Surface* surf = TTF_RenderText_Blended(font, buffer, 0, WHITE);
             if (surf) {
-                cached_performance_tex = SDL_CreateTextureFromSurface(renderer, surf);
+                performance_texture = SDL_CreateTextureFromSurface(renderer, surf);
                 SDL_DestroySurface(surf);
                 last_performance = performance;
             }
+            // Texture size changes... need further improvements.
+            // texture_text<4,int>(renderer, &performance_texture, "%d", performance, font, WHITE);
+            // last_performance = performance;
         }
-        if (cached_performance_tex) {
+        if (performance_texture) {
             // Let PI take up 60 % of the space on the right + some small padding
             SDL_FRect class_bg = {WIDTH * 0.4f + PADDING, PADDING,
                                  WIDTH * 0.6f -2* PADDING, HEIGHT - 2 * PADDING};
@@ -161,7 +168,7 @@ namespace car_info {
 
             // Get original text dimensions
             float tex_w = 0.0f, tex_h = 0.0f;
-            SDL_GetTextureSize(cached_performance_tex, &tex_w, &tex_h);
+            SDL_GetTextureSize(performance_texture, &tex_w, &tex_h);
 
             // Calculate bounding box constraint (give it 25% padding inside the box)
             float max_w = class_bg.w * 0.75f;
@@ -180,7 +187,7 @@ namespace car_info {
                 final_h
             };
 
-            SDL_RenderTexture(renderer, cached_performance_tex, nullptr, &text_rect);
+            SDL_RenderTexture(renderer, performance_texture, nullptr, &text_rect);
         }
     }
 

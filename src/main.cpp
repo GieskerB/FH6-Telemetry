@@ -3,6 +3,7 @@
 #include <iostream>
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <thread>
 
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
@@ -43,10 +44,10 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr) {
             continue;
         }
 
-        engine_rpm::update(data_out);
-        gforce::update(data_out);
-        map::update(data_out);
-        car_info::update(data_out);
+        std::thread thread_engine_rpm {engine_rpm::update, data_out};
+        std::thread thread_gforce {gforce::update, data_out};
+        std::thread thread_map {map::update, data_out};
+        std::thread thread_car_info {car_info::update, data_out};
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -54,6 +55,11 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr) {
                 running = false;
             }
         }
+
+        thread_engine_rpm.join();
+        thread_gforce.join();
+        thread_map.join();
+        thread_car_info.join();
     }
 #ifdef _WIN32
     closesocket(sockfd);
