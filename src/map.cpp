@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <SDL3/SDL.h>
 #include <algorithm>
-#include <math.h>
+#include <cmath>
 
 #include "../include/map.hpp"
 #include "../include/date.hpp"
@@ -21,6 +21,8 @@ namespace map{
     static constexpr unsigned short MAX_ORIGIN_Y = 499;
 
     static constexpr unsigned char ARROW_SIZE = 13;
+
+    static constexpr double PI = 3.14159265358979323846;
 
     static constexpr float SCALE_FACTOR = (0.051509 + 0.051842 + 0.052109 + 0.051713) / 4.f;
 
@@ -117,7 +119,7 @@ namespace map{
         SDL_Point position {static_cast<int>(pos_x * SCALE_FACTOR) + MAX_ORIGIN_X, static_cast<int>(pos_y * (-SCALE_FACTOR)) + MAX_ORIGIN_Y};
         static SDL_Point last_position = position;
         
-        const float rotation = data_out.Yaw * 180 / M_PI;
+        const float rotation = data_out.Yaw * 180 / PI;
         static float last_rotation = rotation;
 
         // Stops jumping to (0,0) when paused.
