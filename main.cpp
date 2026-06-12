@@ -5,6 +5,8 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <SDL3/SDL_keycode.h>
 #include <thread>
+#include <array>
+#include <semaphore>
 
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
@@ -24,14 +26,46 @@
 #include "include/udp/socket_setup.hpp"
 #include "include/util/texture_handler.hpp"
 
+constexpr unsigned char THREAD_COUNT = 4;
+
 // Running variable to stop loop when program ends.
 volatile bool running = true;
+
+struct thread_data {
+    std::binary_semaphore semaphore;
+    fh6_data* data;
+    void (*update) (const fh6_data&);
+};
+
+void run_thread(thread_data* t_data) {
+    while (running) {
+        // Block until data is ready.
+        t_data->semaphore.acquire();
+        const fh6_data& f_data = *t_data->data;
+        std::cout << "TS: " << f_data.TimestampMS<<"\n";
+        t_data->update(f_data);
+    }
+}
 
 // Continuously receive data via UDP.
 void receive_loop(int sockfd, const struct sockaddr* client_addr) {
     unsigned int last_time_stamp = 0;
+
+    std::array<thread_data,THREAD_COUNT> thread_data_array {
+        thread_data{std::binary_semaphore{0}, nullptr, engine_rpm::update},
+        thread_data{std::binary_semaphore{0}, nullptr, gforce::update},
+        thread_data{std::binary_semaphore{0}, nullptr, map::update},
+        thread_data{std::binary_semaphore{0}, nullptr, car_info::update},
+    };
+
+    std::vector<std::thread> thread_vector;
+    for(int i = 0; i < THREAD_COUNT; ++i) {
+        thread_vector.emplace_back(run_thread, &thread_data_array[i]);
+    }
+
+
+    struct fh6_data data_out;
     while (running) {
-        struct fh6_data data_out;
 
         // Call wrapper, exit if data could not be received.
         receive_message(sockfd, ((void*) &data_out), (const struct sockaddr*)&client_addr);
@@ -44,15 +78,10 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr) {
             continue;
         }
 
-        // std::thread thread_engine_rpm {engine_rpm::update, data_out};
-        // std::thread thread_gforce {gforce::update, data_out};
-        // std::thread thread_map {map::update, data_out};
-        // std::thread thread_car_info {car_info::update, data_out};
-
-        engine_rpm::update(data_out);
-        gforce::update(data_out);
-        map::update(data_out);
-        car_info::update(data_out);
+        for (int i = 0 ; i < THREAD_COUNT; ++i) {
+            thread_data_array[i].data = &data_out;
+            thread_data_array[i].semaphore.release();
+        }
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -69,11 +98,12 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr) {
             }
         }
 
-        // thread_engine_rpm.join();
-        // thread_gforce.join();
-        // thread_map.join();
-        // thread_car_info.join();
     }
+
+    for (int i = 0 ; i < THREAD_COUNT; ++i) {
+        thread_vector[i].join();
+    }
+
 #ifdef _WIN32
     closesocket(sockfd);
     WSACleanup();
