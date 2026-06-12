@@ -67,11 +67,7 @@ namespace gforce {
     static void draw_background() {
         static SDL_Texture* background_texture = nullptr;
         if (!background_texture) {
-            SDL_Surface* surf = SDL_LoadPNG("assets/sprites/gforce_background.png");
-            if (surf) {
-                background_texture = SDL_CreateTextureFromSurface(renderer, surf);
-                SDL_DestroySurface(surf);
-            }
+            texture_png_static(renderer,&background_texture,"assets/sprites/gforce_background.png");
         }
         if (background_texture) {
             static const SDL_FRect unit_rect = { 0,0,WIDTH,HEIGHT };

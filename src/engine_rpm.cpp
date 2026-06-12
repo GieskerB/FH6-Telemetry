@@ -16,6 +16,8 @@ namespace engine_rpm {
 
     static constexpr float RPM_FADE = 0.6f;
 
+    static const char* GEARS[] = {" R", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8", " 9", "10", " N"};
+ 
     static SDL_Window * window = nullptr;
     static SDL_Renderer* renderer = nullptr;
     static TTF_Font* font = nullptr;
@@ -42,13 +44,7 @@ namespace engine_rpm {
         static SDL_Texture* cached_gear_tex = nullptr;
         static int last_gear = -1;
         if (last_gear != gear) {
-            char buffer[3]{0};
-            switch (gear) {
-                case 0:  SDL_snprintf(buffer, sizeof(buffer), " R"); break;
-                case 11: SDL_snprintf(buffer, sizeof(buffer), " N"); break;
-                default: SDL_snprintf(buffer, sizeof(buffer), "%2d", gear); break;
-            }
-            texture_text<3,const char*>(renderer, &cached_gear_tex, "%s", buffer, font, ORANGE);
+            texture_text<3,const char*>(renderer, &cached_gear_tex, "%s", GEARS[gear], font, ORANGE);
             last_gear = gear;
         }
         if (cached_gear_tex) {
@@ -135,6 +131,11 @@ namespace engine_rpm {
     }
 
     void update(const fh6_data & data_out) {
+        if(data_out.CurrentEngineRpm == 0) {
+            // In menu
+            return;
+        }
+
         // Clear screen
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);

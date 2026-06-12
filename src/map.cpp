@@ -7,6 +7,7 @@
 #include "../include/map.hpp"
 #include "../include/util/date.hpp"
 #include "../include/util/colors.hpp"
+#include "../include/util/texture_handler.hpp"
 
 namespace map{
 
@@ -20,11 +21,13 @@ namespace map{
     static constexpr unsigned short MAX_ORIGIN_X = 420;
     static constexpr unsigned short MAX_ORIGIN_Y = 499;
 
-    static constexpr unsigned char ARROW_SIZE = 13;
+    static constexpr unsigned char ARROW_SIZE = 17;
 
     static constexpr double PI = 3.14159265358979323846;
 
     static constexpr float SCALE_FACTOR = (0.051509 + 0.051842 + 0.052109 + 0.051713) / 4.f;
+
+    static const char* SEASONS[] = {"assets/maps/summer.png","assets/maps/autumn.png","assets/maps/winter.png","assets/maps/spring.png"};
 
     static SDL_Window * window = nullptr;
     static SDL_Renderer* renderer = nullptr;
@@ -50,25 +53,41 @@ namespace map{
         return rotation;
     }
 
-    static void draw_nav_arrow(const SDL_Point& point, float rotation) {
-        const int rotation_step = (std::round(rotation / 5)) * 5;
+    static void draw_nav_arrow(float pos_x, float pos_z, float yaw) {
+
+        // reduce from 3 to 2 dimension
+        const SDL_Point position {static_cast<int>(pos_x * SCALE_FACTOR) + MAX_ORIGIN_X, static_cast<int>(pos_z * (-SCALE_FACTOR)) + MAX_ORIGIN_Y};
+        
+        //Convert from rad to deg:
+        yaw = yaw * 180 / PI;
+        const int rotation = (std::round((yaw) / 5)) * 5;
+        static int last_rotation = -1;
+
         static SDL_Texture* arrow_tex = nullptr;
-        static int last_rotation = rotation_step;
-        if (!arrow_tex or last_rotation != rotation_step) {
+        if (!arrow_tex or last_rotation != rotation) {
             if (arrow_tex) SDL_DestroyTexture(arrow_tex);
             
             char buffer[26]{0};
-            SDL_snprintf(buffer, sizeof(buffer), "assets/arrows/nav-%03d.png", rotate_correctly(rotation_step));
+            SDL_snprintf(buffer, sizeof(buffer), "assets/arrows/nav-%03d.png", rotate_correctly(rotation));
 
             SDL_Surface* surf  = SDL_LoadPNG(buffer);
             if (surf) {
                 arrow_tex = SDL_CreateTextureFromSurface(renderer, surf);
-                last_rotation = rotation_step;
+                last_rotation = rotation;
                 SDL_DestroySurface(surf);
             }
         }
         if (arrow_tex) {
-            const SDL_FRect rect = {point.x - (ARROW_SIZE / 2 +1.f) , point.y - ARROW_SIZE / 2 +1.f, ARROW_SIZE, ARROW_SIZE};
+            float texture_size = 0;
+            // should be between 21 and 30!
+            SDL_GetTextureSize(arrow_tex,&texture_size,&texture_size);
+            const float scalar = texture_size / 30;
+            const SDL_FRect rect = {
+                position.x - (ARROW_SIZE * scalar / 2 +1.f),
+                position.y - ARROW_SIZE * scalar/ 2 +1.f,
+                ARROW_SIZE * scalar,
+                ARROW_SIZE * scalar
+            };
             SDL_RenderTexture(renderer, arrow_tex, nullptr, &rect);
         }
     }
@@ -78,28 +97,9 @@ namespace map{
         if (!map_tex) {
             const date first_season_start {21,5,2026};
             const date today = get_today();
+            const unsigned int weeks_since_start = (date_to_int(today) - date_to_int(first_season_start)) / 7;
 
-            unsigned int weeks_since_start = (date_to_int(today) - date_to_int(first_season_start)) / 7;
-
-            SDL_Surface* surf;
-            switch (weeks_since_start % 4) {
-                case 0:
-                    surf = SDL_LoadPNG("assets/maps/summer.png");
-                    break;
-                case 1:
-                    surf = SDL_LoadPNG("assets/maps/autumn.png");
-                    break;
-                case 2:
-                    surf = SDL_LoadPNG("assets/maps/winter.png");
-                    break;
-                case 3:
-                    surf = SDL_LoadPNG("assets/maps/spring.png");
-                    break;
-            }
-            if (surf) {
-                map_tex = SDL_CreateTextureFromSurface(renderer, surf);
-                SDL_DestroySurface(surf);
-            }
+            texture_png_static(renderer,&map_tex,SEASONS[weeks_since_start % 4]);
         }
         if (map_tex) {
             static const SDL_FRect rect = {0,0,WIDTH,HEIGHT };
@@ -108,27 +108,17 @@ namespace map{
     }
 
     void update(const fh6_data& data_out) {
+        if(data_out.PositionX == 0.f and data_out.PositionZ == 0.f) {
+            // In menu!
+            return;
+        }
+
         SDL_SetRenderDrawColor(renderer, 15, 15, 20, 255);
         SDL_RenderClear(renderer);
 
         draw_map();
-
-        // reduce from 3 to 2 dimension
-        const float pos_x = data_out.PositionX;
-        const float pos_y = data_out.PositionZ;
-        SDL_Point position {static_cast<int>(pos_x * SCALE_FACTOR) + MAX_ORIGIN_X, static_cast<int>(pos_y * (-SCALE_FACTOR)) + MAX_ORIGIN_Y};
-        static SDL_Point last_position = position;
+        draw_nav_arrow(data_out.PositionX, data_out.PositionZ, data_out.Yaw);
         
-        const float rotation = data_out.Yaw * 180 / PI;
-        static float last_rotation = rotation;
-
-        // Stops jumping to (0,0) when paused.
-        if(!(pos_x == 0.f and pos_x == 0.f)) {
-            last_position = position;
-            last_rotation = rotation;
-        }
-
-        draw_nav_arrow(last_position, last_rotation);
         SDL_RenderPresent(renderer);
     }
 
