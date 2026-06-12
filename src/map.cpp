@@ -5,8 +5,8 @@
 #include <cmath>
 
 #include "../include/map.hpp"
-#include "../include/date.hpp"
-#include "../include/colors.hpp"
+#include "../include/util/date.hpp"
+#include "../include/util/colors.hpp"
 
 namespace map{
 

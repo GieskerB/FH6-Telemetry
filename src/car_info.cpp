@@ -5,8 +5,8 @@
 #include <algorithm>
 
 #include "../include/car_info.hpp"
-#include "../include/colors.hpp"
-#include "../include/texture_handler.hpp"
+#include "../include/util/colors.hpp"
+#include "../include/util/texture_handler.hpp"
 
 namespace car_info {
 

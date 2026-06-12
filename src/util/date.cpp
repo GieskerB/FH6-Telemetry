@@ -1,6 +1,6 @@
 #include <ctime>
 
-#include "../include/date.hpp"
+#include "../../include/util/date.hpp"
 
 date get_today() {
     const time_t t = time(nullptr);

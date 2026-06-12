@@ -16,13 +16,11 @@
     #include <unistd.h>
 #endif
 
-
-#include "../include/fh6_data.hpp"
-#include "../include/socket_setup.hpp"
-#include "../include/engine_rpm.hpp"
-#include "../include/gforce.hpp"
-#include "../include/map.hpp"
-#include "../include/car_info.hpp"
+#include "include/engine_rpm.hpp"
+#include "include/gforce.hpp"
+#include "include/map.hpp"
+#include "include/car_info.hpp"
+#include "include/udp/socket_setup.hpp"
 
 // Running variable to stop loop when program ends.
 volatile bool running = true;

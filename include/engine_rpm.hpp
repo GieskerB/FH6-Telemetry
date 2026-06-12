@@ -1,7 +1,7 @@
 #ifndef ENGINE_RPM_HPP
 #define ENGINE_RPM_HPP
 
-#include "../include/fh6_data.hpp"
+#include "util/fh6_data.hpp"
 
 namespace engine_rpm {
     void init();

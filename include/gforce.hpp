@@ -1,7 +1,7 @@
 #ifndef GFORCE_HPP
 #define GFORCE_HPP
 
-#include "../include/fh6_data.hpp"
+#include "util/fh6_data.hpp"
 
 namespace gforce {
     void init();

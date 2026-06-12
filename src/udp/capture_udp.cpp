@@ -8,9 +8,9 @@
     #include <arpa/inet.h>
 #endif
 
-#include "../include/socket_setup.hpp"
-#include "../include/fh6_data.hpp"
-#include "../include/data_per_file.hpp"
+#include "../../include/udp/socket_setup.hpp"
+#include "../../include/util/fh6_data.hpp"
+#include "../../include/util/data_per_file.hpp"
 
 static std::vector<fh6_data> data_vector;
 

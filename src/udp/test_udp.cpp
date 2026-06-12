@@ -1,9 +1,9 @@
 #include <bits/stdc++.h>
 #include <arpa/inet.h>
 
-#include "../include/fh6_data.hpp"
-#include "../include/socket_setup.hpp"
-#include "../include/data_per_file.hpp"
+#include "../../include/util/fh6_data.hpp"
+#include "../../include/udp/socket_setup.hpp"
+#include "../../include/util/data_per_file.hpp"
 
 // Running variable to stop loop when program ends.
 volatile bool running = true;

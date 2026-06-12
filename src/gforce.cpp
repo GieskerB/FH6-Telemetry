@@ -6,8 +6,8 @@
 #include <SDL3_ttf/SDL_ttf.h>
 
 #include "../include/gforce.hpp"
-#include "../include/colors.hpp"
-#include "../include/texture_handler.hpp"
+#include "../include/util/colors.hpp"
+#include "../include/util/texture_handler.hpp"
 
 namespace gforce {
 

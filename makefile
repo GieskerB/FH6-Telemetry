@@ -13,9 +13,9 @@ BUILDDIR := build
 
 PROGS := fh6_telemetry udp_test udp_capture
 
-fh6_telemetry_SRCS := $(SRCDIR)/main.cpp $(SRCDIR)/socket_setup.cpp $(SRCDIR)/engine_rpm.cpp $(SRCDIR)/gforce.cpp $(SRCDIR)/map.cpp $(SRCDIR)/date.cpp $(SRCDIR)/car_info.cpp 
-udp_test_SRCS := $(SRCDIR)/test_udp.cpp $(SRCDIR)/socket_setup.cpp
-udp_capture_SRCS := $(SRCDIR)/capture_udp.cpp $(SRCDIR)/socket_setup.cpp
+fh6_telemetry_SRCS := main.cpp $(SRCDIR)/udp/socket_setup.cpp $(SRCDIR)/engine_rpm.cpp $(SRCDIR)/gforce.cpp $(SRCDIR)/map.cpp $(SRCDIR)/util/date.cpp $(SRCDIR)/car_info.cpp 
+udp_test_SRCS := $(SRCDIR)/udp/test_udp.cpp $(SRCDIR)/udp/socket_setup.cpp
+udp_capture_SRCS := $(SRCDIR)/udp/capture_udp.cpp $(SRCDIR)/udp/socket_setup.cpp
 
 fh6_telemetry_OBJS := $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%.o, $(fh6_telemetry_SRCS))
 udp_test_OBJS := $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%.o, $(udp_test_SRCS))
@@ -25,6 +25,8 @@ all: $(BUILDDIR) $(PROGS)
 
 $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
+	mkdir -p $(BUILDDIR)/udp
+	mkdir -p $(BUILDDIR)/util
 
 fh6_telemetry: $(fh6_telemetry_OBJS)
 	$(CXX) $(CXXFLAGS) -o $(BUILDDIR)/$@ $^ $(LDFLAGS)

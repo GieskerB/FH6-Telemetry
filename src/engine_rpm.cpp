@@ -4,8 +4,8 @@
 #include <algorithm>
 
 #include "../include/engine_rpm.hpp"
-#include "../include/colors.hpp"
-#include "../include/texture_handler.hpp"
+#include "../include/util/colors.hpp"
+#include "../include/util/texture_handler.hpp"
 
 namespace engine_rpm {
 
