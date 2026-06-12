@@ -19,12 +19,12 @@
     #include <unistd.h>
 #endif
 
-#include "include/engine_rpm.hpp"
-#include "include/gforce.hpp"
-#include "include/map.hpp"
-#include "include/car_info.hpp"
-#include "include/udp/socket_setup.hpp"
-#include "include/util/texture_handler.hpp"
+#include "../include/engine_rpm.hpp"
+#include "../include/gforce.hpp"
+#include "../include/map.hpp"
+#include "../include/car_info.hpp"
+#include "../include/udp/socket_setup.hpp"
+#include "../include/util/texture_handler.hpp"
 
 constexpr unsigned char THREAD_COUNT = 4;
 
@@ -42,7 +42,6 @@ void run_thread(thread_data* t_data) {
         // Block until data is ready.
         t_data->semaphore.acquire();
         const fh6_data& f_data = *t_data->data;
-        std::cout << "TS: " << f_data.TimestampMS<<"\n";
         t_data->update(f_data);
     }
 }
