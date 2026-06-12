@@ -140,7 +140,7 @@ namespace car_info {
     void close() {
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
-        TTF_Quit();
+        TTF_CloseFont(font);
     }
 
 }

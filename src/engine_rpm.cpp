@@ -132,8 +132,7 @@ namespace engine_rpm {
 
     void update(const fh6_data & data_out) {
         if(data_out.CurrentEngineRpm == 0) {
-            // In menu
-            return;
+            const_cast<fh6_data &>(data_out).Gear = 11; // Neutral instead of reverse!
         }
 
         // Clear screen
@@ -151,6 +150,6 @@ namespace engine_rpm {
     void close() {
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
-        TTF_Quit();
+        TTF_CloseFont(font);
     }
 }

@@ -64,7 +64,7 @@ namespace map{
         static int last_rotation = -1;
 
         static SDL_Texture* arrow_tex = nullptr;
-        if (!arrow_tex or last_rotation != rotation) {
+        if (last_rotation != rotation) {
             if (arrow_tex) SDL_DestroyTexture(arrow_tex);
             
             char buffer[26]{0};
@@ -123,7 +123,8 @@ namespace map{
     }
 
     void close() {
-
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
     }
 
 }

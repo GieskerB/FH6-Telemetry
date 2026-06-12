@@ -5,7 +5,7 @@ SDL_TTF_CFLAGS := $(shell pkg-config --cflags sdl3-ttf)
 SDL_TTF_LIBS   := $(shell pkg-config --libs sdl3-ttf)
 
 CXX := g++
-CXXFLAGS := -Wall -Wextra -Werror -O3 -std=c++20 -lSDL3 $(SDL_CFLAGS) $(SDL__TTF_CFLAGS) 
+CXXFLAGS := -Wall -Wextra -Werror -std=c++20 -O3 -lSDL3 $(SDL_CFLAGS) $(SDL__TTF_CFLAGS) 
 LDFLAGS = $(SDL_LIBS) $(SDL_TTF_LIBS)
 SRCDIR := src
 BUILDDIR := build

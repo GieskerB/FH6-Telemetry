@@ -3,6 +3,7 @@
 #include <iostream>
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <SDL3/SDL_keycode.h>
 #include <thread>
 
 #ifdef _WIN32
@@ -21,6 +22,7 @@
 #include "include/map.hpp"
 #include "include/car_info.hpp"
 #include "include/udp/socket_setup.hpp"
+#include "include/util/texture_handler.hpp"
 
 // Running variable to stop loop when program ends.
 volatile bool running = true;
@@ -42,22 +44,35 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr) {
             continue;
         }
 
-        std::thread thread_engine_rpm {engine_rpm::update, data_out};
-        std::thread thread_gforce {gforce::update, data_out};
-        std::thread thread_map {map::update, data_out};
-        std::thread thread_car_info {car_info::update, data_out};
+        // std::thread thread_engine_rpm {engine_rpm::update, data_out};
+        // std::thread thread_gforce {gforce::update, data_out};
+        // std::thread thread_map {map::update, data_out};
+        // std::thread thread_car_info {car_info::update, data_out};
+
+        engine_rpm::update(data_out);
+        gforce::update(data_out);
+        map::update(data_out);
+        car_info::update(data_out);
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            if(event.type == SDL_EventType::SDL_EVENT_QUIT) {
+            // 1. Check if the user clicked the window's close button (highly recommended)
+            if (event.type == SDL_EVENT_QUIT) {
                 running = false;
+            }
+            // 2. Check if a key was pressed down
+            else if (event.type == SDL_EVENT_KEY_DOWN) {
+                // 3. Check if that specific key was the Escape key
+                if (event.key.key == SDLK_ESCAPE) {
+                    running = false;
+                }
             }
         }
 
-        thread_engine_rpm.join();
-        thread_gforce.join();
-        thread_map.join();
-        thread_car_info.join();
+        // thread_engine_rpm.join();
+        // thread_gforce.join();
+        // thread_map.join();
+        // thread_car_info.join();
     }
 #ifdef _WIN32
     closesocket(sockfd);
@@ -95,6 +110,8 @@ int main(int argc, const char* argv[]) {
     gforce::close();
     map::close();
     car_info::close();
+
+    destroy_registered_textures();
 
     SDL_Quit();
     TTF_Quit();
