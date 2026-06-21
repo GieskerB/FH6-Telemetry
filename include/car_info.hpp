@@ -3,10 +3,11 @@
 
 #include "util/fh6_data.hpp"
 
-namespace car_info {
+class car_info_t {
+public:
     void init();
     void update(const fh6_data&);
     void close();
-}
+};
 
 #endif

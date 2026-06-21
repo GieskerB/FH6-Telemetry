@@ -3,7 +3,7 @@
 
 #include <utility>
 
-typedef std::pair<int,struct sockaddr_in> sock_info;
+using sock_info = std::pair<int,struct sockaddr_in>;
 
 void bind_socket(int, const struct sockaddr*);
 void receive_message(int, void*, const struct sockaddr*);

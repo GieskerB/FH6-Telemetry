@@ -7,6 +7,8 @@
 #include <thread>
 #include <array>
 #include <semaphore>
+#include <memory>
+#include <variant>
 
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
@@ -19,49 +21,59 @@
     #include <unistd.h>
 #endif
 
+#include "../include/udp/socket_setup.hpp"
+#include "../include/util/texture_handler.hpp"
 #include "../include/engine_rpm.hpp"
 #include "../include/gforce.hpp"
 #include "../include/map.hpp"
 #include "../include/car_info.hpp"
-#include "../include/udp/socket_setup.hpp"
-#include "../include/util/texture_handler.hpp"
 
-constexpr unsigned char THREAD_COUNT = 4;
+using telemetries_t = std::variant<car_info_t, engine_rpm_t, gforce_t, map_t> ;
 
 // Running variable to stop loop when program ends.
 volatile bool running = true;
 
-struct thread_data {
-    std::binary_semaphore semaphore;
+struct thread_data_t {
     fh6_data* data;
-    void (*update) (const fh6_data&);
+    void (*update)(void* instance, const fh6_data&); 
+    void* instance_ptr;
+    std::binary_semaphore semaphore{0};
 };
 
-void run_thread(thread_data* t_data) {
+void run_thread(std::unique_ptr<thread_data_t> thread_data) {
     while (running) {
         // Block until data is ready.
-        t_data->semaphore.acquire();
-        const fh6_data& f_data = *t_data->data;
-        t_data->update(f_data);
+        thread_data->semaphore.acquire();
+        thread_data->update(thread_data->instance_ptr, *thread_data->data);
     }
 }
 
 // Continuously receive data via UDP.
-void receive_loop(int sockfd, const struct sockaddr* client_addr) {
+void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<telemetries_t> telemetries) {
     unsigned int last_time_stamp = 0;
 
-    std::array<thread_data,THREAD_COUNT> thread_data_array {
-        thread_data{std::binary_semaphore{0}, nullptr, engine_rpm::update},
-        thread_data{std::binary_semaphore{0}, nullptr, gforce::update},
-        thread_data{std::binary_semaphore{0}, nullptr, map::update},
-        thread_data{std::binary_semaphore{0}, nullptr, car_info::update},
-    };
-
-    std::vector<std::thread> thread_vector;
-    for(int i = 0; i < THREAD_COUNT; ++i) {
-        thread_vector.emplace_back(run_thread, &thread_data_array[i]);
+    std::vector<std::unique_ptr<thread_data_t>> thread_datas;
+    for (auto& item : telemetries) {
+        std::visit([&](auto& arg) {
+            thread_datas.emplace_back(std::make_unique<thread_data_t>(
+                nullptr, 
+                [](void* inst, const fh6_data& d) {
+                    static_cast<std::decay_t<decltype(arg)>*>(inst)->update(d);
+                },
+                &arg
+            ));
+        }, item);
     }
 
+    std::vector<thread_data_t*> raw_pointers;
+    for(const auto& item: thread_datas) {
+        raw_pointers.push_back(item.get());
+    }
+
+    std::vector<std::thread> threads;
+    for(size_t i = 0; i < telemetries.size(); ++i) {
+        threads.emplace_back(run_thread, std::move(thread_datas[i]));
+    }
 
     struct fh6_data data_out;
     while (running) {
@@ -77,9 +89,9 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr) {
             continue;
         }
 
-        for (int i = 0 ; i < THREAD_COUNT; ++i) {
-            thread_data_array[i].data = &data_out;
-            thread_data_array[i].semaphore.release();
+        for (const auto thread_data: raw_pointers) {
+            thread_data->data = &data_out;
+            thread_data->semaphore.release();
         }
 
         SDL_Event event;
@@ -99,8 +111,8 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr) {
 
     }
 
-    for (int i = 0 ; i < THREAD_COUNT; ++i) {
-        thread_vector[i].join();
+    for (auto& thread: threads) {
+        thread.join();
     }
 
 #ifdef _WIN32
@@ -125,20 +137,26 @@ int main(int argc, const char* argv[]) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
-    engine_rpm::init();
-    gforce::init();
-    map::init();
-    car_info::init();
+
+    std::vector<telemetries_t> telemetries;
+
+    telemetries.push_back(map_t{});
+    telemetries.push_back(car_info_t{});
+    telemetries.push_back(gforce_t{});
+    telemetries.push_back(engine_rpm_t{});
+
+    for (auto& telem : telemetries) {
+        std::visit([](auto& obj) {obj.init();},telem);
+    }
 
     // setup everything socket related as well as the ctrl-c handler
     auto [sockfd, client_addr] = setup(std::stoi(argv[1]));
     bind_socket(sockfd, (const struct sockaddr*)&client_addr);
-    receive_loop(sockfd, (const struct sockaddr*)&client_addr);
+    receive_loop(sockfd, (const struct sockaddr*)&client_addr,telemetries);
 
-    engine_rpm::close();
-    gforce::close();
-    map::close();
-    car_info::close();
+    for (auto& telem : telemetries) {
+        std::visit([](auto& obj) {obj.close();},telem);
+    }
 
     destroy_registered_textures();
 
