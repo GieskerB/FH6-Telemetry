@@ -50,32 +50,24 @@ void run_thread(std::unique_ptr<thread_data_t> thread_data) {
 
 // Continuously receive data via UDP.
 void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<telemetries_t> telemetries) {
-    unsigned int last_time_stamp = 0;
-
-    std::vector<std::unique_ptr<thread_data_t>> thread_datas;
+    std::vector<thread_data_t*> raw_pointers;
+    std::vector<std::thread> threads;
     for (auto& item : telemetries) {
         std::visit([&](auto& arg) {
-            thread_datas.emplace_back(std::make_unique<thread_data_t>(
+            std::unique_ptr<thread_data_t> tmp = std::make_unique<thread_data_t>(
                 nullptr, 
                 [](void* inst, const fh6_data& d) {
                     static_cast<std::decay_t<decltype(arg)>*>(inst)->update(d);
                 },
                 &arg
-            ));
+            );
+            raw_pointers.push_back(tmp.get());
+            threads.emplace_back(run_thread, std::move(tmp));
         }, item);
     }
 
-    std::vector<thread_data_t*> raw_pointers;
-    for(const auto& item: thread_datas) {
-        raw_pointers.push_back(item.get());
-    }
-
-    std::vector<std::thread> threads;
-    for(size_t i = 0; i < telemetries.size(); ++i) {
-        threads.emplace_back(run_thread, std::move(thread_datas[i]));
-    }
-
     struct fh6_data data_out;
+    unsigned int last_time_stamp = 0;
     while (running) {
 
         // Call wrapper, exit if data could not be received.
@@ -89,26 +81,20 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<te
             continue;
         }
 
-        for (const auto thread_data: raw_pointers) {
+        for (const auto& thread_data: raw_pointers) {
             thread_data->data = &data_out;
             thread_data->semaphore.release();
         }
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            // 1. Check if the user clicked the window's close button (highly recommended)
             if (event.type == SDL_EVENT_QUIT) {
                 running = false;
             }
-            // 2. Check if a key was pressed down
-            else if (event.type == SDL_EVENT_KEY_DOWN) {
-                // 3. Check if that specific key was the Escape key
-                if (event.key.key == SDLK_ESCAPE) {
-                    running = false;
-                }
+            if (event.type == SDL_EVENT_KEY_DOWN and event.key.key == SDLK_ESCAPE) {
+                running = false;
             }
         }
-
     }
 
     for (auto& thread: threads) {
