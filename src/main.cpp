@@ -121,25 +121,24 @@ void print_help() {
     std::cout << "\n";
 }
 
-bool handle_telemetry_arg(std::string arg, arg_data_t& arg_data, bool& need_help) {
+bool handle_telemetry_arg(std::string arg, arg_data_t& arg_data) {
     const size_t colon_pos = arg.find(':');
     const bool specify_size = std::string::npos != colon_pos;
 
     const std::string& telemetry_name = specify_size ? arg.substr(0,colon_pos) : arg;
 
-    bool found_telemetry = false;
-
-    std::cout << "TELEM name" << telemetry_name << "\n";
-
     for(unsigned char i = 0; i < TELEMETRY_COUNT; ++i) {
         if(telemetry_name == TELEMETRIES[i]) {
+            if (arg_data.show_telemetry[i]) {
+                std::cerr << "Cannot instanace same telemetry more then once!\n";
+                return true;
+            }
             arg_data.show_telemetry[i] = true;
             if(specify_size) {
                 const size_t number_start = colon_pos+1;
-                if(number_start <= arg.size()) {
+                if(number_start >= arg.size()) {
                     std::cerr << "Number required after colon size specifier!\n";
-                    need_help = true;
-                    return false;
+                    return true;
                 }
                 std::string tmp;
                 try {
@@ -148,22 +147,21 @@ bool handle_telemetry_arg(std::string arg, arg_data_t& arg_data, bool& need_help
                     const unsigned short max_value = std::numeric_limits<unsigned short>::max();
                     if(size < 0 or size > max_value) {
                         std::cerr << "Size of telemetry must be in range [0, "<< max_value <<"]!\n";
-                        need_help = true;
-                        return false;
+                        return true;
                     }
                     arg_data.telemetry_size[i] = static_cast<unsigned short>(size);
                 }  catch (std::invalid_argument&) {
                     std::cerr << "Can not parse " << tmp << " into a size for telemetry number!\n";
-                    need_help = true;
-                    return false;
+                    return true;
                 }
             } else {
                 arg_data.telemetry_size[i] = DEFAULT_SIZES[i];
             }
+            return false;
         }
     }
-
-    return found_telemetry;
+    std::cerr << "'" << telemetry_name << "' is not part of the implemented telemetry set!\n";
+    return true;
 }
 
 arg_data_t parse_args(int argc, const char* argv[]) {
@@ -206,11 +204,13 @@ arg_data_t parse_args(int argc, const char* argv[]) {
                 need_help = true;
                 break;
             }
-            const bool found = handle_telemetry_arg(argv[++i], arg_data, need_help);
-            if(!found and need_help) break;
-            if(found) std::cout << argv[i] << "\n";
-            if(found) continue;
+            need_help = handle_telemetry_arg(argv[++i], arg_data);
+            if(need_help) break;
+            continue;
         }
+        std::cerr << "Unknown argument '" << arg << "'!\n";
+        need_help = true;
+        break;
     }
 
     if (!has_port_input and !need_help) {
@@ -229,11 +229,6 @@ arg_data_t parse_args(int argc, const char* argv[]) {
 int main(int argc, const char* argv[]) {
 
     const arg_data_t arg_data = parse_args(argc,argv);
-
-    // if(argc != 2) {
-    //     perror("FH6 telemetry requires one argument:\n\tmessage port\n");
-    //     exit(EXIT_FAILURE);
-    // }
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         perror(SDL_GetError());
