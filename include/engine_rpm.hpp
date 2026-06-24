@@ -3,11 +3,12 @@
 
 #include "util/fh6_data.hpp"
 
-namespace engine_rpm {
+class engine_rpm_t {
+public:
     void init();
     void update(const fh6_data &);
     void close();
-}
+};
 
 
 #endif

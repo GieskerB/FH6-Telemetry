@@ -7,6 +7,7 @@
 #include <array>
 #include <semaphore>
 #include <memory>
+#include <variant>
 
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
@@ -19,16 +20,17 @@
     #include <unistd.h>
 #endif
 
+#include "../include/udp/socket_setup.hpp"
+#include "../include/util/texture_handler.hpp"
 #include "../include/engine_rpm.hpp"
 #include "../include/gforce.hpp"
 #include "../include/map.hpp"
 #include "../include/car_info.hpp"
-#include "../include/udp/socket_setup.hpp"
-#include "../include/util/texture_handler.hpp"
 
 const char * TELEMETRIES[] = {"car-info", "engine-rpm", "g-force", "map"};
 constexpr unsigned short DEFAULT_SIZES[] = {100,200,300,400};
 constexpr unsigned char TELEMETRY_COUNT = sizeof(TELEMETRIES) / sizeof(char *);
+using telemetries_t = std::variant<car_info_t, engine_rpm_t, gforce_t, map_t>;
 
 // Running variable to stop loop when program ends.
 volatile bool running = true;
@@ -41,55 +43,39 @@ struct arg_data_t {
 
 struct thread_data_t {
     fh6_data* data;
-    void (*update) (const fh6_data&);
+    void (*update)(void* instance, const fh6_data&); 
+    void* instance_ptr;
     std::binary_semaphore semaphore{0};
 };
 
-void run_thread(thread_data_t* thread_data) {
+void run_thread(std::unique_ptr<thread_data_t> thread_data) {
     while (running) {
         // Block until data is ready.
         thread_data->semaphore.acquire();
-        const fh6_data& f_data = *thread_data->data;
-        thread_data->update(f_data);
+        thread_data->update(thread_data->instance_ptr, *thread_data->data);
     }
 }
 
 // Continuously receive data via UDP.
-void receive_loop(int sockfd, const struct sockaddr* client_addr, const arg_data_t& arg_data) {
-    unsigned int last_time_stamp = 0;
-
-    std::vector<std::unique_ptr<thread_data_t>> thread_data_vector {
-        // thread_data_t{std::binary_semaphore{0}, nullptr, engine_rpm::update},
-        // thread_data_t{std::binary_semaphore{0}, nullptr, gforce::update},
-        // thread_data_t{std::binary_semaphore{0}, nullptr, map::update},
-        // thread_data_t{std::binary_semaphore{0}, nullptr, car_info::update},
-    };
-
-    for(int i= 0; i < TELEMETRY_COUNT; ++i) {
-        if(arg_data.show_telemetry[i]) {
-            switch (i) {
-            case 0:
-                thread_data_vector.push_back(std::make_unique<thread_data_t>( nullptr, car_info::update));
-                break;
-            case 1:
-                thread_data_vector.push_back(std::make_unique<thread_data_t>( nullptr, engine_rpm::update));
-                break;
-            case 2:
-                thread_data_vector.push_back(std::make_unique<thread_data_t>( nullptr, gforce::update));
-                break;
-            case 3:
-                thread_data_vector.push_back(std::make_unique<thread_data_t>( nullptr, map::update));
-                break;
-            }
-        }
-    }
-
-    std::vector<std::thread> thread_vector;
-    for(size_t i = 0; i < thread_data_vector.size(); ++i) {
-        thread_vector.emplace_back(run_thread, &*thread_data_vector[i]);
+void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<telemetries_t> telemetries) {
+    std::vector<thread_data_t*> raw_pointers;
+    std::vector<std::thread> threads;
+    for (auto& item : telemetries) {
+        std::visit([&](auto& arg) {
+            std::unique_ptr<thread_data_t> tmp = std::make_unique<thread_data_t>(
+                nullptr, 
+                [](void* inst, const fh6_data& d) {
+                    static_cast<std::decay_t<decltype(arg)>*>(inst)->update(d);
+                },
+                &arg
+            );
+            raw_pointers.push_back(tmp.get());
+            threads.emplace_back(run_thread, std::move(tmp));
+        }, item);
     }
 
     struct fh6_data data_out;
+    unsigned int last_time_stamp = 0;
     while (running) {
 
         // Call wrapper, exit if data could not be received.
@@ -103,30 +89,24 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr, const arg_data
             continue;
         }
 
-        for (size_t i = 0 ; i < thread_data_vector.size(); ++i) {
-            thread_data_vector[i]->data = &data_out;
-            thread_data_vector[i]->semaphore.release();
+        for (const auto& thread_data: raw_pointers) {
+            thread_data->data = &data_out;
+            thread_data->semaphore.release();
         }
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            // 1. Check if the user clicked the window's close button (highly recommended)
             if (event.type == SDL_EVENT_QUIT) {
                 running = false;
             }
-            // 2. Check if a key was pressed down
-            else if (event.type == SDL_EVENT_KEY_DOWN) {
-                // 3. Check if that specific key was the Escape key
-                if (event.key.key == SDLK_ESCAPE) {
-                    running = false;
-                }
+            if (event.type == SDL_EVENT_KEY_DOWN and event.key.key == SDLK_ESCAPE) {
+                running = false;
             }
         }
-
     }
 
-    for (size_t i = 0 ; i < thread_data_vector.size(); ++i) {
-        thread_vector[i].join();
+    for (auto& thread: threads) {
+        thread.join();
     }
 
 #ifdef _WIN32
@@ -264,51 +244,25 @@ int main(int argc, const char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    int thread_count = 0;
-    for(int i= 0; i < TELEMETRY_COUNT; ++i) {
-        if(arg_data.show_telemetry[i]) {
-            ++thread_count;
-            switch (i)
-            {
-            case 0:
-                map::init();
-                break;
-            case 1:
-                engine_rpm::init();
-                break;
-            case 2:
-                gforce::init();
-                break;
-            case 3:
-                car_info::init();
-                break;
-            }        
-        }
+    std::vector<telemetries_t> telemetries;
+
+    telemetries.push_back(map_t{});
+    telemetries.push_back(car_info_t{});
+    telemetries.push_back(gforce_t{});
+    telemetries.push_back(engine_rpm_t{});
+
+    for (auto& telem : telemetries) {
+        std::visit([](auto& obj) {obj.init();},telem);
     }
 
     // setup everything socket related as well as the ctrl-c handler
     auto [sockfd, client_addr] = setup(arg_data.port);
     bind_socket(sockfd, (const struct sockaddr*)&client_addr);
-    receive_loop(sockfd, (const struct sockaddr*)&client_addr, arg_data);
+    
+    receive_loop(sockfd, (const struct sockaddr*)&client_addr,telemetries);
 
-    for(int i= 0; i < TELEMETRY_COUNT; ++i) {
-        if(arg_data.show_telemetry[i]) {
-            switch (i)
-            {
-            case 0:
-                map::close();
-                break;
-            case 1:
-                engine_rpm::close();
-                break;
-            case 2:
-                gforce::close();
-                break;
-            case 3:
-                car_info::close();
-                break;
-            }        
-        }
+    for (auto& telem : telemetries) {
+        std::visit([](auto& obj) {obj.close();},telem);
     }
 
     destroy_registered_textures();
