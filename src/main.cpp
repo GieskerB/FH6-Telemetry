@@ -22,7 +22,7 @@
 
 #include "../include/udp/socket_setup.hpp"
 #include "../include/util/texture_handler.hpp"
-#include "../include/util/parse_arg.hpp"
+#include "../include/util/parse_args.hpp"
 
 // Running variable to stop loop when program ends.
 volatile bool running = true;
