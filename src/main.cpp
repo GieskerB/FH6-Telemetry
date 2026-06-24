@@ -112,7 +112,36 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<te
 }
 
 void print_help() {
-    std::cout << "\n";
+    std::cout << "\n=====================================================================\n";
+    std::cout << "                      FORZA HORIZON 6 TELEMETRY\n";
+    std::cout << "=====================================================================\n\n";
+
+    std::cout << "USAGE:\n";
+    std::cout << "  fh6_telemetry -p <port> [options]\n\n";
+
+    std::cout << "REQUIRED ARGUMENTS:\n";
+    std::cout << "  -p, --port <number>      Specify the incoming UDP port (Range: 1024 - 65535).\n\n";
+
+    std::cout << "OPTIONS:\n";
+    std::cout << "  -h, --help               Display this help text and exit.\n";
+    std::cout << "  -a, --all                Initialize and display all available telemetry windows.\n";
+    std::cout << "                           Cannot be combined with individual -t selections.\n";
+    std::cout << "  -t, --telemetry <name>   Enable a specific telemetry. You can specify a custom\n";
+    std::cout << "                           window size using a colon suffix (:size).\n";
+    std::cout << "                           Example: -t engine_rpm:500\n\n";
+
+    std::cout << "AVAILABLE TELEMETRY TYPES  (Only one instance per type allowed):\n";
+    
+    for (unsigned char i = 0; i < TELEMETRY_COUNT; ++i) {
+        std::cout << "  * " << TELEMETRIES[i] << "\n";
+    }
+    
+    std::cout << "\nEXAMPLES:\n";
+    std::cout << "  Listen on port 8000 with every telemtry enabled on default size:\n";
+    std::cout << "    ./fh6_telemetry --port 8000 --all\n\n";
+    std::cout << "  Listen on port 2345 with very engine-rpm telemetry:\n";
+    std::cout << "    ./fh6_telemetry -p 2345 -t engine-rpm:1000\n";
+    std::cout << "======================================================================\n" << std::endl;
 }
 
 bool push_unique(std::vector<telemetries_t>& vec, const telemetries_t& value) {
@@ -236,6 +265,20 @@ int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemet
             if(need_help) break;
             continue;
         }
+        if(arg == "-a" or arg == "--all") {
+            if (!push_unique(telemetries, car_info_t{})) need_help = true;
+            if (!push_unique(telemetries, engine_rpm_t{})) need_help = true;
+            if (!push_unique(telemetries, gforce_t{})) need_help = true;
+            if (!push_unique(telemetries, map_t{})) need_help = true;
+            if (need_help) {
+                std::cerr << "[-a|--all] can only be used without [-t|--telemetry]!\n";
+                break;
+            }
+            for (auto& telem: telemetries) {
+                std::visit([](auto& obj) {obj.init();},telem);
+            }
+            continue;
+        }
         std::cerr << "Unknown argument '" << arg << "'!\n";
         need_help = true;
         break;
@@ -267,7 +310,7 @@ int main(int argc, const char* argv[]) {
     std::vector<telemetries_t> telemetries;
     int port = parse_args(argc, argv, telemetries);
 
-    // setup everything socket related as well as the ctrl-c handler
+    // setup everything socket related
     auto [sockfd, client_addr] = setup(port);
     bind_socket(sockfd, (const struct sockaddr*)&client_addr);
     
