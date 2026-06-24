@@ -9,29 +9,38 @@
 #include "../include/util/colors.hpp"
 #include "../include/util/texture_handler.hpp"
 
-static constexpr unsigned short WIDTH = 780;
-static constexpr unsigned short HEIGHT = 996;
+static unsigned short WIDTH;
+static unsigned short HEIGHT;
 
 // Manual measurements of coordinates:
 //  3048  8063 -> 577  81 =  157 -418 =>  157  418 = 0,051509 0,051842
 // -7350 -3152 ->  37 662 = -383  163 => -383 -163 = 0,052109 0,051713
 
-static constexpr unsigned short MAX_ORIGIN_X = 420;
-static constexpr unsigned short MAX_ORIGIN_Y = 499;
+static unsigned short MAP_ORIGIN_X;
+static unsigned short MAP_ORIGIN_Y;
 
-static constexpr unsigned char ARROW_SIZE = 17;
+static float SCALE_FACTOR;
+
+static unsigned char ARROW_SIZE;
 
 static constexpr double PI = 3.14159265358979323846;
-
-static constexpr float SCALE_FACTOR = (0.051509 + 0.051842 + 0.052109 + 0.051713) / 4.f;
 
 static const char* SEASONS[] = {"assets/maps/summer.png","assets/maps/autumn.png","assets/maps/winter.png","assets/maps/spring.png"};
 
 static SDL_Window * window = nullptr;
 static SDL_Renderer* renderer = nullptr;
 
+void map_t::init(unsigned short size) {
+    WIDTH = size;
+    HEIGHT = static_cast<unsigned short>(996.f / 780.f * size);
 
-void map_t::init() {
+    MAP_ORIGIN_X = static_cast<unsigned short>(420.f / 780.f * WIDTH);
+    MAP_ORIGIN_Y = static_cast<unsigned short>(499.f / 996.f * HEIGHT);
+
+    SCALE_FACTOR = (0.051509 + 0.051842 + 0.052109 + 0.051713) / 4.f * (size / 780.f );
+
+    ARROW_SIZE = 17.f / 780.f * size;
+
     window = SDL_CreateWindow("Map",WIDTH,HEIGHT,SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_TRANSPARENT);
     if(window == nullptr) {
         perror(SDL_GetError());
@@ -54,7 +63,7 @@ static int rotate_correctly(int rotation) {
 static void draw_nav_arrow(float pos_x, float pos_z, float yaw) {
 
     // reduce from 3 to 2 dimension
-    const SDL_Point position {static_cast<int>(pos_x * SCALE_FACTOR) + MAX_ORIGIN_X, static_cast<int>(pos_z * (-SCALE_FACTOR)) + MAX_ORIGIN_Y};
+    const SDL_Point position {static_cast<int>(pos_x * SCALE_FACTOR) + MAP_ORIGIN_X, static_cast<int>(pos_z * (-SCALE_FACTOR)) + MAP_ORIGIN_Y};
     
     //Convert from rad to deg:
     yaw = yaw * 180 / PI;
@@ -100,7 +109,7 @@ static void draw_map() {
         texture_png_static(renderer,&map_tex,SEASONS[weeks_since_start % 4]);
     }
     if (map_tex) {
-        static const SDL_FRect rect = {0,0,WIDTH,HEIGHT };
+        static const SDL_FRect rect = {0, 0, static_cast<float>(WIDTH), static_cast<float>(HEIGHT)};
         SDL_RenderTexture(renderer, map_tex, nullptr, &rect);
     }
 }

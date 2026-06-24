@@ -9,13 +9,11 @@
 #include "../include/util/texture_handler.hpp"
 
 
-static constexpr unsigned short SPRITE_WIDTH = 125 / 2;
-static constexpr unsigned short SPRITE_HEIGHT = 197 / 2;
-
-static constexpr unsigned short WIDTH = 200;
-static constexpr unsigned short HEIGHT = SPRITE_HEIGHT;
-
-static constexpr unsigned short PADDING = HEIGHT * 0.05;
+static constexpr float SPRITE_RATIO = 197.f / 125.f;
+static constexpr float SPRITE_PORTION = 0.25f;
+static unsigned short WIDTH;
+static unsigned short HEIGHT;
+static unsigned short PADDING;
 
 static constexpr SDL_Color CLASS_COLORS[8] = {{103, 185, 238, 255}, {246, 198, 85,255},
                                                 {236, 109, 65, 255}, {233, 61, 78, 255},
@@ -29,8 +27,13 @@ static SDL_Window * window = nullptr;
 static SDL_Renderer* renderer = nullptr;
 static TTF_Font* font = nullptr;
 
-void car_info_t::init() {
-    window = SDL_CreateWindow("Car Info",WIDTH + SPRITE_WIDTH ,HEIGHT,SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_TRANSPARENT);
+void car_info_t::init(unsigned short size) {
+
+    WIDTH = size;
+    HEIGHT = WIDTH * SPRITE_PORTION * SPRITE_RATIO;
+    PADDING = HEIGHT * 0.05;
+
+    window = SDL_CreateWindow("Car Info",WIDTH ,HEIGHT,SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_TRANSPARENT);
     if(window == nullptr) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
@@ -56,7 +59,7 @@ static void draw_drivetrain(int drivetrain) {
         last_drivetrain = drivetrain;
     }
     if (drivetrain_texture) {
-        static const SDL_FRect unit_rect = {WIDTH,0,SPRITE_WIDTH,HEIGHT}; // HALF IMAGE SIZE
+        static const SDL_FRect unit_rect = {WIDTH * (1 - SPRITE_PORTION), 0, WIDTH * SPRITE_PORTION, static_cast<float>(HEIGHT)};
         SDL_RenderTexture(renderer, drivetrain_texture, nullptr, &unit_rect);
     }
 }
@@ -70,8 +73,8 @@ static void draw_class_id(int id) {
     }
     if (id_texture) {
         // Let ID take up 40 % of the space on the left
-        static const SDL_FRect class_bg = { 0, 0, WIDTH * 0.4f, HEIGHT};
-        static const SDL_FRect rest_bg = {WIDTH * 0.4f,0,WIDTH * 0.6f + SPRITE_WIDTH,HEIGHT};
+        static const SDL_FRect class_bg = { 0, 0, WIDTH * (1-SPRITE_PORTION) * 0.4f, static_cast<float>(HEIGHT)};
+        static const SDL_FRect rest_bg = {WIDTH * (1-SPRITE_PORTION) * 0.4f, 0, WIDTH * (1-SPRITE_PORTION) * 0.6f,static_cast<float>(HEIGHT)};
 
         SDL_SetRenderDrawColor(renderer, CLASS_COLORS[id].r, CLASS_COLORS[id].g, CLASS_COLORS[id].b, CLASS_COLORS[id].a);
         SDL_RenderFillRect(renderer, &class_bg);
@@ -100,10 +103,10 @@ static void draw_performance_index(int performance) {
     if (performance_texture) {
         // Let PI take up 60 % of the space on the right - some small padding
         static const SDL_FRect performance_bg = {
-            WIDTH * 0.4f + PADDING,
-            PADDING,
-            WIDTH * 0.6f -2* PADDING,
-            HEIGHT - 2 * PADDING};
+            WIDTH * (1-SPRITE_PORTION) * 0.4f + PADDING,
+            static_cast<float>(PADDING),
+            WIDTH * (1-SPRITE_PORTION) * 0.6f -2* PADDING,
+            static_cast<float>(HEIGHT - 2 * PADDING)};
 
         SDL_SetRenderDrawColor(renderer, BLACK.r, BLACK.g, BLACK.b, 255);
         SDL_RenderFillRect(renderer, &performance_bg);

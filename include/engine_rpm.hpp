@@ -5,7 +5,7 @@
 
 class engine_rpm_t {
 public:
-    void init();
+    void init(unsigned short  = 400);
     void update(const fh6_data &);
     void close();
 };

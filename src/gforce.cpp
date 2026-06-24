@@ -9,8 +9,8 @@
 #include "../include/util/colors.hpp"
 #include "../include/util/texture_handler.hpp"
 
-static constexpr unsigned short WIDTH = 300;
-static constexpr unsigned short HEIGHT = 300;
+static unsigned short WIDTH;
+static unsigned short HEIGHT;
 
 static constexpr unsigned char HISTORY_SIZE = 69;
 static constexpr int G_MAX = 4;
@@ -20,7 +20,11 @@ static SDL_Window * window = nullptr;
 static SDL_Renderer* renderer = nullptr;
 static TTF_Font* font = nullptr;
 
-void gforce_t::init() {
+void gforce_t::init(unsigned short size) {
+
+    WIDTH = size;
+    HEIGHT = size;
+
     window = SDL_CreateWindow("GForce",WIDTH,HEIGHT,SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_TRANSPARENT);
     if(window == nullptr) {
         perror(SDL_GetError());
@@ -68,7 +72,7 @@ static void draw_background() {
         texture_png_static(renderer,&background_texture,"assets/sprites/gforce_background.png");
     }
     if (background_texture) {
-        static const SDL_FRect unit_rect = { 0,0,WIDTH,HEIGHT };
+        static const SDL_FRect unit_rect = { 0, 0, static_cast<float>(WIDTH), static_cast<float>(HEIGHT)};
         SDL_RenderTexture(renderer, background_texture, nullptr, &unit_rect);
     }
 }
@@ -82,7 +86,7 @@ static void draw_gforce_labels() {
     }
     if (gforce_labels[0]) {
         for(int i = 0 ; i < G_MAX; ++i) {
-            const SDL_FRect unit_rect = { WIDTH /2.f + (i+0.5f) * WIDTH / 8.f, HEIGHT / 2, WIDTH * 0.05f, WIDTH * 0.05f };
+            const SDL_FRect unit_rect = { WIDTH /2.f + (i+0.5f) * WIDTH / 8.f, static_cast<float>(HEIGHT / 2), WIDTH * 0.05f, WIDTH * 0.05f };
             SDL_RenderTexture(renderer, gforce_labels[i], nullptr, &unit_rect);
         }
     }
@@ -97,7 +101,7 @@ static void draw_speed_labels() {
     }
     if (speed_labels[0]) {
         for(int i = 0 ; i < G_MAX; ++i) {
-            const SDL_FRect unit_rect = { (i) * WIDTH / 8.f, HEIGHT / 2, WIDTH * 0.075f, WIDTH * 0.05f };
+            const SDL_FRect unit_rect = { (i) * WIDTH / 8.f, static_cast<float>(HEIGHT / 2), WIDTH * 0.075f, WIDTH * 0.05f };
             SDL_RenderTexture(renderer, speed_labels[i], nullptr, &unit_rect);
         }
     }

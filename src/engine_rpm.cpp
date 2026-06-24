@@ -7,8 +7,8 @@
 #include "../include/util/colors.hpp"
 #include "../include/util/texture_handler.hpp"
 
-static constexpr unsigned short WIDTH = 400;
-static constexpr unsigned short HEIGHT = 200;
+static unsigned short WIDTH;
+static unsigned short HEIGHT;
 
 static constexpr unsigned short STEP_SIZE = 1000;
 
@@ -20,7 +20,11 @@ static SDL_Window * window = nullptr;
 static SDL_Renderer* renderer = nullptr;
 static TTF_Font* font = nullptr;
 
-void engine_rpm_t::init() {
+void engine_rpm_t::init(unsigned short size) {
+
+    WIDTH = size;
+    HEIGHT = size / 2;
+
     window = SDL_CreateWindow("Engine RPM",WIDTH,HEIGHT,SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_TRANSPARENT);
     if(window == nullptr) {
         perror(SDL_GetError());

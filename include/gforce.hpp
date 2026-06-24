@@ -5,7 +5,7 @@
 
 class gforce_t {
 public:
-    void init();
+    void init(unsigned short  = 300);
     void update(const fh6_data &);
     void close();
 };

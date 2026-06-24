@@ -5,7 +5,7 @@
 
 class map_t {
 public:
-    void init();
+    void init(unsigned short  = 780);
     void update(const fh6_data&);
     void close();
 };
