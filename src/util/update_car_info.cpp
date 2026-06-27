@@ -3,6 +3,7 @@
 #include <sstream>
 #include <set>
 #include <filesystem>
+#include <algorithm>
 
 std::set<std::string> get_zip_set() {
     std::ifstream csv_file {"csv/fh6_car_database.csv"};
@@ -45,8 +46,8 @@ int main(int argc, char* argv[]) {
         const std::string filename = entry.path().filename().string();
         const bool is_zip = filename.substr(filename.length() -4, 4) == ".zip";
         if (is_zip) {
-            if(!set.contains(filename))  {
-                std::cout << "FOUND NEW CAR [" << filename << "]!!!\nDont forget to add it to the database!";
+            if(!set.contains(filename) and filename.find("_Traffic_") == std::string::npos)  {
+                std::cout << "FOUND NEW CAR [" << filename << "]!!!\nDon't forget to add it to the database!";
             }
         }
     }

@@ -313,10 +313,6 @@ id,year,make,model,zip
 2654,2017,Mercedes-Benz,AMGGTR,MER_AMGGTR_17.zip
 2659,1998,Nissan,Silvia Ks,NIS_SilviaKs_98.zip
 2663,2016,RJ Anderson,37 Pro 2 Truck,RJ_37_Pro2Truck_16.zip
-2711,2010,Mazda,Mazdaspeed 3 Traffic,MAZ_Mazdaspeed3_Traffic_10.zip
-2712,1992,Mitsubishi,Galant VR 4 Traffic,MIT_GalantVR4_Traffic_92.zip
-2713,2014,Playground Games,Box Truck Traffic,PG_BoxTruck_Traffic_14.zip
-2714,2014,Playground Games,Bus Traffic,PG_Bus_Traffic_14.zip
 2738,1995,Nissan,gtrlm,nis_gtrlm_95.zip
 2739,2017,Chevrolet,camarozl 1,che_camarozl1_17.zip
 2742,2017,Jeep,Trailcat,JEE_Trailcat_17.zip
@@ -334,8 +330,6 @@ id,year,make,model,zip
 2870,2018,Honda,Civic Type R,HON_CivicTypeR_18.zip
 2871,2018,Can-Am,Maverick,CAN_Maverick_18.zip
 2872,2019,Hyundai,Veloster N,HYU_VelosterN_19.zip
-2902,2018,Playground Games,Flatbed Truck Traffic,PG_FlatbedTruck_Traffic_18.zip
-2903,2005,Subaru,Legacy B 4 GT Traffic,SUB_LegacyB4GT_Traffic_05.zip
 2909,2018,Dodge,Demon,DOD_Demon_18.zip
 2910,2017,Koenigsegg,Agera RS,KOE_AgeraRS_17.zip
 2935,2018,Funco,F 9,FUN_F9_18.zip
@@ -438,7 +432,6 @@ id,year,make,model,zip
 3476,2020,Ford,F 450 DRW,FOR_F450DRW_20.zip
 3477,2020,Chevrolet,Silverado LTZ 71,CHE_SilveradoLTZ71_20.zip
 3482,2021,McLaren,765 LT,MCL_765LT_21.zip
-3486,2012,Jeep,Wrangler Traffic,JEE_Wrangler_Traffic_12.zip
 3498,2017,Saleen,S 7 LM,SAL_S7LM_17.zip
 3518,2020,BMW,M 8,BMW_M8_20.zip
 3520,2021,Lexus,LC 500,LEX_LC500_21.zip
@@ -460,7 +453,7 @@ id,year,make,model,zip
 3594,2021,Ferrari,Roma,FER_Roma_21.zip
 3595,2020,Ferrari,SF 90 Stradale,FER_SF90Stradale_20.zip
 3597,1983,Ford,F 150,FOR_F150_83.zip
-3599,2022,Gordon Murray Automotive,T 50,GMA_T50_22.zip
+3599,2022,Gordon Murray,T 50,GMA_T50_22.zip
 3600,2021,Hennessey,Venom F 5,HEN_VenomF5_21.zip
 3603,2019,Jeep,4422 Trophy,JEE_4422_Trophy_19.zip
 3604,2019,Jimco,Hammer Head Buggy,JIM_HammerHeadBuggy_19.zip
@@ -575,12 +568,6 @@ id,year,make,model,zip
 4094,2024,Nissan,GTRNISMO,NIS_GTRNISMO_24.zip
 4114,1992,Nissan,Skyline GT-R,NIS_SkylineGTR_92.zip
 4119,1998,Nissan,Skyline Autech,NIS_SkylineAutech_98.zip
-4124,2013,Mercedes-Benz,G 65 AMG Traffic,MER_G65AMG_Traffic_13.zip
-4125,1994,Honda,Acty Traffic,HON_Acty_Traffic_94.zip
-4126,2022,Honda,e Traffic,HON_e_Traffic_22.zip
-4127,1995,Mitsubishi,Pajero Traffic,MIT_Pajero_Traffic_95.zip
-4128,2022,Subaru,WRX Traffic,SUB_WRX_Traffic_22.zip
-4129,1997,Nissan,Stagea Traffic,NIS_Stagea_Traffic_97.zip
 4144,1992,Mazda,RX 7,MAZ_RX7_92.zip
 4145,1974,Mazda,123 808 Wagon,MAZ_123_808Wagon_74.zip
 4158,2010,Lexus,LFAFE,LEX_LFAFE_10.zip
@@ -633,7 +620,5 @@ id,year,make,model,zip
 4303,2012,Nissan,GTRTG,NIS_GTRTG_12.zip
 4313,1970,Porsche,3 917 LHFE,POR_3_917LHFE_70.zip
 4315,1962,Peel,P 50 Trolli,PEE_P50Trolli_62.zip
-4332,2005,Toyota,Crown Taxi Traffic,TOY_CrownTaxi_Traffic_05.zip
-4333,2017,Toyota,JPNTaxi Traffic,TOY_JPNTaxi_Traffic_17.zip
 4341,2017,Ferrari,J 50 PO,FER_J50PO_17.zip
 4342,1965,Toyota,Sports 800 Fanta,TOY_Sports800Fanta_65.zip

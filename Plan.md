@@ -2,6 +2,8 @@
 
 ## Available variables
 
+$65/88$ remaining!
+
 ``` cpp
 int IsRaceOn
 
@@ -54,11 +56,7 @@ float SuspensionTravelMetersFrontRight
 float SuspensionTravelMetersRearLeft
 float SuspensionTravelMetersRearRight
 
-int CarOrdinal
-
 int NumCylinders
-
-unsigned int CarGroup
 
 float SmashableVelDiff
 
@@ -136,3 +134,5 @@ char NormalizedAIBrakeDifference
 - ```int CarClass```
 - ```int CarPerformanceIndex```
 - ```int DrivetrainType```
+- ```int CarOrdinal```
+- ```unsigned int CarGroup```

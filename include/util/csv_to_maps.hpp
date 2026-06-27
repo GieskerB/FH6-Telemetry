@@ -11,6 +11,6 @@ struct car_details_t {
 
 std::unordered_map<int, car_details_t> car_details_map();
 std::unordered_map<int, std::string> car_group_map();
-std::unordered_map<std::string, std::string> car_make_map();
+std::unordered_map<std::string, std::string> car_country_map();
 
 #endif

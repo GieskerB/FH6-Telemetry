@@ -66,7 +66,7 @@ std::unordered_map<int, std::string> car_group_map() {
     return group_map;
 }
 
-std::unordered_map<std::string, std::string> car_make_map() {
+std::unordered_map<std::string, std::string> car_country_map() {
         std::ifstream csv_file {"csv/fh6_make_database.csv"};
     if (!csv_file.is_open()) {
         std::cerr << "Could not open csv/fh6_make_database.csv!\n";
