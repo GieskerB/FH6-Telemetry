@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <string>
 #include <format>
+#include <iostream>
 
 #include "../include/car_info.hpp"
 #include "../include/util/colors.hpp"
@@ -28,7 +29,8 @@ static const char* DRIVETRAIN_PNGS[] = {"assets/sprites/FWD.png","assets/sprites
 
 static SDL_Window * window = nullptr;
 static SDL_Renderer* renderer = nullptr;
-static TTF_Font* font = nullptr;
+static TTF_Font* pi_font = nullptr;
+static TTF_Font* text_font = nullptr;
 
 void car_info_t::init(unsigned short size) {
 
@@ -49,8 +51,14 @@ void car_info_t::init(unsigned short size) {
         exit(EXIT_FAILURE);
     }
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    font = TTF_OpenFont("assets/fonts/digital-7.ttf",255);
-    if(font == nullptr) {
+    pi_font = TTF_OpenFont("assets/fonts/digital-7.ttf",150);
+    if(pi_font == nullptr) {
+        perror(SDL_GetError());
+        exit(EXIT_FAILURE);
+    }
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    text_font = TTF_OpenFont("assets/fonts/droid-sans.ttf",64);
+    if(text_font == nullptr) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
@@ -73,7 +81,9 @@ static void draw_class_id(int id) {
     static SDL_Texture* id_texture = nullptr;
     static int last_id = -1;
     if (last_id !=  id) {
-        texture_text<3,const char*>(renderer, &id_texture, "%s", CLASS_IDS[id], font, WHITE);
+        char buffer[3]{0};
+        SDL_snprintf(buffer, sizeof(buffer), "%s", CLASS_IDS[id]);
+        texture_text(renderer, &id_texture, buffer, pi_font, WHITE);
         last_id =id;
     }
     if (id_texture) {
@@ -103,7 +113,9 @@ static void draw_performance_index(int performance) {
     static int last_performance = -1;
 
     if (last_performance !=  performance) {
-        texture_text<4,int>(renderer, &performance_texture, "%d", performance, font, WHITE);
+        char buffer[4]{0};
+        SDL_snprintf(buffer, sizeof(buffer), "%d", performance);
+        texture_text(renderer, &performance_texture, buffer, pi_font, WHITE);
         last_performance = performance;
     }
     if (performance_texture) {
@@ -134,10 +146,11 @@ static void draw_group(int group) {
     static SDL_Texture* group_texture = nullptr;
     static int last_group = -1;
     if (last_group != group) {
-        const std::string& group_str = group_map[group];
-        std::string indent(TEXT_WIDTH - 1 - group_str.length(), ' ');
-        texture_text<TEXT_WIDTH,const char*>(renderer, &group_texture, "%s", (group_str+indent).c_str(), font, WHITE);
-        last_group =group;
+        char buffer[TEXT_WIDTH]{' '};
+        buffer[TEXT_WIDTH-1] = '\0';
+        SDL_snprintf(buffer, sizeof(buffer), "%-24s", group_map[group].c_str());
+        texture_text(renderer, &group_texture, buffer, text_font, WHITE);
+        last_group = group;
     }
     if (group_texture) {
         const SDL_FRect unit_rect = { 0, static_cast<float>(SPRITE_HEIGHT), static_cast<float>(WIDTH-SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH / 3)};
@@ -152,9 +165,10 @@ static void draw_year_make(int year, const std::string& make) {
     static int last_year = -1;
     static std::string last_make;
     if (last_make != make or last_year != year) {
-        char buffer[TEXT_WIDTH]{0};
-        SDL_snprintf(buffer, sizeof(buffer), "%d - %-*s", year, TEXT_WIDTH-8, make.c_str());
-        texture_text<TEXT_WIDTH,const char*>(renderer, &year_make_texture, "%s", buffer, font, WHITE);
+        char buffer[TEXT_WIDTH]{' '};
+        buffer[TEXT_WIDTH-1] = '\0';
+        SDL_snprintf(buffer, sizeof(buffer), "%d - %-17s", year, make.c_str());
+        texture_text(renderer, &year_make_texture, buffer, text_font, WHITE);
         last_make = make;
         last_year = year;
     }
@@ -168,9 +182,11 @@ static void draw_model(const std::string& model) {
     static SDL_Texture* model_texture = nullptr;
     static std::string last_model;
     if (last_model != model) {
-        std::string indent(TEXT_WIDTH - 1 - model.length(), ' ');
-        texture_text<TEXT_WIDTH,const char*>(renderer, &model_texture, "%s", (model+indent).c_str(), font, WHITE);
-        last_model =model;
+        char buffer[TEXT_WIDTH]{' '};
+        buffer[TEXT_WIDTH-1] = '\0';
+        SDL_snprintf(buffer, sizeof(buffer), "%-24s", model.c_str());
+        texture_text(renderer, &model_texture, buffer, text_font, WHITE);
+        last_model = model;
     }
     if (model_texture) {
         const SDL_FRect unit_rect = { 0, static_cast<float>(SPRITE_HEIGHT + SPRITE_WIDTH *2 / 3), static_cast<float>(WIDTH-SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH / 3)};
@@ -220,6 +236,7 @@ void car_info_t::update(const fh6_data& data_out) {
 void car_info_t::close() {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
-    TTF_CloseFont(font);
+    TTF_CloseFont(pi_font);
+    TTF_CloseFont(text_font);
 }
 

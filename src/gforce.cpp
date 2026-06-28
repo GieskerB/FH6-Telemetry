@@ -81,7 +81,9 @@ static void draw_gforce_labels() {
     static SDL_Texture* gforce_labels[G_MAX];
     if (!gforce_labels[0]) {
         for(int i = 0 ; i < G_MAX; ++i) {
-            texture_text_static<3,int>(renderer, &gforce_labels[i], "%dG", i+1, font, ORANGE);
+            char buffer[3]{0};
+            SDL_snprintf(buffer, sizeof(buffer), "%dG",  i+1);
+            texture_text_static(renderer, &gforce_labels[i], buffer, font, ORANGE);
         }
     }
     if (gforce_labels[0]) {
@@ -96,7 +98,9 @@ static void draw_speed_labels() {
     static SDL_Texture* speed_labels[G_MAX];
     if (!speed_labels[0]) {
         for(int i = 0 ; i < G_MAX; ++i) {
-            texture_text_static<4,int>(renderer, &speed_labels[i], "%d", SPEED_MAX - i * 100, font, BLUE);
+            char buffer[4]{0};
+            SDL_snprintf(buffer, sizeof(buffer), "%d", SPEED_MAX - i * 100);
+            texture_text_static(renderer, &speed_labels[i], buffer, font, BLUE);
         }
     }
     if (speed_labels[0]) {
@@ -108,10 +112,13 @@ static void draw_speed_labels() {
 }
 
 static void draw_gforce(float gforce) {
+    gforce = std::clamp(gforce,0.f,9.99f);
     static SDL_Texture* gforce_texture = nullptr;
     static float last_gforce = -1.f;
     if (last_gforce != gforce) {
-        texture_text<6,float>(renderer, &gforce_texture, "%.2fG", std::clamp(gforce,0.f,9.99f), font, ORANGE);
+        char buffer[6]{0};
+        SDL_snprintf(buffer, sizeof(buffer), "%.2fG", gforce);
+        texture_text(renderer, &gforce_texture, buffer, font, ORANGE);
         last_gforce = gforce;
     }
     if (gforce_texture) {
@@ -121,10 +128,13 @@ static void draw_gforce(float gforce) {
 }
 
 static void draw_speed(int speed) {
+    speed = std::clamp(speed,0,999);
     static SDL_Texture* speed_texture = nullptr;
     static int last_speed = -1;
     if (last_speed != speed) {
-        texture_text<8,int>(renderer, &speed_texture, "%03dKM/H", std::clamp(speed,0,999), font, BLUE);
+        char buffer[8]{0};
+        SDL_snprintf(buffer, sizeof(buffer), "%03dKM/H", speed);
+        texture_text(renderer, &speed_texture, buffer, font, BLUE);
         last_speed = speed;
     }
     if (speed_texture) {

@@ -7,7 +7,7 @@ SDL_LIBS       := $(shell pkg-config --libs sdl3)
 SDL_TTF_CFLAGS := $(shell pkg-config --cflags sdl3-ttf)
 SDL_TTF_LIBS   := $(shell pkg-config --libs sdl3-ttf)
 
-CXXFLAGS       := -Wall -Wextra -Werror -std=c++20 -O3 $(SDL_CFLAGS) $(SDL_TTF_CFLAGS) 
+CXXFLAGS       := -Wall -Wextra -Werror -std=c++20 -O3 $(SDL_CFLAGS) $(SDL_TTF_CFLAGS) # -fsanitize=address -static-libasan -g 
 LDFLAGS        := $(SDL_LIBS) $(SDL_TTF_LIBS)
 
 # Windows Cross-Compilation Flags

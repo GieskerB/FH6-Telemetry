@@ -43,15 +43,17 @@ void engine_rpm_t::init(unsigned short size) {
 }
 
 static void draw_gear(int gear) {
-    static SDL_Texture* cached_gear_tex = nullptr;
+    static SDL_Texture* gear_texture = nullptr;
     static int last_gear = -1;
     if (last_gear != gear) {
-        texture_text<3,const char*>(renderer, &cached_gear_tex, "%s", GEARS[gear], font, ORANGE);
+        char buffer[3]{0};
+        SDL_snprintf(buffer, sizeof(buffer), "%s", GEARS[gear]);
+        texture_text(renderer, &gear_texture, buffer, font, ORANGE);
         last_gear = gear;
     }
-    if (cached_gear_tex) {
+    if (gear_texture) {
         static const SDL_FRect gear_rect = { WIDTH * 0.75f, HEIGHT * 0.1f, WIDTH * 0.225f, HEIGHT * 0.4f };
-        SDL_RenderTexture(renderer, cached_gear_tex, nullptr, &gear_rect);
+        SDL_RenderTexture(renderer, gear_texture, nullptr, &gear_rect);
     }
 }
 
@@ -60,7 +62,9 @@ static void draw_speed(int speed) {
     static SDL_Texture* speed_texture = nullptr;
     static int last_speed = -1;
     if (last_speed != speed) {
-        texture_text<4,int>(renderer, &speed_texture, "%03d", speed, font, WHITE);
+        char buffer[4]{0};
+        SDL_snprintf(buffer, sizeof(buffer), "%03d", speed);
+        texture_text(renderer, &speed_texture, buffer, font, WHITE);
         last_speed = speed;
     }
     if (speed_texture) {
@@ -72,7 +76,9 @@ static void draw_speed(int speed) {
 static void draw_static_text() {
     static SDL_Texture* kmh_texture = nullptr;
     if (!kmh_texture) {
-        texture_text_static<5,const char*>(renderer, &kmh_texture, "%s", "KM/H", font, WHITE);
+        char buffer[5]{0};
+        SDL_snprintf(buffer, sizeof(buffer), "%s", "KM/H");
+        texture_text_static(renderer, &kmh_texture, buffer, font, WHITE);
     }
     if (kmh_texture) {
         static const SDL_FRect unit_rect = { WIDTH * 0.75f, HEIGHT * 0.5f, WIDTH * 0.225f, HEIGHT * 0.2f };
