@@ -11,8 +11,9 @@
 #include "../include/util/texture_handler.hpp"
 #include "../include/util/csv_to_maps.hpp"
 
+static constexpr int TEXT_WIDTH = 25;
 static constexpr float SPRITE_RATIO = 197.f / 125.f;
-static constexpr float SPRITE_PORTION = 0.25f;
+static constexpr float SPRITE_PORTION = 0.2f;
 static unsigned short WIDTH, HEIGHT;
 static unsigned short SPRITE_WIDTH, SPRITE_HEIGHT;
 static unsigned short PADDING;
@@ -34,7 +35,7 @@ void car_info_t::init(unsigned short size) {
     WIDTH = size;
     SPRITE_WIDTH = WIDTH * SPRITE_PORTION;
     SPRITE_HEIGHT = SPRITE_WIDTH * SPRITE_RATIO;
-    HEIGHT = SPRITE_HEIGHT + SPRITE_WIDTH * 3 / 2;
+    HEIGHT = SPRITE_HEIGHT + SPRITE_WIDTH;
     PADDING = HEIGHT * 0.05;
 
     window = SDL_CreateWindow("Car Info",WIDTH ,HEIGHT,SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_TRANSPARENT);
@@ -133,11 +134,13 @@ static void draw_group(int group) {
     static SDL_Texture* group_texture = nullptr;
     static int last_group = -1;
     if (last_group != group) {
-        texture_text<22,const char*>(renderer, &group_texture, "%s", group_map[group].c_str(), font, WHITE);
+        const std::string& group_str = group_map[group];
+        std::string indent(TEXT_WIDTH - 1 - group_str.length(), ' ');
+        texture_text<TEXT_WIDTH,const char*>(renderer, &group_texture, "%s", (group_str+indent).c_str(), font, WHITE);
         last_group =group;
     }
     if (group_texture) {
-        const SDL_FRect unit_rect = { 0, static_cast<float>(SPRITE_HEIGHT), static_cast<float>(WIDTH-SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH / 2)};
+        const SDL_FRect unit_rect = { 0, static_cast<float>(SPRITE_HEIGHT), static_cast<float>(WIDTH-SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH / 3)};
         SDL_RenderTexture(renderer, group_texture, nullptr, &unit_rect);
     }
 }
@@ -149,14 +152,14 @@ static void draw_year_make(int year, const std::string& make) {
     static int last_year = -1;
     static std::string last_make;
     if (last_make != make or last_year != year) {
-        char buffer[22]{0};
-        SDL_snprintf(buffer, sizeof(buffer), "%d - %s", year, make.c_str());
-        texture_text<22,const char*>(renderer, &year_make_texture, "%s", buffer, font, WHITE);
+        char buffer[TEXT_WIDTH]{0};
+        SDL_snprintf(buffer, sizeof(buffer), "%d - %-*s", year, TEXT_WIDTH-8, make.c_str());
+        texture_text<TEXT_WIDTH,const char*>(renderer, &year_make_texture, "%s", buffer, font, WHITE);
         last_make = make;
         last_year = year;
     }
     if (year_make_texture) {
-        const SDL_FRect unit_rect = { 0, static_cast<float>(SPRITE_HEIGHT + SPRITE_WIDTH / 2), static_cast<float>(WIDTH-SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH / 2)};
+        const SDL_FRect unit_rect = { 0, static_cast<float>(SPRITE_HEIGHT + SPRITE_WIDTH / 3), static_cast<float>(WIDTH-SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH / 3)};
         SDL_RenderTexture(renderer, year_make_texture, nullptr, &unit_rect);
     }
 }
@@ -165,11 +168,12 @@ static void draw_model(const std::string& model) {
     static SDL_Texture* model_texture = nullptr;
     static std::string last_model;
     if (last_model != model) {
-        texture_text<24,const char*>(renderer, &model_texture, "%s", model.c_str(), font, WHITE);
+        std::string indent(TEXT_WIDTH - 1 - model.length(), ' ');
+        texture_text<TEXT_WIDTH,const char*>(renderer, &model_texture, "%s", (model+indent).c_str(), font, WHITE);
         last_model =model;
     }
     if (model_texture) {
-        const SDL_FRect unit_rect = { 0, static_cast<float>(SPRITE_HEIGHT + SPRITE_WIDTH), static_cast<float>(WIDTH), static_cast<float>(SPRITE_WIDTH / 2)};
+        const SDL_FRect unit_rect = { 0, static_cast<float>(SPRITE_HEIGHT + SPRITE_WIDTH *2 / 3), static_cast<float>(WIDTH-SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH / 3)};
         SDL_RenderTexture(renderer, model_texture, nullptr, &unit_rect);
     }
 }
