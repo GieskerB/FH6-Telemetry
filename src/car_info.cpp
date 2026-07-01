@@ -57,7 +57,7 @@ void car_info_t::init(unsigned short size) {
         exit(EXIT_FAILURE);
     }
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    text_font = TTF_OpenFont("assets/fonts/droid-sans.ttf",64);
+    text_font = TTF_OpenFont("assets/fonts/droid-sans.ttf",256);
     if(text_font == nullptr) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
@@ -234,9 +234,9 @@ void car_info_t::update(const fh6_data& data_out) {
 }
 
 void car_info_t::close() {
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    TTF_CloseFont(pi_font);
-    TTF_CloseFont(text_font);
+    if (renderer) SDL_DestroyRenderer(renderer);
+    if (window) SDL_DestroyWindow(window);
+    if (pi_font) TTF_CloseFont(pi_font);
+    if (text_font) TTF_CloseFont(text_font);
 }
 

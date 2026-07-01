@@ -101,7 +101,7 @@ void send_loop(int sockfd, const struct sockaddr* client_addr, bool use_recorded
             exit(EXIT_FAILURE);;
         }
         // Sleep for small duration to roughly match 60 Hz.
-        usleep(16500);
+        usleep(1650);
     }
     close(sockfd);
 }

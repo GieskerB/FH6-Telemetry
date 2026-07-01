@@ -91,6 +91,11 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<te
         }
     }
 
+    for (const auto& thread_data: raw_pointers) {
+        // One last release such that the threads can finish
+        thread_data->semaphore.release();
+    }
+
     for (auto& thread: threads) {
         thread.join();
     }
