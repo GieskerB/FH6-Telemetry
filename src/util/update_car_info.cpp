@@ -63,7 +63,7 @@ static int get_id(const std::string& car_folder, const std::string& zip_filename
 
         // Should only be one!
         for (const auto & entry : std::filesystem::directory_iterator(id_file_directory)) {
-            const std::string id_filename = entry.path().filename();
+            const std::string id_filename = entry.path().filename().string();
             const char* digits = "0123456789";
             const std::size_t  n = id_filename.find_first_of(digits);
             if (n != std::string::npos) {

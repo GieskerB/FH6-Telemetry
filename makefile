@@ -20,27 +20,27 @@ BUILD_DIR := build
 WIN_DIR   := $(BUILD_DIR)/windows
 ZIP_NAME  := FH6Telemetry.zip
 
-PROGS := telemetry udp_test udp_capture update_car_info
+PROGS := telemetry udp_test udp_capture update_cars
 
 # Sources
-telemetry_SRCS       := $(SRC_DIR)/main.cpp \
- 				        $(SRC_DIR)/udp/socket_setup.cpp \
-						$(SRC_DIR)/util/date.cpp $(SRC_DIR)/util/texture_handler.cpp $(SRC_DIR)/util/csv_to_maps.cpp  \
-						$(SRC_DIR)/car_info.cpp $(SRC_DIR)/engine_rpm.cpp $(SRC_DIR)/gforce.cpp $(SRC_DIR)/map.cpp $(SRC_DIR)/race_info.cpp 
-udp_test_SRCS        := $(SRC_DIR)/udp/test_udp.cpp $(SRC_DIR)/udp/socket_setup.cpp
-udp_capture_SRCS     := $(SRC_DIR)/udp/capture_udp.cpp $(SRC_DIR)/udp/socket_setup.cpp
-update_car_info_SRCS := $(SRC_DIR)/util/update_car_info.cpp
+telemetry_SRCS   := $(SRC_DIR)/main.cpp \
+ 					$(SRC_DIR)/udp/socket_setup.cpp \
+					$(SRC_DIR)/util/date.cpp $(SRC_DIR)/util/texture_handler.cpp $(SRC_DIR)/util/csv_to_maps.cpp  \
+					$(SRC_DIR)/car_info.cpp $(SRC_DIR)/engine_rpm.cpp $(SRC_DIR)/gforce.cpp $(SRC_DIR)/map.cpp $(SRC_DIR)/race_info.cpp 
+udp_test_SRCS    := $(SRC_DIR)/udp/test_udp.cpp $(SRC_DIR)/udp/socket_setup.cpp
+udp_capture_SRCS := $(SRC_DIR)/udp/capture_udp.cpp $(SRC_DIR)/udp/socket_setup.cpp
+update_cars_SRCS := $(SRC_DIR)/util/update_car_info.cpp
 
 # Object Files
-telemetry_OBJS       := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(telemetry_SRCS))
-udp_test_OBJS        := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(udp_test_SRCS))
-udp_capture_OBJS     := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(udp_capture_SRCS))
-update_car_info_OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(update_car_info_SRCS))
+telemetry_OBJS   := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(telemetry_SRCS))
+udp_test_OBJS    := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(udp_test_SRCS))
+udp_capture_OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(udp_capture_SRCS))
+update_cars_OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(update_cars_SRCS))
 
 # Windows Object Files
-telemetry_WIN_OBJS       := $(patsubst $(SRC_DIR)/%.cpp, $(WIN_DIR)/%_win.o, $(telemetry_SRCS))
-udp_capture_WIN_OBJS     := $(patsubst $(SRC_DIR)/%.cpp, $(WIN_DIR)/%_win.o, $(udp_capture_SRCS))
-update_car_info_WIN_OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(WIN_DIR)/%_win.o, $(update_car_info_SRCS))
+telemetry_WIN_OBJS   := $(patsubst $(SRC_DIR)/%.cpp, $(WIN_DIR)/%_win.o, $(telemetry_SRCS))
+udp_capture_WIN_OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(WIN_DIR)/%_win.o, $(udp_capture_SRCS))
+update_cars_WIN_OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(WIN_DIR)/%_win.o, $(update_cars_SRCS))
 
 # --- Rules ---
 
@@ -59,7 +59,7 @@ udp_capture: $(udp_capture_OBJS)
 	@echo "Linking" $@
 	@$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS)
 
-update_car_info: $(update_car_info_OBJS)
+update_cars: $(update_cars_OBJS)
 	@echo "Linking" $@
 	@$(CXX) $(CXXFLAGS) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS)
 
@@ -70,16 +70,24 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Windows Target
-windows: $(WIN_DIR)/telemetry.exe $(WIN_DIR)/capture_data.exe 
+windows: $(WIN_DIR)/telemetry.exe $(WIN_DIR)/capture_data.exe $(WIN_DIR)/update_cars.exe
 	@cp -r assets $(WIN_DIR)
 	@cp $(WIN_SDL)/bin/SDL3.dll $(WIN_DIR)
 	@cp $(WIN_TTF)/bin/SDL3_ttf.dll $(WIN_DIR)
+	@echo "Creating run script..."
+	@echo "@echo off" > $(WIN_DIR)/run.bat
+	@echo "capture_data.exe" >> $(WIN_DIR)/run.bat
+	@echo "telemetry.exe" >> $(WIN_DIR)/run.bat
 
 $(WIN_DIR)/telemetry.exe: $(telemetry_WIN_OBJS)
 	@echo "Linking" $@
 	@$(WIN_CXX) -o $@ $^ $(WIN_LDFLAGS)
 
 $(WIN_DIR)/capture_data.exe: $(udp_capture_WIN_OBJS)
+	@echo "Linking" $@
+	@$(WIN_CXX) -o $@ $^ $(WIN_LDFLAGS)
+
+$(WIN_DIR)/update_cars.exe: $(update_cars_WIN_OBJS)
 	@echo "Linking" $@
 	@$(WIN_CXX) -o $@ $^ $(WIN_LDFLAGS)
 
@@ -93,4 +101,4 @@ clean:
 	@echo "Cleaning up..."
 	@rm -rf $(BUILD_DIR)
 
-.PHONY: all telemetry udp_test udp_capture update_car_info windows clean
+.PHONY: all telemetry udp_test udp_capture update_cars windows clean
