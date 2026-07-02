@@ -13,7 +13,7 @@ ssize_t send_message(int sockfd, const void* message, const struct sockaddr* cli
     return sendto(sockfd, message, sizeof(struct fh6_data), 0, client_addr, sizeof(struct sockaddr));
 }
 
-void read_data(fh6_data& data) {
+void get_data(fh6_data& data, int folder_number) {
 
     static unsigned int current_file = 0;
     static unsigned int current_blob = 0;
@@ -23,17 +23,17 @@ void read_data(fh6_data& data) {
     // Open file
     if (!file.is_open()) {
 
-        file.open(make_filename(current_file), std::ios::binary);
+        file.open(make_filename(folder_number, current_file), std::ios::binary);
         
         // If failed, it just wraps around.
         if (!file) {
             current_file = 0;
-            file.open(make_filename(current_file), std::ios::binary);
+            file.open(make_filename(folder_number, current_file), std::ios::binary);
             
             // If wrap around does not work. exit with error.
             if (!file) {
                 // Replaced perror with std::cerr to easily print the std::string
-                std::cerr << "Could not open file '" << make_filename(current_file) << "': " << strerror(errno) << "\n";
+                std::cerr << "Could not open file '" << make_filename(folder_number, current_file) << "': " << strerror(errno) << "\n";
                 exit(EXIT_FAILURE);
             }
         }
@@ -64,36 +64,12 @@ void read_data(fh6_data& data) {
     }
 }
 
-void set_data(fh6_data& data) {
-    // EngineRPM
-    data.EngineMaxRpm = 8500;
-    data.EngineIdleRpm = 1650;
-    if (data.CurrentEngineRpm == 0) data.CurrentEngineRpm = data.EngineIdleRpm;
-    data.CurrentEngineRpm = data.CurrentEngineRpm * 1.005;
-    if(data.CurrentEngineRpm > data.EngineMaxRpm) {
-        data.CurrentEngineRpm = data.EngineIdleRpm;
-        if (++data.Gear > 11) data.Gear = 0;
-    }
-    data.VelocityZ += 0.1;
-    if(data.VelocityZ > 999 / 3.6) {
-        data.VelocityZ = 0;
-    }
-    //GForce
-    data.AccelerationX = 1 * 9.81;
-    data.AccelerationZ = 2 * 9.81;
-}
-
 // Continuously sends data via UDP.
-void send_loop(int sockfd, const struct sockaddr* client_addr, bool use_recorded) {
+void send_loop(int sockfd, const struct sockaddr* client_addr, int folder_number, int delay) {
     while (running) {
         static struct fh6_data data_out;
-        data_out.TimestampMS++;
 
-        if(use_recorded) {
-            read_data(data_out);
-        } else {    
-            set_data(data_out);
-        }
+        get_data(data_out, folder_number);
 
         // Call wrapper, exit if data could not be send.
         if (send_message(sockfd, ((const void*) &data_out), client_addr) < 0) {
@@ -101,7 +77,7 @@ void send_loop(int sockfd, const struct sockaddr* client_addr, bool use_recorded
             exit(EXIT_FAILURE);;
         }
         // Sleep for small duration to roughly match 60 Hz.
-        usleep(1650);
+        usleep(delay);
     }
     close(sockfd);
 }
@@ -112,17 +88,15 @@ bool run_recorded(const char * test_mode_str) {
 
 int main(int argc, const char* argv[]) {
 
-    if(argc < 2 or argc > 3) {
-        perror("UPD test server requires one argument:\n\tMESSAGE PORT\n\tTEST DATA (synthetic | recorded)\n");
+    if(argc != 4) {
+        perror("UPD test server requires one argument:\n\tMESSAGE PORT\n\tFOLDER NUMBER\n\t DELAY AFTER SEND (ms)\n");
         exit(EXIT_FAILURE);
     }
 
     // setup everything socket related as well as the ctrl-c handler
     auto [sockfd, client_addr] = setup(std::stoi(argv[1]));
 
-    bool use_recorded = argc == 3 ? run_recorded(argv[2]) : false;
-
     // start sending data
-    send_loop(sockfd, (const struct sockaddr*)&client_addr, use_recorded);
+    send_loop(sockfd, (const struct sockaddr*)&client_addr, std::stoi(argv[2]),std::stoi(argv[3]));
     return 0;
 }

@@ -16,7 +16,7 @@ static std::vector<fh6_data> data_vector;
 
 volatile bool running = true;
 
-void capture_loop(int sockfd, const struct sockaddr* client_addr) {
+void capture_loop(int sockfd, const struct sockaddr* client_addr, int folder_number) {
     std::filesystem::create_directory(data_folder);
     unsigned int file_counter = 0;
     while (running) {
@@ -27,12 +27,10 @@ void capture_loop(int sockfd, const struct sockaddr* client_addr) {
 
         data_vector.push_back(data_out);
 
-        std::cout << "Pos: " << data_out.PositionX << " " << data_out.PositionZ<< '\n';
-
         if (data_vector.size() >= DATA_PER_FILE) {
             std::ofstream output_file;
 
-            output_file.open(make_filename(file_counter++), std::ios::out|std::ios::binary);
+            output_file.open(make_filename(folder_number, file_counter++), std::ios::out|std::ios::binary);
             for(const auto & data: data_vector) {
                 output_file.write((char*) &data, TELEMETRY_SIZE);
             }
@@ -50,14 +48,14 @@ void capture_loop(int sockfd, const struct sockaddr* client_addr) {
 
 int main(int argc, char* argv[]) {
 
-    if(argc != 2 ) {
-        perror("UPD capture requires one argument:\n\tMESSAGE port\n");
+    if(argc != 3) {
+        perror("UPD capture requires one argument:\n\tMESSAGE PORT\n\tFOLDER NUMBER\n");
         exit(EXIT_FAILURE);
     }
 
     auto [sockfd, client_addr] = setup(std::stoi(argv[1]));
     bind_socket(sockfd, (const struct sockaddr*)&client_addr);
-    capture_loop(sockfd, (const struct sockaddr*)&client_addr);
+    capture_loop(sockfd, (const struct sockaddr*)&client_addr, std::stoi(argv[2]));
 
     return 0;
 }
