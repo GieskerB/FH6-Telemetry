@@ -45,7 +45,7 @@ void race_info_t::init(unsigned short size) {
 
 static void format_time(float seconds, char* buffer, size_t buffer_size) {
     if (seconds < 0.f) seconds = 0.f;
-    
+
     int total_seconds = static_cast<int>(seconds);
     int ms = static_cast<int>((seconds - total_seconds) * 1000.f);
     int hours = total_seconds / 3600;
@@ -88,7 +88,7 @@ static void draw_position_and_lap(unsigned char position, unsigned short lap_num
     }
 
     static SDL_Texture* position_texture = nullptr;
-    static SDL_Texture* lap_texture = nullptr;   
+    static SDL_Texture* lap_texture = nullptr;
     static unsigned char  last_position = -1;
     static unsigned short last_lap = -1;
 
@@ -117,7 +117,7 @@ static void draw_race_time(float race_time) {
         texture_text_static(renderer, &total_time_text_texture, "Total race time", text_font, WHITE);
     }
 
-    static SDL_Texture* total_time_texture = nullptr; 
+    static SDL_Texture* total_time_texture = nullptr;
 
     const int total_time_ms = static_cast<int>(race_time * 1000.f);
     static int last_time = -1;
@@ -138,8 +138,8 @@ static void draw_current_lap(float current_lap_time) {
         texture_text_static(renderer, &curr_time_text_texture, "Current lap", text_font, BLUE);
     }
 
-    static SDL_Texture* current_time_texture = nullptr;  
-    
+    static SDL_Texture* current_time_texture = nullptr;
+
     const int curr_lap_ms = static_cast<int>(current_lap_time * 1000.f);
     static int last_time = -1;
     if (last_time != curr_lap_ms) {
@@ -162,7 +162,7 @@ static void draw_lap_history(float last_lap_time, float best_lap_time) {
     }
 
     static SDL_Texture* tex_last_lap = nullptr;
-    static SDL_Texture* tex_best_lap = nullptr; 
+    static SDL_Texture* tex_best_lap = nullptr;
 
     const int last_lap_ms = static_cast<int>(last_lap_time * 1000.f);
     static int last_last_lap_ms = -1;
@@ -196,14 +196,14 @@ static void draw_distance_and_shifts(float distance_traveled, unsigned int shift
         texture_text_static(renderer, &shift_text_texure, "Shift count", text_font, WHITE);
     }
 
-    static SDL_Texture* distance_texture = nullptr;      
-    static SDL_Texture* shift_texture = nullptr;   
+    static SDL_Texture* distance_texture = nullptr;
+    static SDL_Texture* shift_texture = nullptr;
 
     const int dist = static_cast<int>(distance_traveled * 100.f);
     static int last_dist = -1;
     if (last_dist != dist) {
         char buffer[16];
-        float distance_km = std::clamp(distance_traveled / 1000.f, 0.f, 999.99f); 
+        float distance_km = std::clamp(distance_traveled / 1000.f, 0.f, 999.99f);
         SDL_snprintf(buffer, sizeof(buffer), "%06.2f", distance_km);
         texture_text(renderer, &distance_texture, buffer, num_font, WHITE);
         last_dist = dist;
@@ -235,6 +235,7 @@ void race_info_t::update(const fh6_data& data_out) {
     const bool on_race = data_out.IsRaceOn;
     static bool was_on_race = false;
     static float race_start_time = 0;
+    static float distant_at_start = 0;
     static unsigned short shift_count = 0;
     static int last_gear = 1;
     if (!on_race and !was_on_race){
@@ -244,6 +245,7 @@ void race_info_t::update(const fh6_data& data_out) {
         // Just entered race!
         was_on_race = true;
         race_start_time = data_out.CurrentRaceTime;
+        distant_at_start = data_out.DistanceTraveled;
         shift_count = 0;
         last_gear = 1;
     } else if (!on_race and was_on_race) {
@@ -257,7 +259,6 @@ void race_info_t::update(const fh6_data& data_out) {
         ++shift_count;
     }
 
-
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
@@ -266,7 +267,7 @@ void race_info_t::update(const fh6_data& data_out) {
     draw_race_time(data_out.CurrentRaceTime - race_start_time);
     draw_current_lap(data_out.CurrentLap);
     draw_lap_history(data_out.LastLap, data_out.BestLap);
-    draw_distance_and_shifts(data_out.DistanceTraveled, shift_count);
+    draw_distance_and_shifts(data_out.DistanceTraveled - distant_at_start, shift_count);
 
     SDL_RenderPresent(renderer);
 }

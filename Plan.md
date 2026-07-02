@@ -2,37 +2,17 @@
 
 ## Available variables
 
-$65/88$ remaining!
+$37/88$ remaining!
 
 ``` cpp
 float AngularVelocityX
 float AngularVelocityY
 float AngularVelocityZ
 
-float NormalizedSuspensionTravelFrontLeft
-float NormalizedSuspensionTravelFrontRight
-float NormalizedSuspensionTravelRearLeft
-float NormalizedSuspensionTravelRearRight
-
 float TireSlipRatioFrontLeft
 float TireSlipRatioFrontRight
 float TireSlipRatioRearLeft
 float TireSlipRatioRearRight
-
-float WheelRotationSpeedFrontLeft
-float WheelRotationSpeedFrontRight
-float WheelRotationSpeedRearLeft
-float WheelRotationSpeedRearRight
-
-int WheelOnRumbleStripFrontLeft
-int WheelOnRumbleStripFrontRight
-int WheelOnRumbleStripRearLeft
-int WheelOnRumbleStripRearRight
-
-int WheelInPuddleFrontLeft
-int WheelInPuddleFrontRight
-int WheelInPuddleRearLeft
-int WheelInPuddleRearRight
 
 float SurfaceRumbleFrontLeft
 float SurfaceRumbleFrontRight
@@ -63,11 +43,6 @@ float SmashableMass
 float Power
 
 float Torque
-
-float TireTempFrontLeft
-float TireTempFrontRight
-float TireTempRearLeft
-float TireTempRearRight
 
 float Boost
 
@@ -124,6 +99,7 @@ char NormalizedAIBrakeDifference
 - ```unsigned int CarGroup```
 
 ### Race Info
+
 - ```int IsRaceOn```
 - ```float BestLap```
 - ```float LastLap```
@@ -132,3 +108,28 @@ char NormalizedAIBrakeDifference
 - ```float DistanceTraveled```
 - ```unsigned short LapNumber```
 - ```unsigned char RacePosition```
+
+### Wheel Info
+
+- ```float TireTempFrontLeft```
+- ```float TireTempFrontRight```
+- ```float TireTempRearLeft```
+- ```float TireTempRearRight```
+- ```int WheelOnRumbleStripFrontLeft```
+- ```int WheelOnRumbleStripFrontRight```
+- ```int WheelOnRumbleStripRearLeft```
+- ```int WheelOnRumbleStripRearRight```
+- ```int WheelInPuddleFrontLeft```
+- ```int WheelInPuddleFrontRight```
+- ```int WheelInPuddleRearLeft```
+- ```int WheelInPuddleRearRight```
+- ```float WheelRotationSpeedFrontLeft```
+- ```float WheelRotationSpeedFrontRight```
+- ```float WheelRotationSpeedRearLeft```
+- ```float WheelRotationSpeedRearRight```
+- ```float NormalizedSuspensionTravelFrontLeft```
+- ```float NormalizedSuspensionTravelFrontRight```
+- ```float NormalizedSuspensionTravelRearLeft```
+- ```float NormalizedSuspensionTravelRearRight```
+
+*Idea: calc wheel speed based on rotation and car speed!*
