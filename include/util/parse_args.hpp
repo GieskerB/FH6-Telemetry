@@ -9,11 +9,12 @@
 #include "../gforce.hpp"
 #include "../map.hpp"
 #include "../car_info.hpp"
+#include "../race_info.hpp"
 
-const char * TELEMETRIES[] = {"car-info", "engine-rpm", "g-force", "map"};
+const char * TELEMETRIES[] = {"car-info", "engine-rpm", "g-force", "map", "race-info"};
 constexpr unsigned char TELEMETRY_COUNT = sizeof(TELEMETRIES) / sizeof(char *);
 
-using telemetries_t = std::variant<car_info_t, engine_rpm_t, gforce_t, map_t>;
+using telemetries_t = std::variant<car_info_t, engine_rpm_t, gforce_t, map_t, race_info_t>;
 
 void print_help() {
     std::cout << "\n=====================================================================\n";
@@ -85,6 +86,9 @@ bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetri
                 break;
             case 3:
                 telem = map_t{};
+                break;
+            case 4:
+                telem = race_info_t{};
                 break;
             default:
                 break;

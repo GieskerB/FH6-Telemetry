@@ -56,8 +56,7 @@ void car_info_t::init(unsigned short size) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    text_font = TTF_OpenFont("assets/fonts/droid-sans.ttf",256);
+    text_font = TTF_OpenFont("assets/fonts/droid-sans.ttf",64);
     if(text_font == nullptr) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);

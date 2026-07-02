@@ -25,7 +25,7 @@ ZIP_NAME       := fh6_telemetry_windows.zip
 PROGS          := fh6_telemetry udp_test udp_capture update_car_info
 
 # Sources (Fixed: added $(SRCDIR)/ back to main.cpp)
-fh6_telemetry_SRCS   := $(SRCDIR)/main.cpp $(SRCDIR)/udp/socket_setup.cpp $(SRCDIR)/engine_rpm.cpp $(SRCDIR)/gforce.cpp $(SRCDIR)/map.cpp $(SRCDIR)/car_info.cpp $(SRCDIR)/util/date.cpp $(SRCDIR)/util/texture_handler.cpp $(SRCDIR)/util/csv_to_maps.cpp 
+fh6_telemetry_SRCS   := $(SRCDIR)/main.cpp $(SRCDIR)/udp/socket_setup.cpp $(SRCDIR)/engine_rpm.cpp $(SRCDIR)/gforce.cpp $(SRCDIR)/map.cpp $(SRCDIR)/car_info.cpp $(SRCDIR)/race_info.cpp $(SRCDIR)/util/date.cpp $(SRCDIR)/util/texture_handler.cpp $(SRCDIR)/util/csv_to_maps.cpp 
 udp_test_SRCS        := $(SRCDIR)/udp/test_udp.cpp $(SRCDIR)/udp/socket_setup.cpp
 udp_capture_SRCS     := $(SRCDIR)/udp/capture_udp.cpp $(SRCDIR)/udp/socket_setup.cpp
 update_car_info_SRCS := $(SRCDIR)/util/update_car_info.cpp

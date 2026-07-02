@@ -5,8 +5,6 @@
 $65/88$ remaining!
 
 ``` cpp
-int IsRaceOn
-
 float AngularVelocityX
 float AngularVelocityY
 float AngularVelocityZ
@@ -75,18 +73,6 @@ float Boost
 
 float Fuel
 
-float DistanceTraveled
-
-float BestLap
-float LastLap
-float CurrentLap
-
-float CurrentRaceTime
-
-unsigned short LapNumber
-
-unsigned char RacePosition
-
 unsigned char Accel
 unsigned char Brake
 unsigned char Clutch
@@ -136,3 +122,13 @@ char NormalizedAIBrakeDifference
 - ```int DrivetrainType```
 - ```int CarOrdinal```
 - ```unsigned int CarGroup```
+
+### Race Info
+- ```int IsRaceOn```
+- ```float BestLap```
+- ```float LastLap```
+- ```float CurrentLap```
+- ```float CurrentRaceTime```
+- ```float DistanceTraveled```
+- ```unsigned short LapNumber```
+- ```unsigned char RacePosition```
