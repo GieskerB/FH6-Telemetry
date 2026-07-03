@@ -83,13 +83,14 @@ static void draw_position_and_lap(unsigned char position, unsigned short lap_num
     static SDL_Texture* position_text_texture = nullptr;
     static SDL_Texture* lap_text_texture = nullptr;
     if (!position_text_texture) {
-        texture_text_static(renderer, &position_text_texture, "Position:", text_font, WHITE);
+        static const std::string position_text { "Position:"};
+        texture_text_static(renderer, &position_text_texture, position_text.c_str(), text_font, WHITE);
         texture_text_static(renderer, &lap_text_texture, "Lap:", text_font, WHITE);
     }
 
     static SDL_Texture* position_texture = nullptr;
     static SDL_Texture* lap_texture = nullptr;
-    static unsigned char  last_position = -1;
+    static unsigned char last_position = -1;
     static unsigned short last_lap = -1;
 
     if (last_position != position) {
@@ -227,11 +228,6 @@ static void draw_distance_and_shifts(float distance_traveled, unsigned int shift
 #include <iostream>
 
 void race_info_t::update(const fh6_data& data_out) {
-    if(data_out.PositionX == 0.f and data_out.PositionZ == 0.f) {
-        // In menu!
-        return;
-    }
-
     const bool on_race = data_out.IsRaceOn;
     static bool was_on_race = false;
     static float race_start_time = 0;
@@ -255,7 +251,6 @@ void race_info_t::update(const fh6_data& data_out) {
 
     if(last_gear != data_out.Gear and data_out.Gear != 11) {
         last_gear = data_out.Gear;
-        std::cout << +data_out.Gear << "\n";
         ++shift_count;
     }
 
@@ -263,13 +258,15 @@ void race_info_t::update(const fh6_data& data_out) {
     SDL_RenderClear(renderer);
 
     // Call individual UI modular render components
-    draw_position_and_lap(data_out.RacePosition, data_out.LapNumber);
+    draw_position_and_lap(data_out.RacePosition, data_out.LapNumber + 1);
     draw_race_time(data_out.CurrentRaceTime - race_start_time);
     draw_current_lap(data_out.CurrentLap);
     draw_lap_history(data_out.LastLap, data_out.BestLap);
     draw_distance_and_shifts(data_out.DistanceTraveled - distant_at_start, shift_count);
 
     SDL_RenderPresent(renderer);
+
+    // exit(-1);
 }
 
 

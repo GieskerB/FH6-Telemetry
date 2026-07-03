@@ -72,7 +72,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 # Windows Target
 windows: $(WIN_PROGS)
-	@mkdir $(WIN_DIR)
+	@mkdir -p $(WIN_DIR)
 	@cp -r csv/ $(WIN_DIR)
 	@cp -r assets/ $(WIN_DIR)
 	@cp $(WIN_SDL)/bin/SDL3.dll $(WIN_DIR)

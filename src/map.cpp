@@ -64,7 +64,7 @@ static void draw_nav_arrow(float pos_x, float pos_z, float yaw) {
 
     // reduce from 3 to 2 dimension
     const SDL_Point position {static_cast<int>(pos_x * SCALE_FACTOR) + MAP_ORIGIN_X, static_cast<int>(pos_z * (-SCALE_FACTOR)) + MAP_ORIGIN_Y};
-    
+
     //Convert from rad to deg:
     yaw = yaw * 180 / PI;
     const int rotation = (std::round((yaw) / 5)) * 5;
@@ -73,7 +73,7 @@ static void draw_nav_arrow(float pos_x, float pos_z, float yaw) {
     static SDL_Texture* arrow_tex = nullptr;
     if (last_rotation != rotation) {
         if (arrow_tex) SDL_DestroyTexture(arrow_tex);
-        
+
         char buffer[26]{0};
         SDL_snprintf(buffer, sizeof(buffer), "assets/arrows/nav-%03d.png", rotate_correctly(rotation));
 
@@ -120,12 +120,12 @@ void map_t::update(const fh6_data& data_out) {
         return;
     }
 
-    SDL_SetRenderDrawColor(renderer, 15, 15, 20, 255);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
     draw_map();
     draw_nav_arrow(data_out.PositionX, data_out.PositionZ, data_out.Yaw);
-    
+
     SDL_RenderPresent(renderer);
 }
 
@@ -133,4 +133,3 @@ void map_t::close() {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
 }
-

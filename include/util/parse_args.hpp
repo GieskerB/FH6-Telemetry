@@ -36,11 +36,11 @@ void print_help() {
     std::cout << "                           Example: -t engine_rpm:500\n\n";
 
     std::cout << "AVAILABLE TELEMETRY TYPES  (Only one instance per type allowed):\n";
-    
+
     for (unsigned char i = 0; i < TELEMETRY_COUNT; ++i) {
         std::cout << "  * " << TELEMETRIES[i] << "\n";
     }
-    
+
     std::cout << "\nEXAMPLES:\n";
     std::cout << "  Listen on port 8000 with every telemtry enabled on default size:\n";
     std::cout << "    ./fh6_telemetry --port 8000 --all\n\n";
@@ -58,10 +58,10 @@ bool push_unique(std::vector<telemetries_t>& vec, const telemetries_t& value) {
     // If no matching type index was found, push it!
     if (it == vec.end()) {
         vec.push_back(value);
-        return true; 
+        return true;
     }
 
-    return false; 
+    return false;
 }
 
 bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetries) {
@@ -93,7 +93,7 @@ bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetri
             default:
                 break;
             }
-            
+
             if(specify_size) {
                 const size_t number_start = colon_pos+1;
                 if(number_start >= arg.size()) {
@@ -138,7 +138,7 @@ int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemet
         const std::string arg = argv[i];
         // simple things first! Help:
         if(arg == "-h" or arg == "--help") {
-            need_help = true; 
+            need_help = true;
             break;
         }
         if(arg == "-p" or arg == "--port") {
@@ -159,7 +159,7 @@ int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemet
                 need_help = true;
                 break;
             }
-            
+
             has_port_input = true;
             continue;
         }
@@ -178,6 +178,7 @@ int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemet
             if (!push_unique(telemetries, engine_rpm_t{})) need_help = true;
             if (!push_unique(telemetries, gforce_t{})) need_help = true;
             if (!push_unique(telemetries, map_t{})) need_help = true;
+            if (!push_unique(telemetries, race_info_t{})) need_help = true;
             if (need_help) {
                 std::cerr << "[-a|--all] can only be used without [-t|--telemetry]!\n";
                 break;

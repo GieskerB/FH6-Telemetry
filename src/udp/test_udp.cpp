@@ -24,12 +24,12 @@ void get_data(fh6_data& data, int folder_number) {
     if (!file.is_open()) {
 
         file.open(make_filename(folder_number, current_file), std::ios::binary);
-        
+
         // If failed, it just wraps around.
         if (!file) {
             current_file = 0;
             file.open(make_filename(folder_number, current_file), std::ios::binary);
-            
+
             // If wrap around does not work. exit with error.
             if (!file) {
                 // Replaced perror with std::cerr to easily print the std::string
@@ -56,7 +56,7 @@ void get_data(fh6_data& data, int folder_number) {
         file.close();
         current_file++;
     }
-    
+
     // fh6_telemetry drops udp packages when not in order. Override Timestamp to prevent this.
     data.TimestampMS = timestamp_override++;
     if(timestamp_override == std::numeric_limits<unsigned int>::max()) {
