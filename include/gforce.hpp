@@ -1,12 +1,19 @@
 #ifndef GFORCE_HPP
 #define GFORCE_HPP
 
-#include "util/fh6_data.hpp"
+#include <mutex>
+#include <memory>
+
+#include "data/fh6_data.hpp"
+#include "data/gforce_data.hpp"
 
 class gforce_t {
+    std::unique_ptr<std::mutex> mutex;
+    gforce_data data;
 public:
     void init(unsigned short  = 300);
     void update(const fh6_data &);
+    void render();
     void close();
 };
 

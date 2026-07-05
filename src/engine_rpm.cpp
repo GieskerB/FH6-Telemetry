@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <algorithm>
+#include <string>
+#include <cstring>
 
 #include "../include/engine_rpm.hpp"
 #include "../include/util/colors.hpp"
@@ -11,10 +13,6 @@ static unsigned short WIDTH;
 static unsigned short HEIGHT;
 
 static constexpr unsigned short STEP_SIZE = 1000;
-
-static constexpr float RPM_FADE = 0.6f;
-
-static const char* GEARS[] = {" R", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8", " 9", "10", " N"};
 
 static SDL_Window * window = nullptr;
 static SDL_Renderer* renderer = nullptr;
@@ -40,53 +38,115 @@ void engine_rpm_t::init(unsigned short size) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    mutex = std::make_unique<std::mutex>();
 }
 
-static void draw_gear(int gear) {
-    static SDL_Texture* gear_texture = nullptr;
+static std::string update_gear(int gear, unsigned char& changed) {
+    static std::string GEARS[] = {" R", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8", " 9", "10", " N"};
     static int last_gear = -1;
-    if (last_gear != gear) {
-        char buffer[3]{0};
-        SDL_snprintf(buffer, sizeof(buffer), "%s", GEARS[gear]);
-        texture_text(renderer, &gear_texture, buffer, font, ORANGE);
+    static std::string return_value{};
+    if (gear != last_gear) {
         last_gear = gear;
+        return_value = GEARS[gear];
+        changed |= 0b1;
     }
-    if (gear_texture) {
+    return return_value;
+}
+
+static std::string update_speed(int speed, unsigned char& changed) {
+    static int last_gear = -1;
+    static std::string return_value{};
+    if (speed != last_gear) {
+        last_gear = speed;
+        return_value = std::to_string(speed);
+        changed |= 0b10;
+    }
+    return return_value;
+}
+
+static SDL_Color update_rpm_bar_color(int current_rpm, int max_rpm, unsigned char& changed) {
+    static constexpr float RPM_FADE = 0.6f;
+    static int last_current_rpm = -1;
+    static int last_max_rpm = -1;
+    static SDL_Color return_value{0,0,0,0};
+    if (current_rpm != last_current_rpm or max_rpm != last_current_rpm) {
+        last_current_rpm = current_rpm;
+        last_max_rpm = max_rpm;
+        const float rpm_percentage = static_cast<float>(current_rpm) / max_rpm;
+        unsigned char r = 255, g = 255;
+        if (rpm_percentage < RPM_FADE) {
+            // Fade from Green (0, 255, 0) to Yellow (255, 255, 0)
+            const float factor = rpm_percentage / RPM_FADE;
+            r = static_cast<unsigned char>(factor * 255.0f);
+        } else {
+            // Fade from Yellow (255, 255, 0) to Red (255, 0, 0)
+            const float factor = (rpm_percentage - RPM_FADE) / (1-RPM_FADE);
+            g = static_cast<unsigned char>((1.0f - factor) * 255.0f);
+        }
+        return_value = {r,g,0,255};
+        changed |= 0b100;
+    }
+    return return_value;
+}
+
+void engine_rpm_t::update(const fh6_data & data_out) {
+    const bool is_paused = data_out.PositionX == 0 and data_out.PositionY == 0 and data_out.PositionZ == 0;
+
+    if(is_paused) {
+        mutex->lock();
+        data.is_paused = is_paused;
+        mutex->unlock();
+        return;
+    }
+
+    unsigned char changes = 0;
+    std::string gear = update_gear(data_out.Gear, changes);
+    std::string speed = update_speed(data_out.Speed, changes);
+    SDL_Color rpm_bar_color = update_rpm_bar_color(data_out.CurrentEngineRpm, data_out.EngineMaxRpm, changes);
+
+    if (changes != 0) {
+        mutex->lock();
+        data.is_paused = is_paused;
+        data.new_data = changes;
+        std::strncpy(data.gear,gear.c_str(), sizeof(data.gear)-1);
+        std::strncpy(data.speed,speed.c_str(), sizeof(data.speed)-1);
+        data.rpm_bar_color = rpm_bar_color;
+        data.idle_rpm = data_out.EngineIdleRpm;
+        data.current_rpm = data_out.CurrentEngineRpm;
+        data.max_rpm = data_out.EngineMaxRpm;
+        mutex->unlock();
+    }
+}
+
+
+static void render_gear(const char* gear) {
+    static SDL_Texture* texture = nullptr;
+    texture_text(renderer, &texture, gear, font, ORANGE);
+    if (texture) {
         static const SDL_FRect gear_rect = { WIDTH * 0.75f, HEIGHT * 0.1f, WIDTH * 0.225f, HEIGHT * 0.4f };
-        SDL_RenderTexture(renderer, gear_texture, nullptr, &gear_rect);
+        SDL_RenderTexture(renderer, texture, nullptr, &gear_rect);
     }
 }
 
-static void draw_speed(int speed) {
-    speed = std::clamp(static_cast<int>(std::abs(speed * 3.6f)), 0, 999);
-    static SDL_Texture* speed_texture = nullptr;
-    static int last_speed = -1;
-    if (last_speed != speed) {
-        char buffer[4]{0};
-        SDL_snprintf(buffer, sizeof(buffer), "%03d", speed);
-        texture_text(renderer, &speed_texture, buffer, font, WHITE);
-        last_speed = speed;
-    }
-    if (speed_texture) {
+static void render_speed(const char* speed) {
+    static SDL_Texture* texture = nullptr;
+    texture_text(renderer, &texture, speed, font, WHITE);
+    if (texture) {
         static const SDL_FRect speed_rect = { HEIGHT * 0.1f, 0.0f, WIDTH * 0.667f, HEIGHT * 0.8f };
-        SDL_RenderTexture(renderer, speed_texture, nullptr, &speed_rect);
+        SDL_RenderTexture(renderer, texture, nullptr, &speed_rect);
     }
 }
 
-static void draw_static_text() {
-    static SDL_Texture* kmh_texture = nullptr;
-    if (!kmh_texture) {
-        char buffer[5]{0};
-        SDL_snprintf(buffer, sizeof(buffer), "%s", "KM/H");
-        texture_text_static(renderer, &kmh_texture, buffer, font, WHITE);
-    }
-    if (kmh_texture) {
+static void render_static_text() {
+    static SDL_Texture* texture = nullptr;
+    if (texture != nullptr) texture_text_static(renderer, &texture, static_kmh_text, font, WHITE);
+    if (texture) {
         static const SDL_FRect unit_rect = { WIDTH * 0.75f, HEIGHT * 0.5f, WIDTH * 0.225f, HEIGHT * 0.2f };
-        SDL_RenderTexture(renderer, kmh_texture, nullptr, &unit_rect);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
     }
 }
 
-static void draw_rpm(float idle_rpm, float current_rpm, float max_rpm) {
+static void render_rpm_bar(int idle_rpm, int current_rpm, int max_rpm, const SDL_Color& color) {
     static  const SDL_FRect full_bar = {WIDTH * 0.05f, HEIGHT * 0.75f, WIDTH * 0.9f, WIDTH * 0.1f};
 
     // Draw the Background
@@ -94,25 +154,11 @@ static void draw_rpm(float idle_rpm, float current_rpm, float max_rpm) {
     SDL_RenderFillRect(renderer, &full_bar);
 
     // Draw the Gradient Filled Bar
-    const float rpm_percentage = std::clamp(current_rpm / max_rpm, 0.f,1.f);
+    const float rpm_percentage = static_cast<float>(current_rpm) / max_rpm;
 
     const float fill_width = full_bar.w * rpm_percentage;
 
-    unsigned char r = 0, g = 0;
-
-    if (rpm_percentage < RPM_FADE) {
-        // Fade from Green (0, 255, 0) to Yellow (255, 255, 0)
-        const float factor = rpm_percentage / RPM_FADE;
-        r = static_cast<unsigned char>(factor * 255.0f);
-        g = 255;
-    } else {
-        // Fade from Yellow (255, 255, 0) to Red (255, 0, 0)
-        const float factor = (rpm_percentage - RPM_FADE) / (1-RPM_FADE);
-        r = 255;
-        g = static_cast<unsigned char>((1.0f - factor) * 255.0f);
-    }
-
-    SDL_SetRenderDrawColor(renderer, r, g, 0, 255);
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
     SDL_FRect fill_bar = {full_bar.x, full_bar.y, fill_width, full_bar.h};
     SDL_RenderFillRect(renderer, &fill_bar);
 
@@ -138,20 +184,24 @@ static void draw_rpm(float idle_rpm, float current_rpm, float max_rpm) {
 
 }
 
-void engine_rpm_t::update(const fh6_data & data_out) {
-    if(data_out.CurrentEngineRpm == 0) {
-        const_cast<fh6_data &>(data_out).Gear = 11; // Neutral instead of reverse!
+void engine_rpm_t::render() {
+    engine_rpm_data data_copy;
+    mutex->lock();
+    if (data.new_data == 0 or data.is_paused) {
+        mutex->unlock();
+        return;
     }
+    std::memcpy(&data_copy,&data,sizeof(data));
+    mutex->unlock();
 
-    // Clear screen
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
-    // Render all the information
-    draw_static_text();
-    draw_gear(data_out.Gear);
-    draw_speed(data_out.Speed);
-    draw_rpm(data_out.EngineIdleRpm, data_out.CurrentEngineRpm, data_out.EngineMaxRpm);
+    if (data_copy.new_data & 0b1) render_gear(data_copy.gear);
+    if (data_copy.new_data & 0b10) render_speed(data_copy.speed);
+    render_static_text();
+    if (data_copy.new_data & 0b100) render_rpm_bar(data_copy.idle_rpm, data_copy.current_rpm, data_copy.max_rpm, data_copy.rpm_bar_color);
+
     SDL_RenderPresent(renderer);
 }
 

@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 #include <arpa/inet.h>
 
-#include "../../include/util/fh6_data.hpp"
+#include "../../include/data/fh6_data.hpp"
 #include "../../include/udp/socket_setup.hpp"
 #include "../../include/util/data_per_file.hpp"
 

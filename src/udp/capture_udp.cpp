@@ -9,7 +9,7 @@
 #endif
 
 #include "../../include/udp/socket_setup.hpp"
-#include "../../include/util/fh6_data.hpp"
+#include "../../include/data/fh6_data.hpp"
 #include "../../include/util/data_per_file.hpp"
 
 static std::vector<fh6_data> data_vector;

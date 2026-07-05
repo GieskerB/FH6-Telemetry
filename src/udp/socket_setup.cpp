@@ -12,7 +12,7 @@
 #endif
 
 #include "../../include/udp/socket_setup.hpp"
-#include "../../include/util/fh6_data.hpp"
+#include "../../include/data/fh6_data.hpp"
 
 // Small wrapper around recvfrom
 void receive_message(int sockfd, void* message, const struct sockaddr* client_addr) {

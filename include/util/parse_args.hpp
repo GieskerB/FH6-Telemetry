@@ -49,7 +49,7 @@ void print_help() {
     std::cout << "======================================================================\n" << std::endl;
 }
 
-bool push_unique(std::vector<telemetries_t>& vec, const telemetries_t& value) {
+bool push_unique(std::vector<telemetries_t>& vec, telemetries_t&& value) {
     // Look through the vector to see if any element has the SAME type index
     auto it = std::find_if(vec.begin(), vec.end(), [index_to_match = value.index()](const telemetries_t& v) {
         return v.index() == index_to_match;
@@ -57,7 +57,7 @@ bool push_unique(std::vector<telemetries_t>& vec, const telemetries_t& value) {
 
     // If no matching type index was found, push it!
     if (it == vec.end()) {
-        vec.push_back(value);
+        vec.push_back(std::move(value));
         return true;
     }
 
@@ -118,7 +118,7 @@ bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetri
                 std::visit([](auto& obj) {obj.init();},telem);
             }
 
-            if (!push_unique(telemetries,telem)) {
+            if (!push_unique(telemetries,std::move(telem))) {
                 std::cerr << "Cannot instanace same telemetry more then once!\n";
                 return true;
             }

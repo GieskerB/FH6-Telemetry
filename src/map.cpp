@@ -51,6 +51,7 @@ void map_t::init(unsigned short size) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    mutex = std::make_unique<std::mutex>();
 }
 
 static int rotate_correctly(int rotation) {
@@ -128,6 +129,8 @@ void map_t::update(const fh6_data& data_out) {
 
     SDL_RenderPresent(renderer);
 }
+
+void map_t::render() {}
 
 void map_t::close() {
     SDL_DestroyRenderer(renderer);

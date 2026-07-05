@@ -29,7 +29,7 @@ volatile bool running = true;
 
 struct thread_data_t {
     fh6_data* data;
-    void (*update)(void* instance, const fh6_data&); 
+    void (*update)(void* instance, const fh6_data&);
     void* instance_ptr;
     std::binary_semaphore semaphore{0};
 };
@@ -43,15 +43,16 @@ void run_thread(std::unique_ptr<thread_data_t> thread_data) {
 }
 
 // Continuously receive data via UDP.
-void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<telemetries_t> telemetries) {
+void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<telemetries_t>& telemetries) {
     std::vector<thread_data_t*> raw_pointers;
     std::vector<std::thread> threads;
     for (auto& item : telemetries) {
         std::visit([&](auto& arg) {
             std::unique_ptr<thread_data_t> tmp = std::make_unique<thread_data_t>(
-                nullptr, 
+                nullptr,
                 [](void* inst, const fh6_data& d) {
                     static_cast<std::decay_t<decltype(arg)>*>(inst)->update(d);
+                    static_cast<std::decay_t<decltype(arg)>*>(inst)->render();
                 },
                 &arg
             );
@@ -125,7 +126,7 @@ int main(int argc, const char* argv[]) {
     // setup everything socket related
     auto [sockfd, client_addr] = setup(port);
     bind_socket(sockfd, (const struct sockaddr*)&client_addr);
-    
+
     receive_loop(sockfd, (const struct sockaddr*)&client_addr,telemetries);
 
     for (auto& telem : telemetries) {

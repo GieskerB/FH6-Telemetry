@@ -41,6 +41,7 @@ void race_info_t::init(unsigned short size) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    mutex = std::make_unique<std::mutex>();
 }
 
 static void format_time(float seconds, char* buffer, size_t buffer_size) {
@@ -265,10 +266,9 @@ void race_info_t::update(const fh6_data& data_out) {
     draw_distance_and_shifts(data_out.DistanceTraveled - distant_at_start, shift_count);
 
     SDL_RenderPresent(renderer);
-
-    // exit(-1);
 }
 
+void race_info_t::render() {}
 
 void race_info_t::close() {
     SDL_DestroyRenderer(renderer);
