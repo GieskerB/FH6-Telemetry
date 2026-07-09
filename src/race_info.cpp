@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <SDL3/SDL_surface.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <sstream>
+#include <iomanip>
+#include <cstring>
 
 #include "../include/race_info.hpp"
 #include "../include/util/colors.hpp"
@@ -44,7 +47,7 @@ void race_info_t::init(unsigned short size) {
     mutex = std::make_unique<std::mutex>();
 }
 
-static void format_time(float seconds, char* buffer, size_t buffer_size) {
+static std::string format_time(float seconds) {
     if (seconds < 0.f) seconds = 0.f;
 
     int total_seconds = static_cast<int>(seconds);
@@ -57,178 +60,130 @@ static void format_time(float seconds, char* buffer, size_t buffer_size) {
     if (hours > 9) {
         hours = 9; minutes = 59; secs = 59; ms = 999;
     }
-
-    SDL_snprintf(buffer, buffer_size, "%1d:%02d:%02d.%03d", hours, minutes, secs, ms);
+    std::stringstream strstream;
+    strstream << hours << ':' << std::setw(2) << std::setfill('0') << minutes
+                       << ':' << std::setw(2) << std::setfill('0') << secs
+                       << '.' << std::setw(3) << std::setfill('0') << ms;
+    return strstream.str();
 }
 
-static void render_texture_fixed(SDL_Renderer* renderer, SDL_Texture* texture, float centerX, float centerY, float targetHeight) {
-    if (!texture) return;
-
+static SDL_FRect calc_centered_rect(SDL_Texture* texture, float center_x, float center_y, float target_height) {
     float w, h;
     SDL_GetTextureSize(texture, &w, &h);
 
-    float aspect_ratio = w / h;
-    float final_width = targetHeight * aspect_ratio;
+    const float ratio = w / h;
+    const float final_width = target_height * ratio;
 
-    SDL_FRect dest_rect {
-        centerX - (final_width / 2.f),
-        centerY - (targetHeight / 2.f),
+    return {
+        center_x - (final_width / 2.f),
+        center_y - (target_height / 2.f),
         final_width,
-        targetHeight
+        target_height
     };
-
-    SDL_RenderTexture(renderer, texture, nullptr, &dest_rect);
 }
 
-static void draw_position_and_lap(unsigned char position, unsigned short lap_number) {
-    static SDL_Texture* position_text_texture = nullptr;
-    static SDL_Texture* lap_text_texture = nullptr;
-    if (!position_text_texture) {
-        static const std::string position_text { "Position:"};
-        texture_text_static(renderer, &position_text_texture, position_text.c_str(), text_font, WHITE);
-        texture_text_static(renderer, &lap_text_texture, "Lap:", text_font, WHITE);
-    }
-
-    static SDL_Texture* position_texture = nullptr;
-    static SDL_Texture* lap_texture = nullptr;
+static std::string update_position(unsigned char position, unsigned char& changed) {
     static unsigned char last_position = -1;
-    static unsigned short last_lap = -1;
-
-    if (last_position != position) {
-        char buffer[3];
-        SDL_snprintf(buffer, sizeof(buffer), "%02d", position);
-        texture_text(renderer, &position_texture, buffer, num_font, ORANGE);
+    static std::string return_value{};
+    if (position != last_position) {
         last_position = position;
+        return_value = std::to_string(position);
+        changed |= 0b1;
     }
-    if (last_lap != lap_number) {
-        char buffer[3];
-        SDL_snprintf(buffer, sizeof(buffer), "%02d", lap_number);
-        texture_text(renderer, &lap_texture, buffer, num_font, ORANGE);
-        last_lap = lap_number;
-    }
-
-    render_texture_fixed(renderer, position_text_texture, WIDTH * 0.225f, HEIGHT * 0.05f, HEIGHT * 0.075f);
-    render_texture_fixed(renderer, position_texture,   WIDTH * 0.45f, HEIGHT * 0.05f, HEIGHT * 0.078f);
-    render_texture_fixed(renderer, lap_text_texture, WIDTH * 0.8f, HEIGHT * 0.05f, HEIGHT * 0.075f);
-    render_texture_fixed(renderer, lap_texture, WIDTH * 0.925f, HEIGHT * 0.05f, HEIGHT * 0.08f);
+    return return_value;
 }
-
-static void draw_race_time(float race_time) {
-    static SDL_Texture* total_time_text_texture = nullptr;
-    if (!total_time_text_texture) {
-        texture_text_static(renderer, &total_time_text_texture, "Total race time", text_font, WHITE);
+static std::string update_lap(unsigned short lap, unsigned char& changed) {
+    static unsigned char last_lap = -1;
+    static std::string return_value{};
+    if (lap != last_lap) {
+        last_lap = lap;
+        return_value = std::to_string(lap);
+        changed |= 0b10;
     }
-
-    static SDL_Texture* total_time_texture = nullptr;
-
-    const int total_time_ms = static_cast<int>(race_time * 1000.f);
-    static int last_time = -1;
-    if (last_time != total_time_ms) {
-        char buffer[12];
-        format_time(race_time, buffer, sizeof(buffer));
-        texture_text(renderer, &total_time_texture, buffer, num_font, WHITE);
-        last_time = total_time_ms;
-    }
-
-    render_texture_fixed(renderer, total_time_text_texture, WIDTH * 0.50f, HEIGHT * 0.15f, HEIGHT * 0.075f);
-    render_texture_fixed(renderer, total_time_texture,   WIDTH * 0.50f, HEIGHT * 0.25f, HEIGHT * 0.125f);
+    return return_value;
 }
-
-static void draw_current_lap(float current_lap_time) {
-    static SDL_Texture* curr_time_text_texture = nullptr;
-    if (!curr_time_text_texture) {
-        texture_text_static(renderer, &curr_time_text_texture, "Current lap", text_font, BLUE);
+static std::string update_race_time(float race_time, unsigned char& changed) {
+    static unsigned char last_race_time = -1;
+    static std::string return_value{};
+    if (race_time != last_race_time) {
+        last_race_time = race_time;
+        return_value = format_time(race_time);
+        changed |= 0b100;
     }
-
-    static SDL_Texture* current_time_texture = nullptr;
-
-    const int curr_lap_ms = static_cast<int>(current_lap_time * 1000.f);
-    static int last_time = -1;
-    if (last_time != curr_lap_ms) {
-        char buffer[12];
-        format_time(current_lap_time, buffer, sizeof(buffer));
-        texture_text(renderer, &current_time_texture, buffer, num_font, BLUE);
-        last_time = curr_lap_ms;
-    }
-
-    render_texture_fixed(renderer, curr_time_text_texture, WIDTH * 0.50f, HEIGHT * 0.375f, HEIGHT * 0.075f);
-    render_texture_fixed(renderer, current_time_texture,   WIDTH * 0.50f, HEIGHT * 0.475f, HEIGHT * 0.125f);
+    return return_value;
 }
-
-static void draw_lap_history(float last_lap_time, float best_lap_time) {
-    static SDL_Texture* last_lab_text_texture = nullptr;
-    static SDL_Texture* best_lab_text_texture = nullptr;
-    if (!last_lab_text_texture) {
-        texture_text_static(renderer, &last_lab_text_texture, "Last lap", text_font, WHITE);
-        texture_text_static(renderer, &best_lab_text_texture, "Best lap", text_font, GREEN);
+static std::string update_current_lap(float current_lap, unsigned char& changed) {
+    static unsigned char last_current_lap = -1;
+    static std::string return_value{};
+    if (current_lap != last_current_lap) {
+        last_current_lap = current_lap;
+        return_value = format_time(current_lap);
+        changed |= 0b1000;
     }
-
-    static SDL_Texture* tex_last_lap = nullptr;
-    static SDL_Texture* tex_best_lap = nullptr;
-
-    const int last_lap_ms = static_cast<int>(last_lap_time * 1000.f);
-    static int last_last_lap_ms = -1;
-    if (last_last_lap_ms != last_lap_ms) {
-        char buffer[16];
-        format_time(last_lap_time, buffer, sizeof(buffer));
-        texture_text(renderer, &tex_last_lap, buffer, num_font, WHITE);
-        last_last_lap_ms = last_lap_ms;
-    }
-
-    const int best_lap_ms = static_cast<int>(best_lap_time * 1000.f);
-    static int last_best_lap_ms = -1;
-    if (last_best_lap_ms != best_lap_ms) {
-        char buffer[16];
-        format_time(best_lap_time, buffer, sizeof(buffer));
-        texture_text(renderer, &tex_best_lap, buffer, num_font, GREEN);
-        last_best_lap_ms = best_lap_ms;
-    }
-
-    render_texture_fixed(renderer, last_lab_text_texture, WIDTH * 0.25f, HEIGHT * 0.6f, HEIGHT * 0.0525f);
-    render_texture_fixed(renderer, tex_last_lap,   WIDTH * 0.25f, HEIGHT * 0.675f, HEIGHT * 0.0775f);
-    render_texture_fixed(renderer, best_lab_text_texture, WIDTH * 0.75f, HEIGHT * 0.6f, HEIGHT * 0.0525f);
-    render_texture_fixed(renderer, tex_best_lap,   WIDTH * 0.75f, HEIGHT * 0.675f, HEIGHT * 0.0775f);
+    return return_value;
 }
-
-static void draw_distance_and_shifts(float distance_traveled, unsigned int shift_count) {
-    static SDL_Texture* distance_text_texture = nullptr;
-    static SDL_Texture* shift_text_texure = nullptr;
-    if (!distance_text_texture) {
-        texture_text_static(renderer, &distance_text_texture, "Distance (KM)", text_font, WHITE);
-        texture_text_static(renderer, &shift_text_texure, "Shift count", text_font, WHITE);
+static std::string update_best_lap(float best_lap, unsigned char& changed) {
+    static float last_best_lap = -1;
+    static std::string return_value{};
+    if (best_lap != last_best_lap) {
+        last_best_lap = best_lap;
+        return_value = format_time(best_lap);
+        changed |= 0b10000;
     }
-
-    static SDL_Texture* distance_texture = nullptr;
-    static SDL_Texture* shift_texture = nullptr;
-
-    const int dist = static_cast<int>(distance_traveled * 100.f);
-    static int last_dist = -1;
-    if (last_dist != dist) {
-        char buffer[16];
-        float distance_km = std::clamp(distance_traveled / 1000.f, 0.f, 999.99f);
-        SDL_snprintf(buffer, sizeof(buffer), "%06.2f", distance_km);
-        texture_text(renderer, &distance_texture, buffer, num_font, WHITE);
-        last_dist = dist;
+    return return_value;
+}
+static std::string update_last_lap(float last_lap, unsigned char& changed) {
+    static float last_last_lap = -1;
+    static std::string return_value{};
+    if (last_lap != last_last_lap) {
+        last_last_lap = last_lap;
+        return_value = format_time(last_lap);
+        changed |= 0b100000;
     }
-
+    return return_value;
+}
+static std::string update_distance(float distance, unsigned char& changed) {
+    distance /= 1000;
+    if (distance > 9999.9f) {
+        distance = 9999.9f;
+    }
+    static float last_distance = -1;
+    static std::string return_value{};
+    if (distance != last_distance) {
+        last_distance = distance;
+        std::stringstream strstream;
+        strstream << std::fixed << std::setprecision(2) << std::setw(7) << std:: setfill ('0') << distance;
+        return_value = strstream.str();
+        changed |= 0b1000000;
+    }
+    return return_value;
+}
+static std::string update_shifts(unsigned int shifts, unsigned char& changed) {
+    if (shifts > 99999) {
+        shifts = 99999;
+    }
     static unsigned int last_shifts = -1;
-    if (last_shifts != shift_count) {
-        char buffer[8];
-        unsigned int shifts = std::clamp(shift_count, 0u, 99999u);
-        SDL_snprintf(buffer, sizeof(buffer), "%05u", shifts);
-        texture_text(renderer, &shift_texture, buffer, num_font, WHITE);
-        last_shifts = shift_count;
+    static std::string return_value{};
+    if (shifts != last_shifts) {
+        last_shifts = shifts;
+        std::stringstream strstream;
+        strstream << std::setw(5) << std:: setfill ('0') << shifts;
+        return_value = strstream.str();
+        changed |= 0b10000000;
     }
-
-    render_texture_fixed(renderer, distance_text_texture,   WIDTH * 0.25f, HEIGHT * 0.825f, HEIGHT * 0.0525f);
-    render_texture_fixed(renderer, distance_texture,     WIDTH * 0.25f, HEIGHT * 0.9f, HEIGHT * 0.0775f);
-    render_texture_fixed(renderer, shift_text_texure, WIDTH * 0.75f, HEIGHT * 0.825f, HEIGHT * 0.0525f);
-    render_texture_fixed(renderer, shift_texture,   WIDTH * 0.75f, HEIGHT * 0.9f, HEIGHT * 0.0775f);
+    return return_value;
 }
-
-#include <iostream>
 
 void race_info_t::update(const fh6_data& data_out) {
+    const bool is_paused = data_out.PositionX == 0 and data_out.PositionY == 0 and data_out.PositionZ == 0;
+
+    if(is_paused) {
+        mutex->lock();
+        data.is_paused = is_paused;
+        mutex->unlock();
+        return;
+    }
+
     const bool on_race = data_out.IsRaceOn;
     static bool was_on_race = false;
     static float race_start_time = 0;
@@ -255,20 +210,195 @@ void race_info_t::update(const fh6_data& data_out) {
         ++shift_count;
     }
 
+    unsigned char changes = 0;
+    std::string position = update_position(data_out.RacePosition, changes);
+    std::string lap = update_lap(data_out.LapNumber, changes);
+    std::string race_time = update_race_time(data_out.CurrentRaceTime - race_start_time, changes);
+    std::string current_lap = update_current_lap(data_out.CurrentLap, changes);
+    std::string best_lap = update_best_lap(data_out.BestLap, changes);
+    std::string last_lap = update_last_lap(data_out.LastLap, changes);
+    std::string distance = update_distance(data_out.DistanceTraveled - distant_at_start, changes);
+    std::string shifts = update_shifts(shift_count, changes);
+
+    if (changes != 0) {
+        mutex->lock();
+        data.is_paused = is_paused;
+        data.new_data = changes;
+        std::strncpy(data.position,position.c_str(), sizeof(data.position)-1);
+        std::strncpy(data.lap,lap.c_str(), sizeof(data.lap)-1);
+        std::strncpy(data.race_time,race_time.c_str(), sizeof(data.race_time)-1);
+        std::strncpy(data.current_lap,current_lap.c_str(), sizeof(data.current_lap)-1);
+        std::strncpy(data.best_lap,best_lap.c_str(), sizeof(data.best_lap)-1);
+        std::strncpy(data.last_lap,last_lap.c_str(), sizeof(data.last_lap)-1);
+        std::strncpy(data.distance,distance.c_str(), sizeof(data.distance)-1);
+        std::strncpy(data.shifts,shifts.c_str(), sizeof(data.shifts)-1);
+        mutex->unlock();
+    }
+}
+
+static void render_static_position_text() {
+    static SDL_Texture* texture = nullptr;
+    if (texture != nullptr) texture_text_static(renderer, &texture, static_position_text, text_font, WHITE);
+    if (texture) {
+        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.225f, HEIGHT * 0.05f, HEIGHT * 0.075f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+static void render_static_lap_text() {
+    static SDL_Texture* texture = nullptr;
+    if (texture != nullptr) texture_text_static(renderer, &texture, static_lap_text, text_font, WHITE);
+    if (texture) {
+        static const SDL_FRect unit_rect = calc_centered_rect(texture,WIDTH * 0.8f, HEIGHT * 0.05f, HEIGHT * 0.075f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+static void render_static_race_time_text() {
+    static SDL_Texture* texture = nullptr;
+    if (texture != nullptr) texture_text_static(renderer, &texture, static_race_time_text, text_font, WHITE);
+    if (texture) {
+        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.50f, HEIGHT * 0.15f, HEIGHT * 0.075f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+static void render_static_current_lap_text() {
+    static SDL_Texture* texture = nullptr;
+    if (texture != nullptr) texture_text_static(renderer, &texture, static_current_lap_text, text_font, WHITE);
+    if (texture) {
+        static const SDL_FRect unit_rect = calc_centered_rect(texture,  WIDTH * 0.50f, HEIGHT * 0.375f, HEIGHT * 0.075f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+static void render_static_best_lap_text() {
+    static SDL_Texture* texture = nullptr;
+    if (texture != nullptr) texture_text_static(renderer, &texture, static_best_lap_text, text_font, WHITE);
+    if (texture) {
+        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.6f, HEIGHT * 0.0525f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+static void render_static_last_lap_text() {
+    static SDL_Texture* texture = nullptr;
+    if (texture != nullptr) texture_text_static(renderer, &texture, static_last_lap_text, text_font, WHITE);
+    if (texture) {
+        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.6f, HEIGHT * 0.0525f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+static void render_static_distance_text() {
+    static SDL_Texture* texture = nullptr;
+    if (texture != nullptr) texture_text_static(renderer, &texture, static_distance_text, text_font, WHITE);
+    if (texture) {
+        static const SDL_FRect unit_rect = calc_centered_rect(texture,  WIDTH * 0.25f, HEIGHT * 0.825f, HEIGHT * 0.0525f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+static void render_static_shifts_text() {
+    static SDL_Texture* texture = nullptr;
+    if (texture != nullptr) texture_text_static(renderer, &texture, static_shifts_text, text_font, WHITE);
+    if (texture) {
+        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.825f, HEIGHT * 0.0525f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+
+static void render_position(const char* position) {
+    static SDL_Texture* texture = nullptr;
+    texture_text(renderer, &texture, position, num_font, WHITE);
+    if (texture) {
+        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.45f, HEIGHT * 0.05f, HEIGHT * 0.08f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+static void render_lap(const char* lap) {
+    static SDL_Texture* texture = nullptr;
+    texture_text(renderer, &texture, lap, num_font, WHITE);
+    if (texture) {
+        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.925f, HEIGHT * 0.05f, HEIGHT * 0.08f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+static void render_race_time(const char* race_time) {
+    static SDL_Texture* texture = nullptr;
+    texture_text(renderer, &texture, race_time, num_font, WHITE);
+    if (texture) {
+        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.50f, HEIGHT * 0.25f, HEIGHT * 0.125f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+static void render_current_lap(const char* current_lap) {
+    static SDL_Texture* texture = nullptr;
+    texture_text(renderer, &texture, current_lap, num_font, WHITE);
+    if (texture) {
+        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.50f, HEIGHT * 0.475f, HEIGHT * 0.125f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+static void render_best_lap(const char* best_lap) {
+    static SDL_Texture* texture = nullptr;
+    texture_text(renderer, &texture, best_lap, num_font, WHITE);
+    if (texture) {
+        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.675f, HEIGHT * 0.0775f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+static void render_last_lap(const char* last_lap) {
+    static SDL_Texture* texture = nullptr;
+    texture_text(renderer, &texture, last_lap, num_font, WHITE);
+    if (texture) {
+        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.675f, HEIGHT * 0.0775f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+static void render_distance(const char* distance) {
+    static SDL_Texture* texture = nullptr;
+    texture_text(renderer, &texture, distance, num_font, WHITE);
+    if (texture) {
+        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.9f, HEIGHT * 0.0775f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+static void render_shifts(const char* shifts) {
+    static SDL_Texture* texture = nullptr;
+    texture_text(renderer, &texture, shifts, num_font, WHITE);
+    if (texture) {
+        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.9f, HEIGHT * 0.0775f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+
+void race_info_t::render() {
+    race_info_data data_copy;
+    mutex->lock();
+    if (data.new_data == 0 or data.is_paused) {
+        mutex->unlock();
+        return;
+    }
+    std::memcpy(&data_copy,&data,sizeof(data));
+    mutex->unlock();
+
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
-    // Call individual UI modular render components
-    draw_position_and_lap(data_out.RacePosition, data_out.LapNumber + 1);
-    draw_race_time(data_out.CurrentRaceTime - race_start_time);
-    draw_current_lap(data_out.CurrentLap);
-    draw_lap_history(data_out.LastLap, data_out.BestLap);
-    draw_distance_and_shifts(data_out.DistanceTraveled - distant_at_start, shift_count);
+    render_static_position_text();
+    render_static_lap_text();
+    render_static_race_time_text();
+    render_static_current_lap_text();
+    render_static_best_lap_text();
+    render_static_last_lap_text();
+    render_static_distance_text();
+    render_static_shifts_text();
+
+    if (data_copy.new_data & 0b1) render_position(data_copy.position);
+    if (data_copy.new_data & 0b10) render_lap(data_copy.lap);
+    if (data_copy.new_data & 0b100) render_race_time(data_copy.race_time);
+    if (data_copy.new_data & 0b1000) render_current_lap(data_copy.current_lap);
+    if (data_copy.new_data & 0b10000) render_best_lap(data_copy.best_lap);
+    if (data_copy.new_data & 0b100000) render_last_lap(data_copy.last_lap);
+    if (data_copy.new_data & 0b1000000) render_distance(data_copy.distance);
+    if (data_copy.new_data & 0b10000000) render_shifts(data_copy.shifts);
 
     SDL_RenderPresent(renderer);
 }
-
-void race_info_t::render() {}
 
 void race_info_t::close() {
     SDL_DestroyRenderer(renderer);

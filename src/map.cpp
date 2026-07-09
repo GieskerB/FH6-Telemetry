@@ -3,6 +3,9 @@
 #include <SDL3/SDL.h>
 #include <algorithm>
 #include <cmath>
+#include <sstream>
+#include <iomanip>
+#include <cstring>
 
 #include "../include/map.hpp"
 #include "../include/util/date.hpp"
@@ -24,8 +27,6 @@ static float SCALE_FACTOR;
 static unsigned char ARROW_SIZE;
 
 static constexpr double PI = 3.14159265358979323846;
-
-static const char* SEASONS[] = {"assets/maps/summer.png","assets/maps/autumn.png","assets/maps/winter.png","assets/maps/spring.png"};
 
 static SDL_Window * window = nullptr;
 static SDL_Renderer* renderer = nullptr;
@@ -54,83 +55,121 @@ void map_t::init(unsigned short size) {
     mutex = std::make_unique<std::mutex>();
 }
 
-static int rotate_correctly(int rotation) {
+static std::string update_map_path(const date& today, unsigned char& changed) {
+    static const char* SEASONS[] = {"assets/maps/summer.png","assets/maps/autumn.png","assets/maps/winter.png","assets/maps/spring.png"};
+    static const date first_season_start {21,5,2026};
+    static unsigned int last_date_id = date_to_int(first_season_start);
+    static std::string return_value{};
+    if (int date_id = date_to_int(today) != last_date_id) {
+        const unsigned int weeks_since_start = (date_id - last_date_id) / 7;
+        return_value = SEASONS[weeks_since_start % 4];
+        changed |= 0b1;
+    }
+    return return_value;
+}
+
+static std::string update_arrow_path(float yaw, unsigned char& changed) {
+    float rotation = (std::round((yaw * 180 / PI) / 5)) * 5;
     if (rotation < 0) {
-        return 360 + rotation;
+        rotation += 360;
     }
-    return rotation;
+    static float last_rotation = -1;
+    static std::string return_value{};
+    if (rotation != last_rotation) {
+        last_rotation = rotation;
+        std::stringstream strstream;
+        strstream << "assets/arrows/nav-" << std::setw(3) << std::setfill('0')<< rotation << ".png";
+        return_value = strstream.str();
+        changed |=0b10;
+    }
+    return return_value;
 }
 
-static void draw_nav_arrow(float pos_x, float pos_z, float yaw) {
-
-    // reduce from 3 to 2 dimension
-    const SDL_Point position {static_cast<int>(pos_x * SCALE_FACTOR) + MAP_ORIGIN_X, static_cast<int>(pos_z * (-SCALE_FACTOR)) + MAP_ORIGIN_Y};
-
-    //Convert from rad to deg:
-    yaw = yaw * 180 / PI;
-    const int rotation = (std::round((yaw) / 5)) * 5;
-    static int last_rotation = -1;
-
-    static SDL_Texture* arrow_tex = nullptr;
-    if (last_rotation != rotation) {
-        if (arrow_tex) SDL_DestroyTexture(arrow_tex);
-
-        char buffer[26]{0};
-        SDL_snprintf(buffer, sizeof(buffer), "assets/arrows/nav-%03d.png", rotate_correctly(rotation));
-
-        SDL_Surface* surf  = SDL_LoadPNG(buffer);
-        if (surf) {
-            arrow_tex = SDL_CreateTextureFromSurface(renderer, surf);
-            last_rotation = rotation;
-            SDL_DestroySurface(surf);
-        }
+static SDL_Point update_arrow_position(float pos_x, float pos_z, unsigned char& changed) {
+    static float last_pos_x = -1;
+    static float last_pos_z = -1;
+    static SDL_Point return_value;
+    if(pos_x != last_pos_x or pos_z != last_pos_z) {
+        last_pos_x = pos_x;
+        last_pos_z = pos_z;
+        return_value.x = static_cast<int>(pos_x * SCALE_FACTOR) + MAP_ORIGIN_X;
+        return_value.y = static_cast<int>(pos_z * (-SCALE_FACTOR)) + MAP_ORIGIN_Y;
+        changed |= 0b100;
     }
-    if (arrow_tex) {
-        float texture_size = 0;
-        // should be between 21 and 30!
-        SDL_GetTextureSize(arrow_tex,&texture_size,&texture_size);
-        const float scalar = texture_size / 30;
-        const SDL_FRect rect = {
-            position.x - (ARROW_SIZE * scalar / 2 +1.f),
-            position.y - ARROW_SIZE * scalar/ 2 +1.f,
-            ARROW_SIZE * scalar,
-            ARROW_SIZE * scalar
-        };
-        SDL_RenderTexture(renderer, arrow_tex, nullptr, &rect);
-    }
-}
-
-static void draw_map() {
-    static SDL_Texture* map_tex = nullptr;
-    if (!map_tex) {
-        const date first_season_start {21,5,2026};
-        const date today = get_today();
-        const unsigned int weeks_since_start = (date_to_int(today) - date_to_int(first_season_start)) / 7;
-
-        texture_png_static(renderer,&map_tex,SEASONS[weeks_since_start % 4]);
-    }
-    if (map_tex) {
-        static const SDL_FRect rect = {0, 0, static_cast<float>(WIDTH), static_cast<float>(HEIGHT)};
-        SDL_RenderTexture(renderer, map_tex, nullptr, &rect);
-    }
+    return return_value;
 }
 
 void map_t::update(const fh6_data& data_out) {
-    if(data_out.PositionX == 0.f and data_out.PositionZ == 0.f) {
-        // In menu!
+    const bool is_paused = data_out.PositionX == 0 and data_out.PositionY == 0 and data_out.PositionZ == 0;
+
+    if(is_paused) {
+        mutex->lock();
+        data.is_paused = is_paused;
+        mutex->unlock();
         return;
     }
+
+    unsigned char changes = 0;
+    std::string map_path = update_map_path(get_today(), changes);
+    std::string arrow_path = update_arrow_path(data_out.Yaw, changes);
+    SDL_Point arrow_position = update_arrow_position (data_out.PositionX, data_out.PositionZ, changes);
+
+    if(changes != 0) {
+        mutex->lock();
+        data.is_paused = is_paused;
+        data.new_data = changes;
+        std::strncpy(data.season_map_path,map_path.c_str(), sizeof(data.season_map_path) -1);
+        std::strncpy(data.arrow_path,arrow_path.c_str(), sizeof(data.arrow_path) -1);
+        data.arrow_position = arrow_position;
+    }
+}
+
+static void render_season_map(const char* map_path) {
+    static SDL_Texture* texture = nullptr;
+    if (!texture) texture_png_static(renderer,&texture,map_path);
+    if (texture) {
+        static const SDL_FRect rect = {0, 0, static_cast<float>(WIDTH), static_cast<float>(HEIGHT)};
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
+    }
+}
+
+static void render_arrow(const char* arrow_path, const SDL_Point& arrow_position) {
+    static SDL_Texture* texture = nullptr;
+    if (!texture) texture_png(renderer,&texture,arrow_path);
+    if (texture) {
+        float texture_size = 0;
+        // should be between 21 and 30!
+        SDL_GetTextureSize(texture,&texture_size,&texture_size);
+        const float scalar = texture_size / 30;
+
+        const SDL_FRect rect = {
+            arrow_position.x - (ARROW_SIZE * scalar / 2 +1.f),
+            arrow_position.y - ARROW_SIZE * scalar/ 2 +1.f,
+            ARROW_SIZE * scalar,
+            ARROW_SIZE * scalar
+        };
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
+    }
+}
+
+void map_t::render() {
+    map_data data_copy;
+    mutex->lock();
+    if (data.new_data == 0 or data.is_paused) {
+        mutex->unlock();
+        return;
+    }
+    std::memcpy(&data_copy,&data,sizeof(data));
+    mutex->unlock();
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
-    draw_map();
-    draw_nav_arrow(data_out.PositionX, data_out.PositionZ, data_out.Yaw);
+    if (data_copy.new_data & 0b1) render_season_map(data_copy.season_map_path);
+    if (data_copy.new_data & 0b10 or data_copy.new_data & 0b100) render_arrow(data_copy.arrow_path, data_copy.arrow_position);
 
     SDL_RenderPresent(renderer);
 }
-
-void map_t::render() {}
 
 void map_t::close() {
     SDL_DestroyRenderer(renderer);

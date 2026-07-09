@@ -69,7 +69,7 @@ static SDL_Color update_rpm_bar_color(int current_rpm, int max_rpm, unsigned cha
     static int last_current_rpm = -1;
     static int last_max_rpm = -1;
     static SDL_Color return_value{0,0,0,0};
-    if (current_rpm != last_current_rpm or max_rpm != last_current_rpm) {
+    if (current_rpm != last_current_rpm or max_rpm != last_max_rpm) {
         last_current_rpm = current_rpm;
         last_max_rpm = max_rpm;
         const float rpm_percentage = static_cast<float>(current_rpm) / max_rpm;
@@ -127,7 +127,6 @@ static void render_gear(const char* gear) {
         SDL_RenderTexture(renderer, texture, nullptr, &gear_rect);
     }
 }
-
 static void render_speed(const char* speed) {
     static SDL_Texture* texture = nullptr;
     texture_text(renderer, &texture, speed, font, WHITE);
@@ -136,7 +135,6 @@ static void render_speed(const char* speed) {
         SDL_RenderTexture(renderer, texture, nullptr, &speed_rect);
     }
 }
-
 static void render_static_text() {
     static SDL_Texture* texture = nullptr;
     if (texture != nullptr) texture_text_static(renderer, &texture, static_kmh_text, font, WHITE);
@@ -145,7 +143,6 @@ static void render_static_text() {
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
     }
 }
-
 static void render_rpm_bar(int idle_rpm, int current_rpm, int max_rpm, const SDL_Color& color) {
     static  const SDL_FRect full_bar = {WIDTH * 0.05f, HEIGHT * 0.75f, WIDTH * 0.9f, WIDTH * 0.1f};
 
