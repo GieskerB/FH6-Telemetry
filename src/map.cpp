@@ -59,7 +59,6 @@ static std::string update_map_path(const date& today, unsigned char& changed) {
     static const date first_season_start {21,5,2026};
     static unsigned int last_date_id = date_to_int(first_season_start);
     static std::string return_value{};
-
     const unsigned int date_id = date_to_int(today);
     if (date_id != last_date_id) {
         last_date_id = date_id;
@@ -94,7 +93,7 @@ static SDL_Point update_arrow_position(float pos_x, float pos_z, unsigned char& 
         last_pos_z = pos_z;
         return_value.x = static_cast<int>(pos_x * SCALE_FACTOR) + MAP_ORIGIN_X;
         return_value.y = static_cast<int>(pos_z * (-SCALE_FACTOR)) + MAP_ORIGIN_Y;
-        changed |= 0b100;
+        changed |= 0b10000000;
     }
     return return_value;
 }
@@ -127,15 +126,15 @@ void map_t::update(const fh6_data& data_out) {
 
 static void render_season_map(const char* map_path, bool changed) {
     static SDL_Texture* texture = nullptr;
-    if (changed) texture_png(renderer,&texture,map_path);
+    if (changed or !texture) texture_png(renderer,&texture,map_path);
     if (texture) {
         static const SDL_FRect rect = {0, 0, static_cast<float>(WIDTH), static_cast<float>(HEIGHT)};
         SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
-static void render_arrow(const char* arrow_path, bool changed, const SDL_Point& arrow_position) {
+static void render_arrow(const char* arrow_path, const SDL_Point& arrow_position, bool changed) {
     static SDL_Texture* texture = nullptr;
-    if (changed) texture_png(renderer,&texture,arrow_path);
+    if (changed or !texture) texture_png(renderer,&texture,arrow_path);
     if (texture) {
         float texture_size = 0;
         // should be between 21 and 30!
@@ -167,7 +166,7 @@ void map_t::render() {
     SDL_RenderClear(renderer);
 
     render_season_map(data_copy.season_map_path, (data_copy.new_data & 0b1) == 0b1);
-    render_arrow(data_copy.arrow_path, (data_copy.new_data & 0b10) == 0b10, data_copy.arrow_position);
+    render_arrow(data_copy.arrow_path, data_copy.arrow_position, (data_copy.new_data & 0b10) == 0b10);
 
     SDL_RenderPresent(renderer);
 }

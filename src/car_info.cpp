@@ -89,7 +89,7 @@ static SDL_Color update_class_color(int class_id, unsigned char& changed) {
     if (class_id != last_class_id) {
         last_class_id =class_id;
         return_value = CLASS_COLORS[class_id];
-        changed |= 0b100;
+        changed |= 0b10000000;
     }
     return return_value;
 }
@@ -99,7 +99,7 @@ static std::string update_performance_id(int performance_id, unsigned char& chan
     if (performance_id != last_performance_id) {
         last_performance_id = performance_id;
         return_value = std::to_string(performance_id);
-        changed |= 0b1000;
+        changed |= 0b100;
     }
     return return_value;
 }
@@ -111,7 +111,7 @@ static std::string update_flag_path(const std::string& country, unsigned char& c
         std::stringstream strstream;
         strstream << "assets/flags/" << country << ".png";
         return_value = strstream.str();
-        changed |= 0b10000;
+        changed |= 0b1000;
     }
     return return_value;
 }
@@ -123,7 +123,7 @@ static std::string update_group(const std::string& group, unsigned char& changed
         std::stringstream strstream;
         strstream << std::left << std::setw(TEXT_WIDTH-1) << group;
         return_value =strstream.str();
-        changed |= 0b100000;
+        changed |= 0b10000;
     }
     return return_value;
 }
@@ -138,7 +138,7 @@ static std::string update_year_make(int year, const std::string& make, unsigned 
         std::stringstream strstream;
         strstream << year << " - " << std::left << std::setw(TEXT_WIDTH - 8) << make;
         return_value = strstream.str();
-        changed |= 0b1000000;
+        changed |= 0b100000;
     }
     return return_value;
 }
@@ -150,7 +150,7 @@ static std::string update_model(const std::string& model, unsigned char& changed
         std::stringstream strstream;
         strstream << std::left << std::setw(TEXT_WIDTH-1) << model;
         return_value = strstream.str();
-        changed |= 0b10000000;
+        changed |= 0b1000000;
     }
     return return_value;
 }
@@ -174,7 +174,7 @@ void car_info_t::update(const fh6_data& data_out) {
     unsigned char changes = 0;
     std::string drivetrain_path = update_drivetrain_path(data_out.DrivetrainType,changes);
     std::string class_id = update_class_id(data_out.CarClass,changes);
-    SDL_Color class_color = update_class_color(data_out.CarClass,changes);
+    SDL_Color class_color = update_class_color(data_out.CarClass, changes);
     std::string performance_id = update_performance_id(data_out.CarPerformanceIndex,changes);
     std::string flag_path = update_flag_path(country_map[details.make],changes);
     std::string group = update_group(group_map[data_out.CarGroup],changes);
@@ -197,17 +197,17 @@ void car_info_t::update(const fh6_data& data_out) {
     }
 }
 
-static void render_drivetrain(const char* path) {
+static void render_drivetrain(const char* path, bool changed) {
     static SDL_Texture* texture = nullptr;
-    texture_png(renderer,&texture,path);
+    if(changed or !texture) texture_png(renderer,&texture,path);
     if (texture) {
         static const SDL_FRect unit_rect = {static_cast<float>(WIDTH - SPRITE_WIDTH), 0, static_cast<float>(SPRITE_WIDTH), static_cast<float>(SPRITE_HEIGHT)};
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
     }
 }
-static void render_class_id(const char* value, const SDL_Color& color) {
+static void render_class_id(const char* value, const SDL_Color& color, bool changed) {
     static SDL_Texture* texture = nullptr;
-    texture_text(renderer, &texture, value, pi_font, WHITE);
+    if(changed or !texture) texture_text(renderer, &texture, value, pi_font, WHITE);
     if (texture) {
         // Let ID take up 40 % of the space on the left
         static const float ID_SPACE = 0.4f;
@@ -228,9 +228,9 @@ static void render_class_id(const char* value, const SDL_Color& color) {
         SDL_RenderTexture(renderer, texture, nullptr, &text_rect);
     }
 }
-static void render_performance_id(const char* value) {
+static void render_performance_id(const char* value, bool changed) {
     static SDL_Texture* texture = nullptr;
-    texture_text(renderer, &texture, value, pi_font, WHITE);
+    if(changed or !texture) texture_text(renderer, &texture, value, pi_font, WHITE);
     if (texture) {
         // Let PI take up 60 % of the space on the right - some small padding
         static const SDL_FRect performance_bg = {
@@ -253,33 +253,33 @@ static void render_performance_id(const char* value) {
         SDL_RenderTexture(renderer, texture, nullptr, &text_rect);
     }
 }
-static void render_flag(const char* path) {
+static void render_flag(const char* path, bool changed) {
     static SDL_Texture* texture = nullptr;
-    texture_png(renderer,&texture,path);
+    if(changed or !texture) texture_png(renderer,&texture,path);
     if (texture) {
         static const SDL_FRect unit_rect = {WIDTH * (1 - SPRITE_PORTION), static_cast<float>(SPRITE_HEIGHT), static_cast<float>(SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH)};
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
     }
 }
-static void render_group(const char* value) {
+static void render_group(const char* value, bool changed) {
     static SDL_Texture* texture = nullptr;
-    texture_text(renderer, &texture, value, text_font, WHITE);
+    if(changed or !texture) texture_text(renderer, &texture, value, text_font, WHITE);
     if (texture) {
         const SDL_FRect unit_rect = { 0, static_cast<float>(SPRITE_HEIGHT), static_cast<float>(WIDTH-SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH / 3)};
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
     }
 }
-static void render_year_make(const char* value) {
+static void render_year_make(const char* value, bool changed) {
     static SDL_Texture* texture = nullptr;
-    texture_text(renderer, &texture, value, text_font, WHITE);
+    if(changed or !texture) texture_text(renderer, &texture, value, text_font, WHITE);
     if (texture) {
         const SDL_FRect unit_rect = { 0, static_cast<float>(SPRITE_HEIGHT + SPRITE_WIDTH / 3), static_cast<float>(WIDTH-SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH / 3)};
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
     }
 }
-static void render_model(const char* value) {
+static void render_model(const char* value, bool changed) {
     static SDL_Texture* texture = nullptr;
-    texture_text(renderer, &texture, value, text_font, WHITE);
+    if(changed or !texture) texture_text(renderer, &texture, value, text_font, WHITE);
     if (texture) {
         const SDL_FRect unit_rect = { 0, static_cast<float>(SPRITE_HEIGHT + SPRITE_WIDTH *2 / 3), static_cast<float>(WIDTH-SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH / 3)};
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
@@ -299,13 +299,13 @@ void car_info_t::render() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
-    if (data_copy.new_data & 0b1) render_drivetrain(data_copy.drivetrain_path);
-    if (data_copy.new_data & 0b10) render_class_id(data_copy.class_id,data_copy.class_color);
-    if (data_copy.new_data & 0b1000) render_performance_id(data_copy.performance_id);
-    if (data_copy.new_data & 0b10000) render_flag(data_copy.flag_path);
-    if (data_copy.new_data & 0b100000) render_group(data_copy.group);
-    if (data_copy.new_data & 0b1000000) render_year_make(data_copy.year_make);
-    if (data_copy.new_data & 0b10000000) render_model(data_copy.model);
+    render_drivetrain(data_copy.drivetrain_path, (data_copy.new_data & 0b1) == 0b1);
+    render_class_id(data_copy.class_id,data_copy.class_color, (data_copy.new_data & 0b10) == 0b10);
+    render_performance_id(data_copy.performance_id, (data_copy.new_data & 0b100) == 0b100);
+    render_flag(data_copy.flag_path, (data_copy.new_data & 0b1000) == 0b1000);
+    render_group(data_copy.group, (data_copy.new_data & 0b10000) == 0b10000);
+    render_year_make(data_copy.year_make, (data_copy.new_data & 0b100000) == 0b100000);
+    render_model(data_copy.model, (data_copy.new_data & 0b1000000) == 0b1000000);
 
     SDL_RenderPresent(renderer);
 }

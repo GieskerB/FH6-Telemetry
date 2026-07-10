@@ -4,11 +4,11 @@ std::vector<SDL_Texture*> registered_textures;
 
 void texture_text(SDL_Renderer* renderer, SDL_Texture** texture, const char* text, TTF_Font* font, const SDL_Color &color) {
     SDL_Surface* surf = TTF_RenderText_Blended(font, text, 0, color);
-    if (surf == nullptr) return;
+    if (!surf) return;
 
     if (!*texture) {
         *texture = SDL_CreateTexture(renderer, surf->format, SDL_TEXTUREACCESS_STREAMING, surf->w, surf->h);
-        if(*texture == nullptr) return;
+        if(!*texture) return;
         registered_textures.push_back(*texture);
     }
 
@@ -23,7 +23,7 @@ void texture_text(SDL_Renderer* renderer, SDL_Texture** texture, const char* tex
         if (it != registered_textures.end()) registered_textures.erase(it);
         SDL_DestroyTexture(*texture);
         *texture = SDL_CreateTexture(renderer, surf->format, SDL_TEXTUREACCESS_STREAMING, max_width, max_height);
-        if(*texture == nullptr) return;
+        if(!*texture) return;
         registered_textures.push_back(*texture);
     }
 
@@ -35,10 +35,10 @@ void texture_text(SDL_Renderer* renderer, SDL_Texture** texture, const char* tex
 
 void texture_text_static(SDL_Renderer* renderer, SDL_Texture** texture, const char* text, TTF_Font* font, const SDL_Color &color) {
     SDL_Surface* surf = TTF_RenderText_Blended(font, text, 0, color);
-    if (surf == nullptr) return;
+    if (!surf) return;
     if (!*texture) {
         *texture = SDL_CreateTexture(renderer, surf->format, SDL_TEXTUREACCESS_STATIC, surf->w, surf->h);
-        if(*texture == nullptr) {
+        if(!*texture) {
             SDL_DestroySurface(surf);
             return;
         }
@@ -51,11 +51,11 @@ void texture_text_static(SDL_Renderer* renderer, SDL_Texture** texture, const ch
 
 void texture_png(SDL_Renderer* renderer, SDL_Texture** texture,const char* file_name) {
     SDL_Surface* surf = SDL_LoadPNG(file_name);
-    if (surf == nullptr) return;
+    if (!surf) return;
 
     if (!*texture) {
         *texture = SDL_CreateTexture(renderer, surf->format, SDL_TEXTUREACCESS_STREAMING, surf->w, surf->h);
-        if(*texture == nullptr) return;
+        if(!*texture) return;
         registered_textures.push_back(*texture);
     }
 
@@ -65,11 +65,11 @@ void texture_png(SDL_Renderer* renderer, SDL_Texture** texture,const char* file_
 
 void texture_png_static(SDL_Renderer* renderer, SDL_Texture** texture,const char* file_name) {
     SDL_Surface* surf = SDL_LoadPNG(file_name);
-    if (surf == nullptr) return;
+    if (!surf) return;
 
     if (!*texture) {
         *texture = SDL_CreateTexture(renderer, surf->format, SDL_TEXTUREACCESS_STATIC, surf->w, surf->h);
-        if(*texture == nullptr) return;
+        if(!*texture) return;
         registered_textures.push_back(*texture);
     }
 

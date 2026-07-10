@@ -54,6 +54,7 @@ static std::string update_gear(int gear, unsigned char& changed) {
     return return_value;
 }
 static std::string update_speed(int speed, unsigned char& changed) {
+    speed *= 3.6f; // m/s to km/h
     static int last_speed = -1;
     static std::string return_value{};
     if (speed != last_speed) {
@@ -85,7 +86,7 @@ static SDL_Color update_rpm_bar_color(int current_rpm, int max_rpm, unsigned cha
             g = static_cast<unsigned char>((1.0f - factor) * 255.0f);
         }
         return_value = {r,g,0,255};
-        changed |= 0b100;
+        changed |= 0b10000000;
     }
     return return_value;
 }
@@ -119,28 +120,29 @@ void engine_rpm_t::update(const fh6_data & data_out) {
     }
 }
 
-static void render_gear(const char* gear) {
+static void render_static_text() {
     static SDL_Texture* texture = nullptr;
-    texture_text(renderer, &texture, gear, font, ORANGE);
+    if (texture == nullptr) texture_text_static(renderer, &texture, static_kmh_text, font, WHITE);
+    if (texture) {
+        static const SDL_FRect unit_rect = { WIDTH * 0.75f, HEIGHT * 0.5f, WIDTH * 0.225f, HEIGHT * 0.2f };
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
+
+static void render_gear(const char* gear, bool changed) {
+    static SDL_Texture* texture = nullptr;
+    if(changed or !texture) texture_text(renderer, &texture, gear, font, ORANGE);
     if (texture) {
         static const SDL_FRect gear_rect = { WIDTH * 0.75f, HEIGHT * 0.1f, WIDTH * 0.225f, HEIGHT * 0.4f };
         SDL_RenderTexture(renderer, texture, nullptr, &gear_rect);
     }
 }
-static void render_speed(const char* speed) {
+static void render_speed(const char* speed, bool changed) {
     static SDL_Texture* texture = nullptr;
-    texture_text(renderer, &texture, speed, font, WHITE);
+    if(changed or !texture) texture_text(renderer, &texture, speed, font, WHITE);
     if (texture) {
         static const SDL_FRect speed_rect = { HEIGHT * 0.1f, 0.0f, WIDTH * 0.667f, HEIGHT * 0.8f };
         SDL_RenderTexture(renderer, texture, nullptr, &speed_rect);
-    }
-}
-static void render_static_text() {
-    static SDL_Texture* texture = nullptr;
-    if (texture != nullptr) texture_text_static(renderer, &texture, static_kmh_text, font, WHITE);
-    if (texture) {
-        static const SDL_FRect unit_rect = { WIDTH * 0.75f, HEIGHT * 0.5f, WIDTH * 0.225f, HEIGHT * 0.2f };
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
     }
 }
 static void render_rpm_bar(int idle_rpm, int current_rpm, int max_rpm, const SDL_Color& color) {
@@ -194,10 +196,11 @@ void engine_rpm_t::render() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
-    if (data_copy.new_data & 0b1) render_gear(data_copy.gear);
-    if (data_copy.new_data & 0b10) render_speed(data_copy.speed);
     render_static_text();
-    if (data_copy.new_data & 0b100) render_rpm_bar(data_copy.idle_rpm, data_copy.current_rpm, data_copy.max_rpm, data_copy.rpm_bar_color);
+
+    render_gear(data_copy.gear, (data_copy.new_data & 0b1) == 0b1);
+    render_speed(data_copy.speed, (data_copy.new_data & 0b10) == 0b10);
+    render_rpm_bar(data_copy.idle_rpm, data_copy.current_rpm, data_copy.max_rpm, data_copy.rpm_bar_color);
 
     SDL_RenderPresent(renderer);
 }

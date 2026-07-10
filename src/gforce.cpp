@@ -47,7 +47,6 @@ void gforce_t::init(unsigned short size) {
 }
 
 static std::pair<SDL_Point, std::string> update_gforce_point(float acc_x, float acc_z,unsigned char& changed) {
-
     float x = -acc_x / 9.81f;
     float z = acc_z / 9.81f;
     // round to two decimal places
@@ -57,9 +56,8 @@ static std::pair<SDL_Point, std::string> update_gforce_point(float acc_x, float 
         z = z / gforce * G_MAX;
     }
 
-    //update even without change for correct history!
-    changed |= 0b1;
     const SDL_Point new_point{WIDTH /2 + static_cast<int>((x / G_MAX) * WIDTH / 2),HEIGHT /2 + static_cast<int>((z / G_MAX) * HEIGHT / 2)};
+    changed |= 0b10000000;
 
     static float last_gforce = -1;
     static std::string return_value{};
@@ -68,14 +66,12 @@ static std::pair<SDL_Point, std::string> update_gforce_point(float acc_x, float 
         std::stringstream strstream;
         strstream << std::fixed << std::setprecision(2) << gforce << 'G';
         return_value = strstream.str();
-        changed |= 0b100;
+        changed |= 0b1;
     }
 
     return {new_point,return_value};
 }
 static std::pair<SDL_Point, std::string> update_speed_point(float speed_x, float speed_z, unsigned char& changed) {
-
-
     float x = speed_x * 3.6f;
     float z = -speed_z * 3.6f;
 
@@ -86,9 +82,8 @@ static std::pair<SDL_Point, std::string> update_speed_point(float speed_x, float
         z = z / speed * SPEED_MAX;
     }
 
-    //update even without change for correct history!
-    changed |= 0b10;
     const SDL_Point new_point {WIDTH /2 + static_cast<int>((x / SPEED_MAX) * WIDTH /2),HEIGHT /2 + static_cast<int>((z / SPEED_MAX) * HEIGHT /2)};
+    changed |= 0b10000000;
 
     static int last_speed = -1;
     static std::string return_value{};
@@ -97,7 +92,7 @@ static std::pair<SDL_Point, std::string> update_speed_point(float speed_x, float
         std::stringstream strstream;
         strstream << std::setw(3) << std::setfill('0') << speed << "KM/H";
         return_value = strstream.str();
-        changed |= 0b1000;
+        changed |= 0b10;
     }
 
     return {new_point, return_value};
@@ -166,6 +161,7 @@ static void render_static_speed_labels() {
         }
     }
 }
+
 static void render_gforce_point(const SDL_Point& point) {
     static short head = 0;
     static SDL_Point history[HISTORY_SIZE]{0,0};
@@ -198,17 +194,17 @@ static void render_speed_point(const SDL_Point& point) {
 
     if (head < 0) head = HISTORY_SIZE - 1;
 }
-static void render_gforce(const char* gforce) {
+static void render_gforce(const char* gforce, bool changed) {
     static SDL_Texture* texture = nullptr;
-    texture_text(renderer, &texture, gforce, font, ORANGE);
+    if(changed or !texture) texture_text(renderer, &texture, gforce, font, ORANGE);
     if (texture) {
         const SDL_FRect unit_rect = { WIDTH * 0.7f, HEIGHT * 0.92f, WIDTH * 0.3f, WIDTH * 0.08f };
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
     }
 }
-static void render_speed(const char* speed) {
+static void render_speed(const char* speed, bool changed) {
     static SDL_Texture* texture = nullptr;
-    texture_text(renderer, &texture, speed, font, BLUE);
+    if(changed or !texture) texture_text(renderer, &texture, speed, font, BLUE);
     if (texture) {
         const SDL_FRect unit_rect = { 0, HEIGHT * 0.92f, WIDTH * 0.3f, WIDTH * 0.08f };
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
@@ -228,10 +224,10 @@ void gforce_t::render() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
-    if (data_copy.new_data & 0b1) render_gforce_point(data_copy.new_gforce_point);
-    if (data_copy.new_data & 0b10) render_speed_point(data_copy.new_speed_point);
-    if (data_copy.new_data & 0b100) render_gforce(data_copy.gforce);
-    if (data_copy.new_data & 0b1000) render_speed(data_copy.speed);
+    render_gforce_point(data_copy.new_gforce_point);
+    render_speed_point(data_copy.new_speed_point);
+    render_gforce(data_copy.gforce, (data_copy.new_data & 0b1) == 0b1);
+    render_speed(data_copy.speed, (data_copy.new_data & 0b10) == 0b10);
     render_static_background();
     render_static_gforce_labels();
     render_static_speed_labels();

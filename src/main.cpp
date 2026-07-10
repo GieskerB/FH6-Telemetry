@@ -44,13 +44,13 @@ void render_thread(std::vector<telemetries_t>* telemetries, const std::array<uns
             std::visit([&](auto& obj) {
                 obj.render();
                 const auto elapsed =std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-last);
-                std::cout << elapsed.count() << " ";
+                // std::cout << elapsed.count() << " ";
                 last = std::chrono::system_clock::now();
             },telem);
         }
         const auto end = std::chrono::system_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-        std::cout << " - Total time: " << elapsed.count() << "ms\n";
+        // std::cout << " - Total time: " << elapsed.count() << "ms\n";
     }
 
     for (auto& telem : *telemetries) {
@@ -61,7 +61,7 @@ void render_thread(std::vector<telemetries_t>* telemetries, const std::array<uns
 // Continuously receive data via UDP.
 void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<telemetries_t>& telemetries, const std::array<unsigned short, 5>& sizes) {
     std::thread thread(render_thread, &telemetries, sizes);
-    usleep(2000);
+    // usleep(200000);
 
     struct fh6_data data_out;
     unsigned int last_time_stamp = 0;
