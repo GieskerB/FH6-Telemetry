@@ -20,7 +20,7 @@ struct race_info_data {
     char best_lap[12]{0};
     char last_lap[12]{0};
     char distance[9]{0};
-    char shifts[5]{0};
+    char shifts[6]{0};
 };
 
 #endif

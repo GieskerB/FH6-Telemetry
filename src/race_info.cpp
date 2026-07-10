@@ -66,27 +66,14 @@ static std::string format_time(float seconds) {
     return strstream.str();
 }
 
-static SDL_FRect calc_centered_rect(SDL_Texture* texture, float center_x, float center_y, float target_height) {
-    float w, h;
-    SDL_GetTextureSize(texture, &w, &h);
-
-    const float ratio = w / h;
-    const float final_width = target_height * ratio;
-
-    return {
-        center_x - (final_width / 2.f),
-        center_y - (target_height / 2.f),
-        final_width,
-        target_height
-    };
-}
-
 static std::string update_position(unsigned char position, unsigned char& changed) {
     static unsigned char last_position = -1;
     static std::string return_value{};
     if (position != last_position) {
         last_position = position;
-        return_value = std::to_string(position);
+        std::stringstream strstream;
+        strstream << std::setw(2) << std::setfill('0') << +position;
+        return_value = strstream.str();
         changed |= 0b1;
     }
     return return_value;
@@ -96,7 +83,9 @@ static std::string update_lap(unsigned short lap, unsigned char& changed) {
     static std::string return_value{};
     if (lap != last_lap) {
         last_lap = lap;
-        return_value = std::to_string(lap);
+        std::stringstream strstream;
+        strstream << std::setw(2) << std::setfill('0') << lap;
+        return_value = strstream.str();
         changed |= 0b10;
     }
     return return_value;
@@ -158,15 +147,15 @@ static std::string update_distance(float distance, unsigned char& changed) {
     return return_value;
 }
 static std::string update_shifts(unsigned int shifts, unsigned char& changed) {
-    if (shifts > 99999) {
-        shifts = 99999;
+    if (shifts > 9999) {
+        shifts = 9999;
     }
     static unsigned int last_shifts = -1;
     static std::string return_value{};
     if (shifts != last_shifts) {
         last_shifts = shifts;
         std::stringstream strstream;
-        strstream << std::setw(5) << std:: setfill ('0') << shifts;
+        strstream << std::setw(4) << std::setfill('0') << shifts;
         return_value = strstream.str();
         changed |= 0b10000000;
     }
@@ -183,19 +172,14 @@ void race_info_t::update(const fh6_data& data_out) {
         return;
     }
 
-    const bool on_race = data_out.IsRaceOn;
+    const bool on_race = data_out.RacePosition > 0;
     static bool was_on_race = false;
     static float race_start_time = 0;
     static float distant_at_start = 0;
     static unsigned short shift_count = 0;
     static int last_gear = 1;
 
-    // std::cout << "[["<< +on_race <<  +was_on_race<<"]]";
-
-    if (!on_race and !was_on_race){
-        // No race!
-        return;
-    } else if(on_race and !was_on_race) {
+    if(on_race and !was_on_race) {
         // Just entered race!
         was_on_race = true;
         race_start_time = data_out.CurrentRaceTime;
@@ -207,20 +191,40 @@ void race_info_t::update(const fh6_data& data_out) {
         was_on_race = false;
     }
 
-    if(last_gear != data_out.Gear and data_out.Gear != 11) {
-        last_gear = data_out.Gear;
-        ++shift_count;
-    }
-
     unsigned char changes = 0;
     std::string position = update_position(data_out.RacePosition, changes);
-    std::string lap = update_lap(data_out.LapNumber, changes);
+    std::string lap = update_lap(data_out.LapNumber + 1, changes);
     std::string race_time = update_race_time(data_out.CurrentRaceTime - race_start_time, changes);
     std::string current_lap = update_current_lap(data_out.CurrentLap, changes);
     std::string best_lap = update_best_lap(data_out.BestLap, changes);
     std::string last_lap = update_last_lap(data_out.LastLap, changes);
     std::string distance = update_distance(data_out.DistanceTraveled - distant_at_start, changes);
     std::string shifts = update_shifts(shift_count, changes);
+
+    if (on_race) {
+        if(last_gear != data_out.Gear and data_out.Gear != 11) {
+            last_gear = data_out.Gear;
+            ++shift_count;
+        }
+
+        position = update_position(data_out.RacePosition, changes);
+        lap = update_lap(data_out.LapNumber + 1, changes);
+        race_time = update_race_time(data_out.CurrentRaceTime - race_start_time, changes);
+        current_lap = update_current_lap(data_out.CurrentLap, changes);
+        best_lap = update_best_lap(data_out.BestLap, changes);
+        last_lap = update_last_lap(data_out.LastLap, changes);
+        distance = update_distance(data_out.DistanceTraveled - distant_at_start, changes);
+        shifts = update_shifts(shift_count, changes);
+    } else {
+        position = update_position(0, changes);
+        lap = update_lap(0, changes);
+        race_time = update_race_time(0, changes);
+        current_lap = update_current_lap(0, changes);
+        best_lap = update_best_lap(0, changes);
+        last_lap = update_last_lap(0, changes);
+        distance = update_distance(0, changes);
+        shifts = update_shifts(0, changes);
+    }
 
     if (changes != 0) {
         mutex->lock();
@@ -274,7 +278,7 @@ static void render_static_best_lap_text() {
     static SDL_Texture* texture = nullptr;
     if (texture == nullptr) texture_text_static(renderer, &texture, static_best_lap_text, text_font, WHITE);
     if (texture) {
-        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.6f, HEIGHT * 0.0525f);
+        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.6f, HEIGHT * 0.0525f);
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
     }
 }
@@ -282,7 +286,7 @@ static void render_static_last_lap_text() {
     static SDL_Texture* texture = nullptr;
     if (texture == nullptr) texture_text_static(renderer, &texture, static_last_lap_text, text_font, WHITE);
     if (texture) {
-        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.6f, HEIGHT * 0.0525f);
+        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.6f, HEIGHT * 0.0525f);
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
     }
 }
@@ -305,7 +309,7 @@ static void render_static_shifts_text() {
 
 static void render_position(const char* position, bool changed) {
     static SDL_Texture* texture = nullptr;
-    if(changed or !texture) texture_text(renderer, &texture, position, num_font, WHITE);
+    if(changed or !texture) texture_text(renderer, &texture, position, num_font, ORANGE);
     if (texture) {
         const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.45f, HEIGHT * 0.05f, HEIGHT * 0.08f);
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
@@ -313,7 +317,7 @@ static void render_position(const char* position, bool changed) {
 }
 static void render_lap(const char* lap, bool changed) {
     static SDL_Texture* texture = nullptr;
-    if(changed or !texture) texture_text(renderer, &texture, lap, num_font, WHITE);
+    if(changed or !texture) texture_text(renderer, &texture, lap, num_font, ORANGE);
     if (texture) {
         const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.925f, HEIGHT * 0.05f, HEIGHT * 0.08f);
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
@@ -337,23 +341,23 @@ static void render_current_lap(const char* current_lap, bool changed) {
 }
 static void render_best_lap(const char* best_lap, bool changed) {
     static SDL_Texture* texture = nullptr;
-    if(changed or !texture) texture_text(renderer, &texture, best_lap, num_font, WHITE);
-    if (texture) {
-        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.675f, HEIGHT * 0.0775f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
-    }
-}
-static void render_last_lap(const char* last_lap, bool changed) {
-    static SDL_Texture* texture = nullptr;
-    if(changed or !texture) texture_text(renderer, &texture, last_lap, num_font, WHITE);
+    if(changed or !texture) texture_text(renderer, &texture, best_lap, num_font, BLUE);
     if (texture) {
         const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.675f, HEIGHT * 0.0775f);
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
     }
 }
+static void render_last_lap(const char* last_lap, bool changed) {
+    static SDL_Texture* texture = nullptr;
+    if(changed or !texture) texture_text(renderer, &texture, last_lap, num_font, BLUE);
+    if (texture) {
+        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.675f, HEIGHT * 0.0775f);
+        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+    }
+}
 static void render_distance(const char* distance, bool changed) {
     static SDL_Texture* texture = nullptr;
-    if(changed or !texture) texture_text(renderer, &texture, distance, num_font, WHITE);
+    if(changed or !texture) texture_text(renderer, &texture, distance, num_font, ORANGE);
     if (texture) {
         const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.9f, HEIGHT * 0.0775f);
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
@@ -361,7 +365,7 @@ static void render_distance(const char* distance, bool changed) {
 }
 static void render_shifts(const char* shifts, bool changed) {
     static SDL_Texture* texture = nullptr;
-    if(changed or !texture) texture_text(renderer, &texture, shifts, num_font, WHITE);
+    if(changed or !texture) texture_text(renderer, &texture, shifts, num_font, ORANGE);
     if (texture) {
         const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.9f, HEIGHT * 0.0775f);
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);

@@ -8,6 +8,7 @@ constexpr unsigned short TELEMETRY_SIZE = 324;
 struct fh6_data {
 
 // = 1 when race is on. = 0 when in menus/race stopped.
+// NOTE: race also includes open world driving...
 int IsRaceOn = 0;
 
 // Can overflow to 0 eventually
