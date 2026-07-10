@@ -44,7 +44,6 @@ void race_info_t::init(unsigned short size) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
-    mutex = std::make_unique<std::mutex>();
 }
 
 static std::string format_time(float seconds) {

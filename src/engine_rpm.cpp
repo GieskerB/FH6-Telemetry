@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <string>
 #include <cstring>
+#include <sstream>
+#include <iomanip>
 
 #include "../include/engine_rpm.hpp"
 #include "../include/util/colors.hpp"
@@ -38,7 +40,6 @@ void engine_rpm_t::init(unsigned short size) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
-    mutex = std::make_unique<std::mutex>();
 }
 
 static std::string update_gear(int gear, unsigned char& changed) {
@@ -52,18 +53,18 @@ static std::string update_gear(int gear, unsigned char& changed) {
     }
     return return_value;
 }
-
 static std::string update_speed(int speed, unsigned char& changed) {
-    static int last_gear = -1;
+    static int last_speed = -1;
     static std::string return_value{};
-    if (speed != last_gear) {
-        last_gear = speed;
-        return_value = std::to_string(speed);
+    if (speed != last_speed) {
+        last_speed = speed;
+        std::stringstream strstream;
+        strstream << std::setw(3) << std::setfill('0') << speed;
+        return_value = strstream.str();
         changed |= 0b10;
     }
     return return_value;
 }
-
 static SDL_Color update_rpm_bar_color(int current_rpm, int max_rpm, unsigned char& changed) {
     static constexpr float RPM_FADE = 0.6f;
     static int last_current_rpm = -1;
@@ -117,7 +118,6 @@ void engine_rpm_t::update(const fh6_data & data_out) {
         mutex->unlock();
     }
 }
-
 
 static void render_gear(const char* gear) {
     static SDL_Texture* texture = nullptr;

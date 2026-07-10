@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <variant>
+#include <array>
 
 #include "../engine_rpm.hpp"
 #include "../gforce.hpp"
@@ -64,7 +65,7 @@ bool push_unique(std::vector<telemetries_t>& vec, telemetries_t&& value) {
     return false;
 }
 
-bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetries) {
+bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetries, std::array<unsigned short, 5>& sizes) {
     const size_t colon_pos = arg.find(':');
     const bool specify_size = std::string::npos != colon_pos;
 
@@ -76,19 +77,34 @@ bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetri
 
             switch (i){
             case 0:
-                telem = car_info_t{};
+                if (!push_unique(telemetries,std::move(car_info_t{}))) {
+                    std::cerr << "Cannot instanace same telemetry more then once!\n";
+                    return true;
+                }
                 break;
             case 1:
-                telem = engine_rpm_t{};
+                if (!push_unique(telemetries,std::move(engine_rpm_t{}))) {
+                    std::cerr << "Cannot instanace same telemetry more then once!\n";
+                    return true;
+                }
                 break;
             case 2:
-                telem = gforce_t{};
+                if (!push_unique(telemetries,std::move(gforce_t{}))) {
+                    std::cerr << "Cannot instanace same telemetry more then once!\n";
+                    return true;
+                }
                 break;
             case 3:
-                telem = map_t{};
+                if (!push_unique(telemetries,std::move(map_t{}))) {
+                    std::cerr << "Cannot instanace same telemetry more then once!\n";
+                    return true;
+                }
                 break;
             case 4:
-                telem = race_info_t{};
+                if (!push_unique(telemetries,std::move(race_info_t{}))) {
+                    std::cerr << "Cannot instanace same telemetry more then once!\n";
+                    return true;
+                }
                 break;
             default:
                 break;
@@ -109,18 +125,13 @@ bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetri
                         std::cerr << "Size of telemetry must be in range [0, "<< max_value <<"]!\n";
                         return true;
                     }
-                    std::visit([size](auto& obj) {obj.init(static_cast<unsigned short>(size));},telem);
+                    sizes[i] = size;
                 }  catch (std::invalid_argument&) {
                     std::cerr << "Can not parse " << tmp << " into a size for telemetry number!\n";
                     return true;
                 }
             } else {
-                std::visit([](auto& obj) {obj.init();},telem);
-            }
-
-            if (!push_unique(telemetries,std::move(telem))) {
-                std::cerr << "Cannot instanace same telemetry more then once!\n";
-                return true;
+                sizes[i] = 0;
             }
 
             return false;
@@ -130,7 +141,7 @@ bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetri
     return true;
 }
 
-int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemetries) {
+int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemetries, std::array<unsigned short, 5>& sizes) {
     bool has_port_input = false;
     bool need_help = false;
     int port_number = 0;
@@ -169,7 +180,7 @@ int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemet
                 need_help = true;
                 break;
             }
-            need_help = handle_telemetry_arg(argv[++i], telemetries);
+            need_help = handle_telemetry_arg(argv[++i], telemetries, sizes);
             if(need_help) break;
             continue;
         }
@@ -184,7 +195,7 @@ int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemet
                 break;
             }
             for (auto& telem: telemetries) {
-                std::visit([](auto& obj) {obj.init();},telem);
+                std::visit([&](auto& obj) {sizes[obj.ID] = 0;},telem);
             }
             continue;
         }
@@ -204,6 +215,5 @@ int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemet
     }
     return port_number;
 }
-
 
 #endif

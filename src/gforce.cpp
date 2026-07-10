@@ -44,7 +44,6 @@ void gforce_t::init(unsigned short size) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
-    mutex = std::make_unique<std::mutex>();
 }
 
 static std::pair<SDL_Point, std::string> update_gforce_point(float acc_x, float acc_z,unsigned char& changed) {
@@ -67,7 +66,7 @@ static std::pair<SDL_Point, std::string> update_gforce_point(float acc_x, float 
     if (gforce != last_gforce) {
         last_gforce = gforce;
         std::stringstream strstream;
-        strstream << std::fixed << std::setprecision(2) << gforce;
+        strstream << std::fixed << std::setprecision(2) << gforce << 'G';
         return_value = strstream.str();
         changed |= 0b100;
     }
@@ -80,23 +79,23 @@ static std::pair<SDL_Point, std::string> update_speed_point(float speed_x, float
     float x = speed_x * 3.6f;
     float z = -speed_z * 3.6f;
 
-    const float speed = std::hypot(x,z);
+    const int speed = static_cast<int>(std::round(std::hypot(x,z)));
 
-    if(speed > G_MAX * 100) {
+    if(speed > SPEED_MAX) {
         x = x / speed * SPEED_MAX;
         z = z / speed * SPEED_MAX;
     }
 
     //update even without change for correct history!
     changed |= 0b10;
-    const SDL_Point new_point {WIDTH /2 + static_cast<int>((x / G_MAX) * WIDTH / 2),HEIGHT /2 + static_cast<int>((z / G_MAX) * HEIGHT / 2)};
+    const SDL_Point new_point {WIDTH /2 + static_cast<int>((x / SPEED_MAX) * WIDTH /2),HEIGHT /2 + static_cast<int>((z / SPEED_MAX) * HEIGHT /2)};
 
-    static float last_speed = -1;
+    static int last_speed = -1;
     static std::string return_value{};
     if(speed != last_speed) {
         last_speed = speed;
         std::stringstream strstream;
-        strstream << std::setw(3) << std::setfill('0') << speed;
+        strstream << std::setw(3) << std::setfill('0') << speed << "KM/H";
         return_value = strstream.str();
         changed |= 0b1000;
     }
@@ -126,7 +125,7 @@ void gforce_t::update(const fh6_data& data_out) {
         data.new_gforce_point = gforce_pair.first;
         data.new_speed_point = speed_pair.first;
         std::strncpy(data.gforce,gforce_pair.second.c_str(), sizeof(data.gforce)-1);
-        std::strncpy(data.speed,gforce_pair.second.c_str(), sizeof(data.speed)-1);
+        std::strncpy(data.speed,speed_pair.second.c_str(), sizeof(data.speed)-1);
         mutex->unlock();
     }
 }
@@ -139,7 +138,6 @@ static void render_static_background() {
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
     }
 }
-
 static void render_static_gforce_labels() {
     static SDL_Texture* textures[G_MAX];
     if (!textures[0]) {
@@ -154,12 +152,11 @@ static void render_static_gforce_labels() {
         }
     }
 }
-
 static void render_static_speed_labels() {
     static SDL_Texture* textures[G_MAX];
     if (!textures[0]) {
         for(int i = 0 ; i < G_MAX; ++i) {
-            texture_text_static(renderer, &textures[i], gforce_label[i], font, BLUE);
+            texture_text_static(renderer, &textures[i], speed_label[i], font, BLUE);
         }
     }
     if (textures[0]) {
@@ -169,7 +166,6 @@ static void render_static_speed_labels() {
         }
     }
 }
-
 static void render_gforce_point(const SDL_Point& point) {
     static short head = 0;
     static SDL_Point history[HISTORY_SIZE]{0,0};
@@ -186,7 +182,6 @@ static void render_gforce_point(const SDL_Point& point) {
 
     if (head < 0) head = HISTORY_SIZE - 1;
 }
-
 static void render_speed_point(const SDL_Point& point) {
     static short head = 0;
     static SDL_Point history[HISTORY_SIZE]{0,0};
@@ -203,7 +198,6 @@ static void render_speed_point(const SDL_Point& point) {
 
     if (head < 0) head = HISTORY_SIZE - 1;
 }
-
 static void render_gforce(const char* gforce) {
     static SDL_Texture* texture = nullptr;
     texture_text(renderer, &texture, gforce, font, ORANGE);
@@ -212,7 +206,6 @@ static void render_gforce(const char* gforce) {
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
     }
 }
-
 static void render_speed(const char* speed) {
     static SDL_Texture* texture = nullptr;
     texture_text(renderer, &texture, speed, font, BLUE);
@@ -221,7 +214,6 @@ static void render_speed(const char* speed) {
         SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
     }
 }
-
 
 void gforce_t::render() {
     gforce_data data_copy;

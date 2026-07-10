@@ -52,7 +52,6 @@ void map_t::init(unsigned short size) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
-    mutex = std::make_unique<std::mutex>();
 }
 
 static std::string update_map_path(const date& today, unsigned char& changed) {
@@ -67,7 +66,6 @@ static std::string update_map_path(const date& today, unsigned char& changed) {
     }
     return return_value;
 }
-
 static std::string update_arrow_path(float yaw, unsigned char& changed) {
     float rotation = (std::round((yaw * 180 / PI) / 5)) * 5;
     if (rotation < 0) {
@@ -84,7 +82,6 @@ static std::string update_arrow_path(float yaw, unsigned char& changed) {
     }
     return return_value;
 }
-
 static SDL_Point update_arrow_position(float pos_x, float pos_z, unsigned char& changed) {
     static float last_pos_x = -1;
     static float last_pos_z = -1;
@@ -121,21 +118,21 @@ void map_t::update(const fh6_data& data_out) {
         std::strncpy(data.season_map_path,map_path.c_str(), sizeof(data.season_map_path) -1);
         std::strncpy(data.arrow_path,arrow_path.c_str(), sizeof(data.arrow_path) -1);
         data.arrow_position = arrow_position;
+        mutex->unlock();
     }
 }
 
 static void render_season_map(const char* map_path) {
     static SDL_Texture* texture = nullptr;
-    if (!texture) texture_png_static(renderer,&texture,map_path);
+    texture_png(renderer,&texture,map_path);
     if (texture) {
         static const SDL_FRect rect = {0, 0, static_cast<float>(WIDTH), static_cast<float>(HEIGHT)};
         SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
-
 static void render_arrow(const char* arrow_path, const SDL_Point& arrow_position) {
     static SDL_Texture* texture = nullptr;
-    if (!texture) texture_png(renderer,&texture,arrow_path);
+    texture_png(renderer,&texture,arrow_path);
     if (texture) {
         float texture_size = 0;
         // should be between 21 and 30!

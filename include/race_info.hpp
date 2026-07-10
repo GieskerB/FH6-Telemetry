@@ -8,9 +8,10 @@
 #include "data/race_info_data.hpp"
 
 class race_info_t {
-    std::unique_ptr<std::mutex> mutex;
+    std::unique_ptr<std::mutex> mutex = std::make_unique<std::mutex>();
     race_info_data data;
 public:
+    const unsigned char ID = 4;
     void init(unsigned short  = 400);
     void update(const fh6_data&);
     void render();

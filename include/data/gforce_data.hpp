@@ -5,7 +5,7 @@
 
 constexpr const char static_background_path[] = "assets/sprites/gforce_background.png";
 constexpr const char gforce_label[][3] = {{"1G"},{"2G"},{"3G"},{"4G"}};
-constexpr const char speed_label[][4] = {{"100"},{"200"},{"300"},{"400"}};
+constexpr const char speed_label[][4] = {{"400"},{"300"},{"200"},{"100"}};
 
 struct gforce_data {
     bool is_paused = false;

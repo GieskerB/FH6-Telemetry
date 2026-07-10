@@ -8,6 +8,7 @@
 #include <semaphore>
 #include <memory>
 #include <variant>
+#include <unistd.h>
 
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
@@ -27,44 +28,35 @@
 // Running variable to stop loop when program ends.
 volatile bool running = true;
 
-struct thread_data_t {
-    fh6_data* data;
-    void (*update)(void* instance, const fh6_data&);
-    void* instance_ptr;
-    std::binary_semaphore semaphore{0};
-};
+void render_thread(std::vector<telemetries_t>* telemetries, const std::array<unsigned short, 5>& sizes) {
+    for (auto& telem : *telemetries) {
+        std::visit([&](auto& obj) {
+            if (sizes[obj.ID] != 0) obj.init(sizes[obj.ID]);
+            else obj.init();
+        },telem);
+    }
 
-void run_thread(std::unique_ptr<thread_data_t> thread_data) {
-    while (running) {
-        // Block until data is ready.
-        thread_data->semaphore.acquire();
-        thread_data->update(thread_data->instance_ptr, *thread_data->data);
+    while(running) {
+        for (auto& telem : *telemetries) {
+            std::visit([](auto& obj) {
+                obj.render();
+            },telem);
+        }
+    }
+
+    for (auto& telem : *telemetries) {
+        std::visit([](auto& obj) {obj.close();},telem);
     }
 }
 
 // Continuously receive data via UDP.
-void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<telemetries_t>& telemetries) {
-    std::vector<thread_data_t*> raw_pointers;
-    std::vector<std::thread> threads;
-    for (auto& item : telemetries) {
-        std::visit([&](auto& arg) {
-            std::unique_ptr<thread_data_t> tmp = std::make_unique<thread_data_t>(
-                nullptr,
-                [](void* inst, const fh6_data& d) {
-                    static_cast<std::decay_t<decltype(arg)>*>(inst)->update(d);
-                    static_cast<std::decay_t<decltype(arg)>*>(inst)->render();
-                },
-                &arg
-            );
-            raw_pointers.push_back(tmp.get());
-            threads.emplace_back(run_thread, std::move(tmp));
-        }, item);
-    }
+void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<telemetries_t>& telemetries, const std::array<unsigned short, 5>& sizes) {
+    std::thread thread(render_thread, &telemetries, sizes);
+    usleep(2000);
 
     struct fh6_data data_out;
     unsigned int last_time_stamp = 0;
     while (running) {
-
         // Call wrapper, exit if data could not be received.
         receive_message(sockfd, ((void*) &data_out), (const struct sockaddr*)&client_addr);
 
@@ -76,9 +68,8 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<te
             continue;
         }
 
-        for (const auto& thread_data: raw_pointers) {
-            thread_data->data = &data_out;
-            thread_data->semaphore.release();
+        for (auto& telem : telemetries) {
+            std::visit([&](auto& obj) {obj.update(data_out);},telem);
         }
 
         SDL_Event event;
@@ -92,14 +83,8 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<te
         }
     }
 
-    for (const auto& thread_data: raw_pointers) {
-        // One last release such that the threads can finish
-        thread_data->semaphore.release();
-    }
 
-    for (auto& thread: threads) {
-        thread.join();
-    }
+    thread.join();
 
 #ifdef _WIN32
     closesocket(sockfd);
@@ -121,17 +106,14 @@ int main(int argc, const char* argv[]) {
     }
 
     std::vector<telemetries_t> telemetries;
-    int port = parse_args(argc, argv, telemetries);
+    std::array<unsigned short, 5> sizes;
+    int port = parse_args(argc, argv, telemetries, sizes);
 
     // setup everything socket related
     auto [sockfd, client_addr] = setup(port);
     bind_socket(sockfd, (const struct sockaddr*)&client_addr);
 
-    receive_loop(sockfd, (const struct sockaddr*)&client_addr,telemetries);
-
-    for (auto& telem : telemetries) {
-        std::visit([](auto& obj) {obj.close();},telem);
-    }
+    receive_loop(sockfd, (const struct sockaddr*)&client_addr,telemetries, sizes);
 
     destroy_registered_textures();
 

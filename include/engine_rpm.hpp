@@ -8,9 +8,10 @@
 #include "data/engine_rpm_data.hpp"
 
 class engine_rpm_t {
-    std::unique_ptr<std::mutex> mutex;
+    std::unique_ptr<std::mutex> mutex = std::make_unique<std::mutex>();
     engine_rpm_data data;
 public:
+    const unsigned char ID = 1;
     void init(unsigned short  = 400);
     void update(const fh6_data &);
     void render();

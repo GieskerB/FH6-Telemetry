@@ -38,7 +38,6 @@ void texture_text_static(SDL_Renderer* renderer, SDL_Texture** texture, const ch
     if (surf == nullptr) return;
     if (!*texture) {
         *texture = SDL_CreateTexture(renderer, surf->format, SDL_TEXTUREACCESS_STATIC, surf->w, surf->h);
-    std::cout << text <<" "<< SDL_GetError() << "\n";
         if(*texture == nullptr) {
             SDL_DestroySurface(surf);
             return;
