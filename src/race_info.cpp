@@ -221,7 +221,7 @@ void race_info_t::update(const fh6_data& data_out) {
 
     if (changes != 0) {
         mutex->lock();
-        data.is_paused = is_paused;
+        data.is_paused = is_paused or !on_race;
         data.new_data = changes;
         std::strncpy(data.position,position.c_str(), sizeof(data.position)-1);
         std::strncpy(data.lap,lap.c_str(), sizeof(data.lap)-1);

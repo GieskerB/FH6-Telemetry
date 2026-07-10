@@ -9,6 +9,7 @@
 #include <memory>
 #include <variant>
 #include <unistd.h>
+#include <chrono>
 
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
@@ -37,11 +38,19 @@ void render_thread(std::vector<telemetries_t>* telemetries, const std::array<uns
     }
 
     while(running) {
+        const auto start = std::chrono::system_clock::now();
+        auto last = start;
         for (auto& telem : *telemetries) {
-            std::visit([](auto& obj) {
+            std::visit([&](auto& obj) {
                 obj.render();
+                const auto elapsed =std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()-last);
+                std::cout << elapsed.count() << " ";
+                last = std::chrono::system_clock::now();
             },telem);
         }
+        const auto end = std::chrono::system_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        std::cout << " - Total time: " << elapsed.count() << "ms\n";
     }
 
     for (auto& telem : *telemetries) {

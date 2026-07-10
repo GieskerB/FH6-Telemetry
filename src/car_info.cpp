@@ -7,6 +7,7 @@
 #include <format>
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 #include <cstring>
 
 #include "../include/car_info.hpp"
@@ -116,13 +117,15 @@ static std::string update_flag_path(const std::string& country, unsigned char& c
 }
 static std::string update_group(const std::string& group, unsigned char& changed) {
     static std::string last_group;
-    // static std::string return_value{};
+    static std::string return_value{};
     if (group!= last_group) {
         last_group = group;
-        // return_value = group;
+        std::stringstream strstream;
+        strstream << std::left << std::setw(TEXT_WIDTH-1) << group;
+        return_value =strstream.str();
         changed |= 0b100000;
     }
-    return last_group; //return_value;
+    return return_value;
 }
 static std::string update_year_make(int year, const std::string& make, unsigned char& changed) {
     static auto car_map = car_details_map();
@@ -133,7 +136,7 @@ static std::string update_year_make(int year, const std::string& make, unsigned 
         last_year = year;
         last_make = make;
         std::stringstream strstream;
-        strstream << year << " - " << make;
+        strstream << year << " - " << std::left << std::setw(TEXT_WIDTH - 8) << make;
         return_value = strstream.str();
         changed |= 0b1000000;
     }
@@ -141,13 +144,15 @@ static std::string update_year_make(int year, const std::string& make, unsigned 
 }
 static std::string update_model(const std::string& model, unsigned char& changed) {
     static std::string last_model;
-    // static std::string return_value{};
+    static std::string return_value{};
     if (model != last_model) {
         last_model = model;
-        // return_value = model;
+        std::stringstream strstream;
+        strstream << std::left << std::setw(TEXT_WIDTH-1) << model;
+        return_value = strstream.str();
         changed |= 0b10000000;
     }
-    return last_model; //return_value;
+    return return_value;
 }
 
 void car_info_t::update(const fh6_data& data_out) {

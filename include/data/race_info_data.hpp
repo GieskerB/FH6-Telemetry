@@ -7,7 +7,7 @@ const char static_race_time_text[] = "Total race time";
 const char static_current_lap_text[] = "Current Lap";
 const char static_best_lap_text[] = "Best Lap";
 const char static_last_lap_text[] = "Last Lap";
-const char static_distance_text[] = "Distance (KM)";
+const char static_distance_text[] = "Distance (KM):";
 const char static_shifts_text[] = "Shift count";
 
 struct race_info_data {

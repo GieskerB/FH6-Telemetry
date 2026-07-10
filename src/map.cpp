@@ -59,7 +59,10 @@ static std::string update_map_path(const date& today, unsigned char& changed) {
     static const date first_season_start {21,5,2026};
     static unsigned int last_date_id = date_to_int(first_season_start);
     static std::string return_value{};
-    if (int date_id = date_to_int(today) != last_date_id) {
+
+    const unsigned int date_id = date_to_int(today);
+    if (date_id != last_date_id) {
+        last_date_id = date_id;
         const unsigned int weeks_since_start = (date_id - last_date_id) / 7;
         return_value = SEASONS[weeks_since_start % 4];
         changed |= 0b1;
@@ -122,28 +125,29 @@ void map_t::update(const fh6_data& data_out) {
     }
 }
 
-static void render_season_map(const char* map_path) {
+static void render_season_map(const char* map_path, bool changed) {
     static SDL_Texture* texture = nullptr;
-    texture_png(renderer,&texture,map_path);
+    if (changed) texture_png(renderer,&texture,map_path);
     if (texture) {
         static const SDL_FRect rect = {0, 0, static_cast<float>(WIDTH), static_cast<float>(HEIGHT)};
         SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
-static void render_arrow(const char* arrow_path, const SDL_Point& arrow_position) {
+static void render_arrow(const char* arrow_path, bool changed, const SDL_Point& arrow_position) {
     static SDL_Texture* texture = nullptr;
-    texture_png(renderer,&texture,arrow_path);
+    if (changed) texture_png(renderer,&texture,arrow_path);
     if (texture) {
         float texture_size = 0;
         // should be between 21 and 30!
         SDL_GetTextureSize(texture,&texture_size,&texture_size);
         const float scalar = texture_size / 30;
-
+        const float offset = ARROW_SIZE * scalar / 2 + 1;
+        const float size = ARROW_SIZE * scalar;
         const SDL_FRect rect = {
-            arrow_position.x - (ARROW_SIZE * scalar / 2 +1.f),
-            arrow_position.y - ARROW_SIZE * scalar/ 2 +1.f,
-            ARROW_SIZE * scalar,
-            ARROW_SIZE * scalar
+            arrow_position.x - offset,
+            arrow_position.y - offset,
+            size,
+            size
         };
         SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
@@ -162,8 +166,8 @@ void map_t::render() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
-    if (data_copy.new_data & 0b1) render_season_map(data_copy.season_map_path);
-    if (data_copy.new_data & 0b10 or data_copy.new_data & 0b100) render_arrow(data_copy.arrow_path, data_copy.arrow_position);
+    render_season_map(data_copy.season_map_path, (data_copy.new_data & 0b1) == 0b1);
+    render_arrow(data_copy.arrow_path, (data_copy.new_data & 0b10) == 0b10, data_copy.arrow_position);
 
     SDL_RenderPresent(renderer);
 }
