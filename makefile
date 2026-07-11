@@ -1,4 +1,4 @@
-CXX := g++
+CXX     := g++
 WIN_CXX := x86_64-w64-mingw32-g++
 
 # Linux / Native Flags
@@ -20,7 +20,7 @@ BUILD_DIR := build
 WIN_DIR   := $(BUILD_DIR)/windows
 ZIP_NAME  := FH6Telemetry.zip
 
-PROGS := telemetry udp_test udp_capture update_cars
+PROGS     := telemetry udp_test udp_capture update_cars
 WIN_PROGS := telemetry.exe capture_data.exe update_cars.exe
 
 # Sources

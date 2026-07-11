@@ -8,7 +8,7 @@ struct map_data {
     unsigned char new_data = 0;
     char season_map_path[23]{0};
     char arrow_path[26]{0};
-    SDL_Point arrow_position{0,0};
+    SDL_Point arrow_position{0, 0};
 };
 
 #endif

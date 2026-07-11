@@ -13,7 +13,7 @@ struct engine_rpm_data {
     int idle_rpm = 0;
     int current_rpm = 0;
     int max_rpm = 0;
-    SDL_Color rpm_bar_color{0,0,0,0};
+    SDL_Color rpm_bar_color{0, 0, 0, 0};
 };
 
 #endif

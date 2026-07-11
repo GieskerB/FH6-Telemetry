@@ -10,7 +10,7 @@ struct car_info_data {
     unsigned char new_data = 0;
     char drivetrain_path[23]{0};
     char class_id[3]{0};
-    SDL_Color class_color{0,0,0,0};
+    SDL_Color class_color{0, 0, 0, 0};
     char performance_id[4]{0};
     char flag_path[29]{0};
     char group[TEXT_WIDTH]{0};

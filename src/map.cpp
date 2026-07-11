@@ -1,15 +1,17 @@
-#include <cstdio>
-#include <stdlib.h>
+#include "../include/map.hpp"
+
 #include <SDL3/SDL.h>
+#include <stdlib.h>
+
 #include <algorithm>
 #include <cmath>
-#include <sstream>
-#include <iomanip>
+#include <cstdio>
 #include <cstring>
+#include <iomanip>
+#include <sstream>
 
-#include "../include/map.hpp"
-#include "../include/util/date.hpp"
 #include "../include/util/colors.hpp"
+#include "../include/util/date.hpp"
 #include "../include/util/texture_handler.hpp"
 
 static unsigned short WIDTH;
@@ -28,7 +30,7 @@ static unsigned char ARROW_SIZE;
 
 static constexpr double PI = 3.14159265358979323846;
 
-static SDL_Window * window = nullptr;
+static SDL_Window* window = nullptr;
 static SDL_Renderer* renderer = nullptr;
 
 void map_t::init(unsigned short size) {
@@ -38,25 +40,26 @@ void map_t::init(unsigned short size) {
     MAP_ORIGIN_X = static_cast<unsigned short>(420.f / 780.f * WIDTH);
     MAP_ORIGIN_Y = static_cast<unsigned short>(499.f / 996.f * HEIGHT);
 
-    SCALE_FACTOR = (0.051509 + 0.051842 + 0.052109 + 0.051713) / 4.f * (size / 780.f );
+    SCALE_FACTOR = (0.051509 + 0.051842 + 0.052109 + 0.051713) / 4.f * (size / 780.f);
 
     ARROW_SIZE = 17.f / 780.f * size;
 
-    window = SDL_CreateWindow("Map",WIDTH,HEIGHT,SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_TRANSPARENT);
-    if(window == nullptr) {
+    window = SDL_CreateWindow("Map", WIDTH, HEIGHT, SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_TRANSPARENT);
+    if (window == nullptr) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
     renderer = SDL_CreateRenderer(window, NULL);
-    if(renderer == nullptr) {
+    if (renderer == nullptr) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
 }
 
 static std::string update_map_path(const date& today, unsigned char& changed) {
-    static const char* SEASONS[] = {"assets/maps/summer.png","assets/maps/autumn.png","assets/maps/winter.png","assets/maps/spring.png"};
-    static const date first_season_start {21,5,2026};
+    static const char* SEASONS[] = {"assets/maps/summer.png", "assets/maps/autumn.png", "assets/maps/winter.png",
+                                    "assets/maps/spring.png"};
+    static const date first_season_start{21, 5, 2026};
     static unsigned int last_date_id = date_to_int(first_season_start);
     static std::string return_value{};
     const unsigned int date_id = date_to_int(today);
@@ -78,9 +81,9 @@ static std::string update_arrow_path(float yaw, unsigned char& changed) {
     if (rotation != last_rotation) {
         last_rotation = rotation;
         std::stringstream strstream;
-        strstream << "assets/arrows/nav-" << std::setw(3) << std::setfill('0')<< rotation << ".png";
+        strstream << "assets/arrows/nav-" << std::setw(3) << std::setfill('0') << rotation << ".png";
         return_value = strstream.str();
-        changed |=0b10;
+        changed |= 0b10;
     }
     return return_value;
 }
@@ -88,7 +91,7 @@ static SDL_Point update_arrow_position(float pos_x, float pos_z, unsigned char& 
     static float last_pos_x = -1;
     static float last_pos_z = -1;
     static SDL_Point return_value;
-    if(pos_x != last_pos_x or pos_z != last_pos_z) {
+    if (pos_x != last_pos_x or pos_z != last_pos_z) {
         last_pos_x = pos_x;
         last_pos_z = pos_z;
         return_value.x = static_cast<int>(pos_x * SCALE_FACTOR) + MAP_ORIGIN_X;
@@ -101,7 +104,7 @@ static SDL_Point update_arrow_position(float pos_x, float pos_z, unsigned char& 
 void map_t::update(const fh6_data& data_out) {
     const bool is_paused = data_out.PositionX == 0 and data_out.PositionY == 0 and data_out.PositionZ == 0;
 
-    if(is_paused) {
+    if (is_paused) {
         mutex->lock();
         data.is_paused = is_paused;
         mutex->unlock();
@@ -111,14 +114,14 @@ void map_t::update(const fh6_data& data_out) {
     unsigned char changes = 0;
     std::string map_path = update_map_path(get_today(), changes);
     std::string arrow_path = update_arrow_path(data_out.Yaw, changes);
-    SDL_Point arrow_position = update_arrow_position (data_out.PositionX, data_out.PositionZ, changes);
+    SDL_Point arrow_position = update_arrow_position(data_out.PositionX, data_out.PositionZ, changes);
 
-    if(changes != 0) {
+    if (changes != 0) {
         mutex->lock();
         data.is_paused = is_paused;
         data.new_data = changes;
-        std::strncpy(data.season_map_path,map_path.c_str(), sizeof(data.season_map_path) -1);
-        std::strncpy(data.arrow_path,arrow_path.c_str(), sizeof(data.arrow_path) -1);
+        std::strncpy(data.season_map_path, map_path.c_str(), sizeof(data.season_map_path) - 1);
+        std::strncpy(data.arrow_path, arrow_path.c_str(), sizeof(data.arrow_path) - 1);
         data.arrow_position = arrow_position;
         mutex->unlock();
     }
@@ -126,7 +129,7 @@ void map_t::update(const fh6_data& data_out) {
 
 static void render_season_map(const char* map_path, bool changed) {
     static SDL_Texture* texture = nullptr;
-    if (changed or !texture) texture_png(renderer,&texture,map_path);
+    if (changed or !texture) texture_png(renderer, &texture, map_path);
     if (texture) {
         static const SDL_FRect rect = {0, 0, static_cast<float>(WIDTH), static_cast<float>(HEIGHT)};
         SDL_RenderTexture(renderer, texture, nullptr, &rect);
@@ -134,20 +137,15 @@ static void render_season_map(const char* map_path, bool changed) {
 }
 static void render_arrow(const char* arrow_path, const SDL_Point& arrow_position, bool changed) {
     static SDL_Texture* texture = nullptr;
-    if (changed or !texture) texture_png(renderer,&texture,arrow_path);
+    if (changed or !texture) texture_png(renderer, &texture, arrow_path);
     if (texture) {
         float texture_size = 0;
         // should be between 21 and 30!
-        SDL_GetTextureSize(texture,&texture_size,&texture_size);
+        SDL_GetTextureSize(texture, &texture_size, &texture_size);
         const float scalar = texture_size / 30;
         const float offset = ARROW_SIZE * scalar / 2 + 1;
         const float size = ARROW_SIZE * scalar;
-        const SDL_FRect rect = {
-            arrow_position.x - offset,
-            arrow_position.y - offset,
-            size,
-            size
-        };
+        const SDL_FRect rect = {arrow_position.x - offset, arrow_position.y - offset, size, size};
         SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
@@ -159,7 +157,7 @@ void map_t::render() {
         mutex->unlock();
         return;
     }
-    std::memcpy(&data_copy,&data,sizeof(data));
+    std::memcpy(&data_copy, &data, sizeof(data));
     mutex->unlock();
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);

@@ -1,40 +1,41 @@
 #include <bits/stdc++.h>
 
 #ifdef _WIN32
-    #define WIN32_LEAN_AND_MEAN
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
+#define WIN32_LEAN_AND_MEAN
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #else
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <arpa/inet.h>
-    #include <unistd.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #endif
 
-#include "../../include/udp/socket_setup.hpp"
 #include "../../include/data/fh6_data.hpp"
+#include "../../include/udp/socket_setup.hpp"
 
 // Small wrapper around recvfrom
 void receive_message(int sockfd, void* message, const struct sockaddr* client_addr) {
     static socklen_t len = sizeof(struct sockaddr);
-    auto result = recvfrom(sockfd, static_cast<char*>(message), TELEMETRY_SIZE, 0, (struct sockaddr *)&client_addr, &len);
+    auto result =
+        recvfrom(sockfd, static_cast<char*>(message), TELEMETRY_SIZE, 0, (struct sockaddr*)&client_addr, &len);
 
 #ifdef _WIN32
     if (result == SOCKET_ERROR) {
-            std::cerr << "recvfrom failed. Windows Error: " << WSAGetLastError() << std::endl;
-            exit(EXIT_FAILURE);
+        std::cerr << "recvfrom failed. Windows Error: " << WSAGetLastError() << std::endl;
+        exit(EXIT_FAILURE);
     }
 #else
     if (result < 0) {
-            perror("recvfrom failed");
-            exit(EXIT_FAILURE);
+        perror("recvfrom failed");
+        exit(EXIT_FAILURE);
     }
 #endif
 }
 
 // Small wrapper function around bind
-void bind_socket(const int sockfd, const struct sockaddr * client_addr) {
-        // Bind to socket - necessary for receiver to get the data from the socket
+void bind_socket(const int sockfd, const struct sockaddr* client_addr) {
+    // Bind to socket - necessary for receiver to get the data from the socket
     auto result = bind(sockfd, client_addr, sizeof(struct sockaddr_in));
 #ifdef _WIN32
     if (result == SOCKET_ERROR) {
@@ -52,9 +53,7 @@ void bind_socket(const int sockfd, const struct sockaddr * client_addr) {
 }
 
 // When program is ended with ctrl-c the socket gets closed and the loop ended.
-void handle(int) {
-    running = false;
-}
+void handle(int) { running = false; }
 
 sock_info setup(const int port) {
     // Create UDP socket

@@ -1,19 +1,19 @@
 #ifndef PARSE_ARGS_HPP
 #define PARSE_ARGS_HPP
 
-#include <iostream>
-#include <vector>
-#include <variant>
 #include <array>
+#include <iostream>
+#include <variant>
+#include <vector>
 
+#include "../car_info.hpp"
 #include "../engine_rpm.hpp"
 #include "../gforce.hpp"
 #include "../map.hpp"
-#include "../car_info.hpp"
 #include "../race_info.hpp"
 
-const char * TELEMETRIES[] = {"car-info", "engine-rpm", "g-force", "map", "race-info"};
-constexpr unsigned char TELEMETRY_COUNT = sizeof(TELEMETRIES) / sizeof(char *);
+const char* TELEMETRIES[] = {"car-info", "engine-rpm", "g-force", "map", "race-info"};
+constexpr unsigned char TELEMETRY_COUNT = sizeof(TELEMETRIES) / sizeof(char*);
 
 using telemetries_t = std::variant<car_info_t, engine_rpm_t, gforce_t, map_t, race_info_t>;
 
@@ -65,68 +65,69 @@ bool push_unique(std::vector<telemetries_t>& vec, telemetries_t&& value) {
     return false;
 }
 
-bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetries, std::array<unsigned short, 5>& sizes) {
+bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetries,
+                          std::array<unsigned short, 5>& sizes) {
     const size_t colon_pos = arg.find(':');
     const bool specify_size = std::string::npos != colon_pos;
 
-    const std::string& telemetry_name = specify_size ? arg.substr(0,colon_pos) : arg;
+    const std::string& telemetry_name = specify_size ? arg.substr(0, colon_pos) : arg;
 
-    for(unsigned char i = 0; i < TELEMETRY_COUNT; ++i) {
-        if(telemetry_name == TELEMETRIES[i]) {
+    for (unsigned char i = 0; i < TELEMETRY_COUNT; ++i) {
+        if (telemetry_name == TELEMETRIES[i]) {
             telemetries_t telem;
 
-            switch (i){
-            case 0:
-                if (!push_unique(telemetries,std::move(car_info_t{}))) {
-                    std::cerr << "Cannot instanace same telemetry more then once!\n";
-                    return true;
-                }
-                break;
-            case 1:
-                if (!push_unique(telemetries,std::move(engine_rpm_t{}))) {
-                    std::cerr << "Cannot instanace same telemetry more then once!\n";
-                    return true;
-                }
-                break;
-            case 2:
-                if (!push_unique(telemetries,std::move(gforce_t{}))) {
-                    std::cerr << "Cannot instanace same telemetry more then once!\n";
-                    return true;
-                }
-                break;
-            case 3:
-                if (!push_unique(telemetries,std::move(map_t{}))) {
-                    std::cerr << "Cannot instanace same telemetry more then once!\n";
-                    return true;
-                }
-                break;
-            case 4:
-                if (!push_unique(telemetries,std::move(race_info_t{}))) {
-                    std::cerr << "Cannot instanace same telemetry more then once!\n";
-                    return true;
-                }
-                break;
-            default:
-                break;
+            switch (i) {
+                case 0:
+                    if (!push_unique(telemetries, std::move(car_info_t{}))) {
+                        std::cerr << "Cannot instanace same telemetry more then once!\n";
+                        return true;
+                    }
+                    break;
+                case 1:
+                    if (!push_unique(telemetries, std::move(engine_rpm_t{}))) {
+                        std::cerr << "Cannot instanace same telemetry more then once!\n";
+                        return true;
+                    }
+                    break;
+                case 2:
+                    if (!push_unique(telemetries, std::move(gforce_t{}))) {
+                        std::cerr << "Cannot instanace same telemetry more then once!\n";
+                        return true;
+                    }
+                    break;
+                case 3:
+                    if (!push_unique(telemetries, std::move(map_t{}))) {
+                        std::cerr << "Cannot instanace same telemetry more then once!\n";
+                        return true;
+                    }
+                    break;
+                case 4:
+                    if (!push_unique(telemetries, std::move(race_info_t{}))) {
+                        std::cerr << "Cannot instanace same telemetry more then once!\n";
+                        return true;
+                    }
+                    break;
+                default:
+                    break;
             }
 
-            if(specify_size) {
-                const size_t number_start = colon_pos+1;
-                if(number_start >= arg.size()) {
+            if (specify_size) {
+                const size_t number_start = colon_pos + 1;
+                if (number_start >= arg.size()) {
                     std::cerr << "Number required after colon size specifier!\n";
                     return true;
                 }
                 std::string tmp;
                 try {
-                    tmp = arg.substr(number_start, arg.size()-number_start);
+                    tmp = arg.substr(number_start, arg.size() - number_start);
                     const int size = std::stoi(tmp);
                     const unsigned short max_value = std::numeric_limits<unsigned short>::max();
-                    if(size < 0 or size > max_value) {
-                        std::cerr << "Size of telemetry must be in range [0, "<< max_value <<"]!\n";
+                    if (size < 0 or size > max_value) {
+                        std::cerr << "Size of telemetry must be in range [0, " << max_value << "]!\n";
                         return true;
                     }
                     sizes[i] = size;
-                }  catch (std::invalid_argument&) {
+                } catch (std::invalid_argument&) {
                     std::cerr << "Can not parse " << tmp << " into a size for telemetry number!\n";
                     return true;
                 }
@@ -141,19 +142,20 @@ bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetri
     return true;
 }
 
-int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemetries, std::array<unsigned short, 5>& sizes) {
+int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemetries,
+               std::array<unsigned short, 5>& sizes) {
     bool has_port_input = false;
     bool need_help = false;
     int port_number = 0;
     for (int i = 1; i < argc; ++i) {
         const std::string arg = argv[i];
         // simple things first! Help:
-        if(arg == "-h" or arg == "--help") {
+        if (arg == "-h" or arg == "--help") {
             need_help = true;
             break;
         }
-        if(arg == "-p" or arg == "--port") {
-            if(i + 1 >= argc) {
+        if (arg == "-p" or arg == "--port") {
+            if (i + 1 >= argc) {
                 std::cerr << "Missing argument after [-p|--port]!\nRequires port number as an argument.\n";
                 need_help = true;
                 break;
@@ -165,7 +167,7 @@ int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemet
                 need_help = true;
                 break;
             }
-            if(port_number < 1024 or port_number > 65535) {
+            if (port_number < 1024 or port_number > 65535) {
                 std::cerr << "Port must be between 1024 and 65535!\n";
                 need_help = true;
                 break;
@@ -174,17 +176,18 @@ int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemet
             has_port_input = true;
             continue;
         }
-        if(arg == "-t" or arg == "--telemetry") {
-            if(i + 1 >= argc) {
-                std::cerr << "Missing argument after [-t|--telemetry]!\nRequires name of telemetry window as an argument.\n";
+        if (arg == "-t" or arg == "--telemetry") {
+            if (i + 1 >= argc) {
+                std::cerr
+                    << "Missing argument after [-t|--telemetry]!\nRequires name of telemetry window as an argument.\n";
                 need_help = true;
                 break;
             }
             need_help = handle_telemetry_arg(argv[++i], telemetries, sizes);
-            if(need_help) break;
+            if (need_help) break;
             continue;
         }
-        if(arg == "-a" or arg == "--all") {
+        if (arg == "-a" or arg == "--all") {
             if (!push_unique(telemetries, car_info_t{})) need_help = true;
             if (!push_unique(telemetries, engine_rpm_t{})) need_help = true;
             if (!push_unique(telemetries, gforce_t{})) need_help = true;
@@ -194,8 +197,8 @@ int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemet
                 std::cerr << "[-a|--all] can only be used without [-t|--telemetry]!\n";
                 break;
             }
-            for (auto& telem: telemetries) {
-                std::visit([&](auto& obj) {sizes[obj.ID] = 0;},telem);
+            for (auto& telem : telemetries) {
+                std::visit([&](auto& obj) { sizes[obj.ID] = 0; }, telem);
             }
             continue;
         }
@@ -209,7 +212,7 @@ int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemet
         need_help = true;
     }
 
-    if(need_help) {
+    if (need_help) {
         print_help();
         exit(EXIT_SUCCESS);
     }

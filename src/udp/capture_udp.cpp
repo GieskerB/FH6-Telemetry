@@ -1,15 +1,16 @@
 #include <bits/stdc++.h>
+
 #include <filesystem>
 #include <format>
 #ifdef _WIN32
-    #define WIN32_LEAN_AND_MEAN
-    #include <winsock2.h>
+#define WIN32_LEAN_AND_MEAN
+#include <winsock2.h>
 #else
-    #include <arpa/inet.h>
+#include <arpa/inet.h>
 #endif
 
-#include "../../include/udp/socket_setup.hpp"
 #include "../../include/data/fh6_data.hpp"
+#include "../../include/udp/socket_setup.hpp"
 #include "../../include/util/data_per_file.hpp"
 
 static std::vector<fh6_data> data_vector;
@@ -23,16 +24,16 @@ void capture_loop(int sockfd, const struct sockaddr* client_addr, int folder_num
         struct fh6_data data_out;
 
         // Call wrapper, exit if data could not be received.
-        receive_message(sockfd, ((void*) &data_out), (const struct sockaddr*)&client_addr);
+        receive_message(sockfd, ((void*)&data_out), (const struct sockaddr*)&client_addr);
 
         data_vector.push_back(data_out);
 
         if (data_vector.size() >= DATA_PER_FILE) {
             std::ofstream output_file;
 
-            output_file.open(make_filename(folder_number, file_counter++), std::ios::out|std::ios::binary);
-            for(const auto & data: data_vector) {
-                output_file.write((char*) &data, TELEMETRY_SIZE);
+            output_file.open(make_filename(folder_number, file_counter++), std::ios::out | std::ios::binary);
+            for (const auto& data : data_vector) {
+                output_file.write((char*)&data, TELEMETRY_SIZE);
             }
             output_file.close();
             data_vector.clear();
@@ -47,8 +48,7 @@ void capture_loop(int sockfd, const struct sockaddr* client_addr, int folder_num
 }
 
 int main(int argc, char* argv[]) {
-
-    if(argc != 3) {
+    if (argc != 3) {
         perror("UPD capture requires one argument:\n\tMESSAGE PORT\n\tFOLDER NUMBER\n");
         exit(EXIT_FAILURE);
     }

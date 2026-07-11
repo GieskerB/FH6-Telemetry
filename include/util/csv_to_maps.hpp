@@ -6,7 +6,7 @@
 
 struct car_details_t {
     unsigned short id, year;
-    std::string make, model; 
+    std::string make, model;
 };
 
 std::unordered_map<int, car_details_t> car_details_map();
