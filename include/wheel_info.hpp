@@ -12,7 +12,7 @@ class wheel_info_t {
     wheel_info_data data;
 
    public:
-    const unsigned char ID = 4;
+    const unsigned char ID = 5;
     void init(unsigned short = 400);
     void update(const fh6_data&);
     void render();

@@ -11,11 +11,12 @@
 #include "../gforce.hpp"
 #include "../map.hpp"
 #include "../race_info.hpp"
+#include "../wheel_info.hpp"
 
-const char* TELEMETRIES[] = {"car-info", "engine-rpm", "g-force", "map", "race-info"};
+const char* TELEMETRIES[] = {"car-info", "engine-rpm", "g-force", "map", "race-info", "wheel-info"};
 constexpr unsigned char TELEMETRY_COUNT = sizeof(TELEMETRIES) / sizeof(char*);
 
-using telemetries_t = std::variant<car_info_t, engine_rpm_t, gforce_t, map_t, race_info_t>;
+using telemetries_t = std::variant<car_info_t, engine_rpm_t, gforce_t, map_t, race_info_t, wheel_info_t>;
 
 void print_help() {
     std::cout << "\n=====================================================================\n";
@@ -107,6 +108,12 @@ bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetri
                         return true;
                     }
                     break;
+                case 5:
+                    if (!push_unique(telemetries, std::move(wheel_info_t{}))) {
+                        std::cerr << "Cannot instanace same telemetry more then once!\n";
+                        return true;
+                    }
+                    break;
                 default:
                     break;
             }
@@ -193,6 +200,7 @@ int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemet
             if (!push_unique(telemetries, gforce_t{})) need_help = true;
             if (!push_unique(telemetries, map_t{})) need_help = true;
             if (!push_unique(telemetries, race_info_t{})) need_help = true;
+            if (!push_unique(telemetries, wheel_info_t{})) need_help = true;
             if (need_help) {
                 std::cerr << "[-a|--all] can only be used without [-t|--telemetry]!\n";
                 break;

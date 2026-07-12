@@ -51,7 +51,7 @@ void render_thread(std::vector<telemetries_t>* telemetries, const std::array<uns
                     obj.render();
                     const auto elapsed =
                         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - last);
-                    // std::cout << elapsed.count() << " ";
+                    // std::{0} << elapsed.count() << " ";
                     last = std::chrono::system_clock::now();
                 },
                 telem);

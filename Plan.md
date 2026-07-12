@@ -2,40 +2,9 @@
 
 ## Available variables
 
-$37/88$ remaining!
+$15/88$ remaining!
 
 ``` cpp
-float AngularVelocityX
-float AngularVelocityY
-float AngularVelocityZ
-
-float TireSlipRatioFrontLeft
-float TireSlipRatioFrontRight
-float TireSlipRatioRearLeft
-float TireSlipRatioRearRight
-
-float SurfaceRumbleFrontLeft
-float SurfaceRumbleFrontRight
-float SurfaceRumbleRearLeft
-float SurfaceRumbleRearRight
-
-float TireSlipAngleFrontLeft
-float TireSlipAngleFrontRight
-float TireSlipAngleRearLeft
-float TireSlipAngleRearRight
-
-float TireCombinedSlipFrontLeft
-float TireCombinedSlipFrontRight
-float TireCombinedSlipRearLeft
-float TireCombinedSlipRearRight
-
-float SuspensionTravelMetersFrontLeft
-float SuspensionTravelMetersFrontRight
-float SuspensionTravelMetersRearLeft
-float SuspensionTravelMetersRearRight
-
-int NumCylinders
-
 float SmashableVelDiff
 
 float SmashableMass
@@ -43,6 +12,11 @@ float SmashableMass
 float Power
 
 float Torque
+
+float TireTempFrontLeft
+float TireTempFrontRight
+float TireTempRearLeft
+float TireTempRearRight
 
 float Boost
 
@@ -52,12 +26,6 @@ unsigned char Accel
 unsigned char Brake
 unsigned char Clutch
 unsigned char HandBrake
-
-char Steer
-
-char NormalizedDrivingLine
-
-char NormalizedAIBrakeDifference
 ```
 
 ## Used resources
@@ -111,10 +79,18 @@ char NormalizedAIBrakeDifference
 
 ### Wheel Info
 
-- ```float TireTempFrontLeft```
-- ```float TireTempFrontRight```
-- ```float TireTempRearLeft```
-- ```float TireTempRearRight```
+- (```float TireSlipRatioFrontLeft```)
+- (```float TireSlipRatioFrontRight```)
+- (```float TireSlipRatioRearLeft```)
+- (```float TireSlipRatioRearRight```)
+- (```float TireSlipAngleFrontLeft```)
+- (```float TireSlipAngleFrontRight```)
+- (```float TireSlipAngleRearLeft```)
+- (```float TireSlipAngleRearRight```)
+- ```float TireCombinedSlipFrontLeft```
+- ```float TireCombinedSlipFrontRight```
+- ```float TireCombinedSlipRearLeft```
+- ```float TireCombinedSlipRearRight```
 - ```int WheelOnRumbleStripFrontLeft```
 - ```int WheelOnRumbleStripFrontRight```
 - ```int WheelOnRumbleStripRearLeft```
@@ -123,6 +99,8 @@ char NormalizedAIBrakeDifference
 - ```int WheelInPuddleFrontRight```
 - ```int WheelInPuddleRearLeft```
 - ```int WheelInPuddleRearRight```
+- ```float VelocityZ```
+- ```char Steer```
 - ```float WheelRotationSpeedFrontLeft```
 - ```float WheelRotationSpeedFrontRight```
 - ```float WheelRotationSpeedRearLeft```
@@ -133,3 +111,24 @@ char NormalizedAIBrakeDifference
 - ```float NormalizedSuspensionTravelRearRight```
 
 *Idea: calc wheel speed based on rotation and car speed!*
+
+## Unused resources
+
+- ```float AngularVelocityX```
+- ```float AngularVelocityY```
+- ```float AngularVelocityZ```
+
+- ```float SurfaceRumbleFrontLeft```
+- ```float SurfaceRumbleFrontRight```
+- ```float SurfaceRumbleRearLeft```
+- ```float SurfaceRumbleRearRight```
+
+- ```float SuspensionTravelMetersFrontLeft```
+- ```float SuspensionTravelMetersFrontRight```
+- ```float SuspensionTravelMetersRearLeft```
+- ```float SuspensionTravelMetersRearRight```
+
+- ```int NumCylinders```
+
+- ```char NormalizedDrivingLine```
+- ```char NormalizedAIBrakeDifference```
