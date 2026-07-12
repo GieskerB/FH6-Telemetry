@@ -27,7 +27,7 @@ WIN_PROGS := telemetry.exe capture_data.exe update_cars.exe
 telemetry_SRCS   := $(SRC_DIR)/main.cpp \
  					$(SRC_DIR)/udp/socket_setup.cpp \
 					$(SRC_DIR)/util/date.cpp $(SRC_DIR)/util/texture_handler.cpp $(SRC_DIR)/util/csv_to_maps.cpp  \
-					$(SRC_DIR)/car_info.cpp $(SRC_DIR)/engine_rpm.cpp $(SRC_DIR)/gforce.cpp $(SRC_DIR)/map.cpp $(SRC_DIR)/race_info.cpp
+					$(SRC_DIR)/car_info.cpp $(SRC_DIR)/engine_rpm.cpp $(SRC_DIR)/gforce.cpp $(SRC_DIR)/map.cpp $(SRC_DIR)/race_info.cpp $(SRC_DIR)/wheel_info.cpp
 udp_test_SRCS    := $(SRC_DIR)/udp/test_udp.cpp $(SRC_DIR)/udp/socket_setup.cpp
 udp_capture_SRCS := $(SRC_DIR)/udp/capture_udp.cpp $(SRC_DIR)/udp/socket_setup.cpp
 update_cars_SRCS := $(SRC_DIR)/util/update_car_info.cpp
