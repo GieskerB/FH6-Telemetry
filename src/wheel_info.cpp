@@ -69,7 +69,6 @@ static std::array<SDL_Color, 4> update_slipping(float slips[4], unsigned short& 
     }
     return return_value;
 }
-
 static std::array<std::string,4> update_ground(int on_rumble[4], int on_water[4], unsigned short& changed) {
     static unsigned char last_ground_stats = 0;
     static std::array<std::string,4> return_value{};
@@ -88,7 +87,6 @@ static std::array<std::string,4> update_ground(int on_rumble[4], int on_water[4]
     }
     return return_value;
 }
-
 static std::array<std::string,4> update_wheel_speed (float rot_speed[4], float slip[4], char steer, float car_speed, unsigned short& changed) {
     // Needs Tire Slip Ratio.
     // Needs estimated wheel diameter.
@@ -135,7 +133,6 @@ static std::array<std::string,4> update_wheel_speed (float rot_speed[4], float s
     }
     return return_value;
 }
-
 static std::array<float,4> update_suspension (float suspension[4],unsigned short& changed) {
     static float last_suspension[4]{-1};
     static std::array<float,4> return_value {};
@@ -207,27 +204,33 @@ void wheel_info_t::update(const fh6_data& data_out) {
         mutex->lock();
         data.is_paused = is_paused;
         data.new_data = changes;
-        data.slip_fl = slipping[0];
-        data.slip_fr = slipping[1];
-        data.slip_rl = slipping[2];
-        data.slip_rr = slipping[3];
-        std::strncpy(data.ground_fl,ground[0].c_str(), sizeof(data.ground_fl)-1);
-        std::strncpy(data.ground_fr,ground[1].c_str(), sizeof(data.ground_fr)-1);
-        std::strncpy(data.ground_rl,ground[2].c_str(), sizeof(data.ground_rl)-1);
-        std::strncpy(data.ground_rr,ground[3].c_str(), sizeof(data.ground_rr)-1);
-        std::strncpy(data.wheel_speed_fl,wheel_speed[0].c_str(), sizeof(data.wheel_speed_fl)-1);
-        std::strncpy(data.wheel_speed_fr,wheel_speed[1].c_str(), sizeof(data.wheel_speed_fr)-1);
-        std::strncpy(data.wheel_speed_rl,wheel_speed[2].c_str(), sizeof(data.wheel_speed_rl)-1);
-        std::strncpy(data.wheel_speed_rr,wheel_speed[3].c_str(), sizeof(data.wheel_speed_rr)-1);
-        data.suspension_fl = suspension[0];
-        data.suspension_fr = suspension[1];
-        data.suspension_rl = suspension[2];
-        data.suspension_rr = suspension[3];
+        for(unsigned char i = 0; i < 4; ++i) {
+            data.slipping[i] = slipping[i];
+            std::strncpy(data.ground[i],ground[i].c_str(), sizeof(data.ground[i])-1);
+            std::strncpy(data.wheel_speed[i],wheel_speed[i].c_str(), sizeof(data.wheel_speed[i])-1);
+            data.suspension[i] = suspension[i];
+        }
         mutex->unlock();
     }
 }
 
-void wheel_info_t::render() {}
+void wheel_info_t::render() {
+    wheel_info_data data_copy;
+    mutex->lock();
+    if (data.new_data == 0 or data.is_paused) {
+        mutex->unlock();
+        return;
+    }
+    std::memcpy(&data_copy, &data, sizeof(data));
+    mutex->unlock();
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+
+
+    SDL_RenderPresent(renderer);
+}
 
 void wheel_info_t::close() {
     SDL_DestroyRenderer(renderer);
