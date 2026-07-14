@@ -56,7 +56,7 @@ void map_t::init(unsigned short size) {
     }
 }
 
-static std::string update_map_path(const date& today, unsigned char& changed) {
+static const std::string& update_map_path(const date& today, unsigned char& changed) {
     static const char* SEASONS[] = {"assets/maps/summer.png", "assets/maps/autumn.png", "assets/maps/winter.png",
                                     "assets/maps/spring.png"};
     static const date first_season_start{21, 5, 2026};
@@ -71,7 +71,7 @@ static std::string update_map_path(const date& today, unsigned char& changed) {
     }
     return return_value;
 }
-static std::string update_arrow_path(float yaw, unsigned char& changed) {
+static const std::string& update_arrow_path(float yaw, unsigned char& changed) {
     float rotation = (std::round((yaw * 180 / PI) / 5)) * 5;
     if (rotation < 0) {
         rotation += 360;
@@ -87,7 +87,7 @@ static std::string update_arrow_path(float yaw, unsigned char& changed) {
     }
     return return_value;
 }
-static SDL_Point update_arrow_position(float pos_x, float pos_z, unsigned char& changed) {
+static const SDL_Point& update_arrow_position(float pos_x, float pos_z, unsigned char& changed) {
     static float last_pos_x = -1;
     static float last_pos_z = -1;
     static SDL_Point return_value;
@@ -112,9 +112,9 @@ void map_t::update(const fh6_data& data_out) {
     }
 
     unsigned char changes = 0;
-    std::string map_path = update_map_path(get_today(), changes);
-    std::string arrow_path = update_arrow_path(data_out.Yaw, changes);
-    SDL_Point arrow_position = update_arrow_position(data_out.PositionX, data_out.PositionZ, changes);
+    const std::string& map_path = update_map_path(get_today(), changes);
+    const std::string& arrow_path = update_arrow_path(data_out.Yaw, changes);
+    const SDL_Point& arrow_position = update_arrow_position(data_out.PositionX, data_out.PositionZ, changes);
 
     if (changes != 0) {
         mutex->lock();

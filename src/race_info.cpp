@@ -69,7 +69,7 @@ static std::string format_time(float seconds) {
     return strstream.str();
 }
 
-static std::string update_position(unsigned char position, unsigned char& changed) {
+static const std::string& update_position(unsigned char position, unsigned char& changed) {
     static unsigned char last_position = -1;
     static std::string return_value{};
     if (position != last_position) {
@@ -81,7 +81,7 @@ static std::string update_position(unsigned char position, unsigned char& change
     }
     return return_value;
 }
-static std::string update_lap(unsigned short lap, unsigned char& changed) {
+static const std::string& update_lap(unsigned short lap, unsigned char& changed) {
     static unsigned char last_lap = -1;
     static std::string return_value{};
     if (lap != last_lap) {
@@ -93,7 +93,7 @@ static std::string update_lap(unsigned short lap, unsigned char& changed) {
     }
     return return_value;
 }
-static std::string update_race_time(float race_time, unsigned char& changed) {
+static const std::string& update_race_time(float race_time, unsigned char& changed) {
     static unsigned char last_race_time = -1;
     static std::string return_value{};
     if (race_time != last_race_time) {
@@ -103,7 +103,7 @@ static std::string update_race_time(float race_time, unsigned char& changed) {
     }
     return return_value;
 }
-static std::string update_current_lap(float current_lap, unsigned char& changed) {
+static const std::string& update_current_lap(float current_lap, unsigned char& changed) {
     static unsigned char last_current_lap = -1;
     static std::string return_value{};
     if (current_lap != last_current_lap) {
@@ -113,7 +113,7 @@ static std::string update_current_lap(float current_lap, unsigned char& changed)
     }
     return return_value;
 }
-static std::string update_best_lap(float best_lap, unsigned char& changed) {
+static const std::string& update_best_lap(float best_lap, unsigned char& changed) {
     static float last_best_lap = -1;
     static std::string return_value{};
     if (best_lap != last_best_lap) {
@@ -123,7 +123,7 @@ static std::string update_best_lap(float best_lap, unsigned char& changed) {
     }
     return return_value;
 }
-static std::string update_last_lap(float last_lap, unsigned char& changed) {
+static const std::string& update_last_lap(float last_lap, unsigned char& changed) {
     static float last_last_lap = -1;
     static std::string return_value{};
     if (last_lap != last_last_lap) {
@@ -133,7 +133,7 @@ static std::string update_last_lap(float last_lap, unsigned char& changed) {
     }
     return return_value;
 }
-static std::string update_distance(float distance, unsigned char& changed) {
+static const std::string& update_distance(float distance, unsigned char& changed) {
     distance /= 1000;
     if (distance > 9999.9f) {
         distance = 9999.9f;
@@ -149,7 +149,7 @@ static std::string update_distance(float distance, unsigned char& changed) {
     }
     return return_value;
 }
-static std::string update_shifts(unsigned int shifts, unsigned char& changed) {
+static const std::string& update_shifts(unsigned int shifts, unsigned char& changed) {
     if (shifts > 9999) {
         shifts = 9999;
     }
@@ -194,40 +194,29 @@ void race_info_t::update(const fh6_data& data_out) {
         was_on_race = false;
     }
 
-    unsigned char changes = 0;
-    std::string position = update_position(data_out.RacePosition, changes);
-    std::string lap = update_lap(data_out.LapNumber + 1, changes);
-    std::string race_time = update_race_time(data_out.CurrentRaceTime - race_start_time, changes);
-    std::string current_lap = update_current_lap(data_out.CurrentLap, changes);
-    std::string best_lap = update_best_lap(data_out.BestLap, changes);
-    std::string last_lap = update_last_lap(data_out.LastLap, changes);
-    std::string distance = update_distance(data_out.DistanceTraveled - distant_at_start, changes);
-    std::string shifts = update_shifts(shift_count, changes);
-
-    if (on_race) {
-        if (last_gear != data_out.Gear and data_out.Gear != 11) {
-            last_gear = data_out.Gear;
-            ++shift_count;
-        }
-
-        position = update_position(data_out.RacePosition, changes);
-        lap = update_lap(data_out.LapNumber + 1, changes);
-        race_time = update_race_time(data_out.CurrentRaceTime - race_start_time, changes);
-        current_lap = update_current_lap(data_out.CurrentLap, changes);
-        best_lap = update_best_lap(data_out.BestLap, changes);
-        last_lap = update_last_lap(data_out.LastLap, changes);
-        distance = update_distance(data_out.DistanceTraveled - distant_at_start, changes);
-        shifts = update_shifts(shift_count, changes);
-    } else {
-        position = update_position(0, changes);
-        lap = update_lap(0, changes);
-        race_time = update_race_time(0, changes);
-        current_lap = update_current_lap(0, changes);
-        best_lap = update_best_lap(0, changes);
-        last_lap = update_last_lap(0, changes);
-        distance = update_distance(0, changes);
-        shifts = update_shifts(0, changes);
+    if (on_race && last_gear != data_out.Gear && data_out.Gear != 11) {
+        last_gear = data_out.Gear;
+        ++shift_count;
     }
+
+    const unsigned char position_arg = on_race ? data_out.RacePosition : 0;
+    const unsigned short lap_arg = on_race ? data_out.LapNumber + 1 : 0;
+    const float race_time_arg = on_race ? (data_out.CurrentRaceTime - race_start_time) : 0;
+    const float current_lap_arg = on_race ? data_out.CurrentLap : 0;
+    const float best_lap_arg = on_race ? data_out.BestLap : 0;
+    const float last_lap_arg = on_race ? data_out.LastLap : 0;
+    const float distance_arg = on_race ? (data_out.DistanceTraveled - distant_at_start) : 0;
+    const unsigned short shifts_arg = on_race ? shift_count : 0;
+
+    unsigned char changes = 0;
+    const std::string& position = update_position(position_arg, changes);
+    const std::string& lap = update_lap(lap_arg, changes);
+    const std::string& race_time = update_race_time(race_time_arg, changes);
+    const std::string& current_lap = update_current_lap(current_lap_arg, changes);
+    const std::string& best_lap = update_best_lap(best_lap_arg, changes);
+    const std::string& last_lap = update_last_lap(last_lap_arg, changes);
+    const std::string& distance = update_distance(distance_arg, changes);
+    const std::string& shifts = update_shifts(shifts_arg, changes);
 
     if (changes != 0) {
         mutex->lock();

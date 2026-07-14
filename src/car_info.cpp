@@ -58,7 +58,7 @@ void car_info_t::init(unsigned short size) {
     }
 }
 
-static std::string update_drivetrain_path(int drivetrain, unsigned char& changed) {
+static const std::string& update_drivetrain_path(int drivetrain, unsigned char& changed) {
     static const std::string PATHS[] = {"assets/sprites/FWD.png", "assets/sprites/RWD.png", "assets/sprites/AWD.png"};
     static int last_drivetrain_type = -1;
     static std::string return_value{};
@@ -69,7 +69,7 @@ static std::string update_drivetrain_path(int drivetrain, unsigned char& changed
     }
     return return_value;
 }
-static std::string update_class_id(int class_id, unsigned char& changed) {
+static const std::string& update_class_id(int class_id, unsigned char& changed) {
     static const std::string CLASSES[] = {" D", " C", " B", " A", "S1", "S2", " R", " X"};
     static int last_class_id = -1;
     static std::string return_value{};
@@ -80,7 +80,7 @@ static std::string update_class_id(int class_id, unsigned char& changed) {
     }
     return return_value;
 }
-static SDL_Color update_class_color(int class_id, unsigned char& changed) {
+static const SDL_Color& update_class_color(int class_id, unsigned char& changed) {
     static constexpr SDL_Color CLASS_COLORS[8] = {{103, 185, 238, 255}, {246, 198, 85, 255},  {236, 109, 65, 255},
                                                   {233, 61, 78, 255},   {172, 100, 224, 255}, {49, 93, 210, 255},
                                                   {195, 53, 151, 255},  {101, 212, 104, 255}};
@@ -93,7 +93,7 @@ static SDL_Color update_class_color(int class_id, unsigned char& changed) {
     }
     return return_value;
 }
-static std::string update_performance_id(int performance_id, unsigned char& changed) {
+static const std::string& update_performance_id(int performance_id, unsigned char& changed) {
     static int last_performance_id = -1;
     static std::string return_value{};
     if (performance_id != last_performance_id) {
@@ -103,7 +103,7 @@ static std::string update_performance_id(int performance_id, unsigned char& chan
     }
     return return_value;
 }
-static std::string update_flag_path(const std::string& country, unsigned char& changed) {
+static const std::string& update_flag_path(const std::string& country, unsigned char& changed) {
     static std::string last_country;
     static std::string return_value{};
     if (country != last_country) {
@@ -115,7 +115,7 @@ static std::string update_flag_path(const std::string& country, unsigned char& c
     }
     return return_value;
 }
-static std::string update_group(const std::string& group, unsigned char& changed) {
+static const std::string& update_group(const std::string& group, unsigned char& changed) {
     static std::string last_group;
     static std::string return_value{};
     if (group != last_group) {
@@ -127,7 +127,7 @@ static std::string update_group(const std::string& group, unsigned char& changed
     }
     return return_value;
 }
-static std::string update_year_make(int year, const std::string& make, unsigned char& changed) {
+static const std::string& update_year_make(int year, const std::string& make, unsigned char& changed) {
     static auto car_map = car_details_map();
     static int last_year = -1;
     static std::string last_make;
@@ -142,7 +142,7 @@ static std::string update_year_make(int year, const std::string& make, unsigned 
     }
     return return_value;
 }
-static std::string update_model(const std::string& model, unsigned char& changed) {
+static const std::string& update_model(const std::string& model, unsigned char& changed) {
     static std::string last_model;
     static std::string return_value{};
     if (model != last_model) {
@@ -172,14 +172,14 @@ void car_info_t::update(const fh6_data& data_out) {
     const auto details = details_map[data_out.CarOrdinal];
 
     unsigned char changes = 0;
-    std::string drivetrain_path = update_drivetrain_path(data_out.DrivetrainType, changes);
-    std::string class_id = update_class_id(data_out.CarClass, changes);
-    SDL_Color class_color = update_class_color(data_out.CarClass, changes);
-    std::string performance_id = update_performance_id(data_out.CarPerformanceIndex, changes);
-    std::string flag_path = update_flag_path(country_map[details.make], changes);
-    std::string group = update_group(group_map[data_out.CarGroup], changes);
-    std::string year_make = update_year_make(details.year, details.make, changes);
-    std::string model = update_model(details.model, changes);
+    const std::string& drivetrain_path = update_drivetrain_path(data_out.DrivetrainType, changes);
+    const std::string& class_id = update_class_id(data_out.CarClass, changes);
+    const SDL_Color& class_color = update_class_color(data_out.CarClass, changes);
+    const std::string& performance_id = update_performance_id(data_out.CarPerformanceIndex, changes);
+    const std::string& flag_path = update_flag_path(country_map[details.make], changes);
+    const std::string& group = update_group(group_map[data_out.CarGroup], changes);
+    const std::string& year_make = update_year_make(details.year, details.make, changes);
+    const std::string& model = update_model(details.model, changes);
 
     if (changes != 0) {
         mutex->lock();

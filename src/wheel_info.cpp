@@ -42,9 +42,9 @@ void wheel_info_t::init(unsigned short size) {
     }
 }
 
-static std::array<SDL_Color, 4> update_slipping(float slips[4], unsigned short& changed) {
+static const std::array<SDL_Color, 4>& update_slipping(float slips[4], unsigned short& changed) {
     static float last_slips[4]{-1};
-    static std::array<SDL_Color,4> return_value{{0,0,0,255}};
+    static std::array<SDL_Color, 4> return_value{{0, 0, 0, 255}};
     for (unsigned char i = 0; i < 4; ++i) {
         if (slips[i] > 1.1f) {
             slips[i] = 1.1f;
@@ -52,13 +52,13 @@ static std::array<SDL_Color, 4> update_slipping(float slips[4], unsigned short& 
         if (slips[i] != last_slips[i]) {
             last_slips[i] = slips[i];
 
-            if(slips[i] < 0.9f) {
+            if (slips[i] < 0.9f) {
                 return_value[i].r = 255 * slips[i] / 0.9f;
                 return_value[i].g = 255;
                 return_value[i].b = 0;
             } else if (slips[i] < 1.1f) {
                 return_value[i].r = 255;
-                return_value[i].g = 255 * (1 - (slips[i]- 0.9f) / 0.2f);
+                return_value[i].g = 255 * (1 - (slips[i] - 0.9f) / 0.2f);
                 return_value[i].b = 0;
             } else {
                 return_value[i].r = 255;
@@ -69,25 +69,27 @@ static std::array<SDL_Color, 4> update_slipping(float slips[4], unsigned short& 
     }
     return return_value;
 }
-static std::array<std::string,4> update_ground(int on_rumble[4], int on_water[4], unsigned short& changed) {
+static const std::array<std::string, 4>& update_ground(int on_rumble[4], int on_water[4], unsigned short& changed) {
     static unsigned char last_ground_stats = 0;
-    static std::array<std::string,4> return_value{};
+    static std::array<std::string, 4> return_value{};
     for (unsigned char i = 0; i < 4; ++i) {
-        const bool equal_rumble = (on_rumble[i] != 0) == ((last_ground_stats & (0b1 << (2*i))) != 0);
-        const bool equal_water = (on_water[i] != 0) == ((last_ground_stats & (0b1 << (2*i+1))) != 0);
+        const bool equal_rumble = (on_rumble[i] != 0) == ((last_ground_stats & (0b1 << (2 * i))) != 0);
+        const bool equal_water = (on_water[i] != 0) == ((last_ground_stats & (0b1 << (2 * i + 1))) != 0);
         if (!equal_rumble or !equal_water) {
-            last_ground_stats = (last_ground_stats & ~ (0b11 << 2*i));
-            last_ground_stats |= on_rumble[i] << (2*i);
-            last_ground_stats |= on_water[i] << (2*i+1);
+            last_ground_stats = (last_ground_stats & ~(0b11 << 2 * i));
+            last_ground_stats |= on_rumble[i] << (2 * i);
+            last_ground_stats |= on_water[i] << (2 * i + 1);
             std::stringstream strstream;
-            strstream << "assets/sprites/" << ((on_water[i] == 0b1) ? "Rumble" : "Asphalt") << ((on_water[i] == 0b1) ? "Wet" : "Dry") << ".png";
+            strstream << "assets/sprites/" << ((on_water[i] == 0b1) ? "Rumble" : "Asphalt")
+                      << ((on_water[i] == 0b1) ? "Wet" : "Dry") << ".png";
             return_value[i] = strstream.str();
             changed |= (0b10000 << i);
         }
     }
     return return_value;
 }
-static std::array<std::string,4> update_wheel_speed (float rot_speed[4], float slip[4], char steer, float car_speed, unsigned short& changed) {
+static const std::array<std::string, 4>& update_wheel_speed(float rot_speed[4], float slip[4], char steer,
+                                                            float car_speed, unsigned short& changed) {
     // Needs Tire Slip Ratio.
     // Needs estimated wheel diameter.
 
@@ -96,51 +98,51 @@ static std::array<std::string,4> update_wheel_speed (float rot_speed[4], float s
     static float estim_wheel_diam_front = 0;
     static float estim_wheel_diam_rear = 0;
 
-    if(slip[0] < 1 and slip[1] < 1 and steer < 32 and steer > -32 and car_speed > 10) {
+    if (slip[0] < 1 and slip[1] < 1 and steer < 32 and steer > -32 and car_speed > 10) {
         // estimate front diameter
         const float diameter_fl = car_speed / rot_speed[0];
         const float diameter_fr = car_speed / rot_speed[1];
         const float avg_diameter = (diameter_fl + diameter_fr) / 2;
         estim_wheel_diam_front *= alpha;
-        estim_wheel_diam_front += (1-alpha) * avg_diameter;
+        estim_wheel_diam_front += (1 - alpha) * avg_diameter;
     }
 
-    if(slip[2] < 1 and slip[3] < 1 and car_speed > 10) {
+    if (slip[2] < 1 and slip[3] < 1 and car_speed > 10) {
         // estimate rear diameter
         const float diameter_rl = car_speed / rot_speed[2];
         const float diameter_rr = car_speed / rot_speed[3];
         const float avg_diameter = (diameter_rl + diameter_rr) / 2;
         estim_wheel_diam_rear *= alpha;
-        estim_wheel_diam_rear += (1-alpha) * avg_diameter;
+        estim_wheel_diam_rear += (1 - alpha) * avg_diameter;
     }
 
     float wheel_speed[4];
-    for(int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 2; ++i) {
         wheel_speed[i] = estim_wheel_diam_front * rot_speed[i];
-        wheel_speed[i+2] = estim_wheel_diam_rear * rot_speed[i+2];
+        wheel_speed[i + 2] = estim_wheel_diam_rear * rot_speed[i + 2];
     }
 
     static float last_wheel_speed[4]{-1};
-    static std::array<std::string,4> return_value {};
-    for(int i = 0; i< 4; ++i) {
-        if(wheel_speed[i] != last_wheel_speed[i]) {
+    static std::array<std::string, 4> return_value{};
+    for (int i = 0; i < 4; ++i) {
+        if (wheel_speed[i] != last_wheel_speed[i]) {
             last_wheel_speed[i] = wheel_speed[i];
             std::stringstream strstream;
             strstream << wheel_speed[i];
             return_value[i] = strstream.str();
-            changed |= 0b100000000<< 0b1;
+            changed |= 0b100000000 << 0b1;
         }
     }
     return return_value;
 }
-static std::array<float,4> update_suspension (float suspension[4],unsigned short& changed) {
+static const std::array<float, 4>& update_suspension(float suspension[4], unsigned short& changed) {
     static float last_suspension[4]{-1};
-    static std::array<float,4> return_value {};
-    for(int i = 0; i< 4; ++i) {
-        if(suspension[i] != last_suspension[i]) {
+    static std::array<float, 4> return_value{};
+    for (int i = 0; i < 4; ++i) {
+        if (suspension[i] != last_suspension[i]) {
             last_suspension[i] = suspension[i];
             return_value[i] = suspension[i];
-            changed |= 0b1000000000000<< 0b1;
+            changed |= 0b1000000000000 << 0b1;
         }
     }
     return return_value;
@@ -195,19 +197,19 @@ void wheel_info_t::update(const fh6_data& data_out) {
     slip[3] = data_out.NormalizedSuspensionTravelRearRight;
 
     unsigned short changes = 0;
-    auto slipping = update_slipping(slips, changes);
-    auto ground = update_ground(on_rumble,on_water,changes);
-    auto wheel_speed = update_wheel_speed(rot_speed,slip,data_out.Steer,data_out.VelocityZ,changes);
-    auto suspension = update_suspension(suspend,changes);
+    const auto& slipping = update_slipping(slips, changes);
+    const auto& ground = update_ground(on_rumble, on_water, changes);
+    const auto& wheel_speed = update_wheel_speed(rot_speed, slip, data_out.Steer, data_out.VelocityZ, changes);
+    const auto& suspension = update_suspension(suspend, changes);
 
     if (changes != 0) {
         mutex->lock();
         data.is_paused = is_paused;
         data.new_data = changes;
-        for(unsigned char i = 0; i < 4; ++i) {
+        for (unsigned char i = 0; i < 4; ++i) {
             data.slipping[i] = slipping[i];
-            std::strncpy(data.ground[i],ground[i].c_str(), sizeof(data.ground[i])-1);
-            std::strncpy(data.wheel_speed[i],wheel_speed[i].c_str(), sizeof(data.wheel_speed[i])-1);
+            std::strncpy(data.ground[i], ground[i].c_str(), sizeof(data.ground[i]) - 1);
+            std::strncpy(data.wheel_speed[i], wheel_speed[i].c_str(), sizeof(data.wheel_speed[i]) - 1);
             data.suspension[i] = suspension[i];
         }
         mutex->unlock();
@@ -226,8 +228,6 @@ void wheel_info_t::render() {
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
-
-
 
     SDL_RenderPresent(renderer);
 }

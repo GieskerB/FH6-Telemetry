@@ -47,7 +47,7 @@ void gforce_t::init(unsigned short size) {
     }
 }
 
-static std::pair<SDL_Point, std::string> update_gforce_point(float acc_x, float acc_z, unsigned char& changed) {
+static const std::pair<SDL_Point, std::string>& update_gforce_point(float acc_x, float acc_z, unsigned char& changed) {
     float x = -acc_x / 9.81f;
     float z = acc_z / 9.81f;
     // round to two decimal places
@@ -57,23 +57,25 @@ static std::pair<SDL_Point, std::string> update_gforce_point(float acc_x, float 
         z = z / gforce * G_MAX;
     }
 
-    const SDL_Point new_point{WIDTH / 2 + static_cast<int>((x / G_MAX) * WIDTH / 2),
-                              HEIGHT / 2 + static_cast<int>((z / G_MAX) * HEIGHT / 2)};
+    static std::pair<SDL_Point, std::string> return_value{};
+
+    return_value.first = {WIDTH / 2 + static_cast<int>((x / G_MAX) * WIDTH / 2),
+                          HEIGHT / 2 + static_cast<int>((z / G_MAX) * HEIGHT / 2)};
     changed |= 0b10000000;
 
     static float last_gforce = -1;
-    static std::string return_value{};
     if (gforce != last_gforce) {
         last_gforce = gforce;
         std::stringstream strstream;
         strstream << std::fixed << std::setprecision(2) << gforce << 'G';
-        return_value = strstream.str();
+        return_value.second = strstream.str();
         changed |= 0b1;
     }
 
-    return {new_point, return_value};
+    return return_value;
 }
-static std::pair<SDL_Point, std::string> update_speed_point(float speed_x, float speed_z, unsigned char& changed) {
+static const std::pair<SDL_Point, std::string>& update_speed_point(float speed_x, float speed_z,
+                                                                   unsigned char& changed) {
     float x = speed_x * 3.6f;
     float z = -speed_z * 3.6f;
 
@@ -84,21 +86,22 @@ static std::pair<SDL_Point, std::string> update_speed_point(float speed_x, float
         z = z / speed * SPEED_MAX;
     }
 
-    const SDL_Point new_point{WIDTH / 2 + static_cast<int>((x / SPEED_MAX) * WIDTH / 2),
-                              HEIGHT / 2 + static_cast<int>((z / SPEED_MAX) * HEIGHT / 2)};
+    static std::pair<SDL_Point, std::string> return_value;
+
+    return_value.first = {WIDTH / 2 + static_cast<int>((x / SPEED_MAX) * WIDTH / 2),
+                          HEIGHT / 2 + static_cast<int>((z / SPEED_MAX) * HEIGHT / 2)};
     changed |= 0b10000000;
 
     static int last_speed = -1;
-    static std::string return_value{};
     if (speed != last_speed) {
         last_speed = speed;
         std::stringstream strstream;
         strstream << std::setw(3) << std::setfill('0') << speed << "KM/H";
-        return_value = strstream.str();
+        return_value.second = strstream.str();
         changed |= 0b10;
     }
 
-    return {new_point, return_value};
+    return return_value;
 }
 
 void gforce_t::update(const fh6_data& data_out) {

@@ -43,7 +43,7 @@ void engine_rpm_t::init(unsigned short size) {
     }
 }
 
-static std::string update_gear(int gear, unsigned char& changed) {
+static const std::string& update_gear(int gear, unsigned char& changed) {
     static std::string GEARS[] = {" R", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8", " 9", "10", " N"};
     static int last_gear = -1;
     static std::string return_value{};
@@ -54,7 +54,7 @@ static std::string update_gear(int gear, unsigned char& changed) {
     }
     return return_value;
 }
-static std::string update_speed(float speed, unsigned char& changed) {
+static const std::string& update_speed(float speed, unsigned char& changed) {
     speed *= 3.6f;  // m/s to km/h
     static float last_speed = -1;
     static std::string return_value{};
@@ -67,7 +67,7 @@ static std::string update_speed(float speed, unsigned char& changed) {
     }
     return return_value;
 }
-static SDL_Color update_rpm_bar_color(int current_rpm, int max_rpm, unsigned char& changed) {
+static const SDL_Color& update_rpm_bar_color(int current_rpm, int max_rpm, unsigned char& changed) {
     static constexpr float RPM_FADE = 0.6f;
     static int last_current_rpm = -1;
     static int last_max_rpm = -1;
@@ -103,9 +103,9 @@ void engine_rpm_t::update(const fh6_data& data_out) {
     }
 
     unsigned char changes = 0;
-    std::string gear = update_gear(data_out.Gear, changes);
-    std::string speed = update_speed(data_out.Speed, changes);
-    SDL_Color rpm_bar_color = update_rpm_bar_color(data_out.CurrentEngineRpm, data_out.EngineMaxRpm, changes);
+    const std::string& gear = update_gear(data_out.Gear, changes);
+    const std::string& speed = update_speed(data_out.Speed, changes);
+    const SDL_Color& rpm_bar_color = update_rpm_bar_color(data_out.CurrentEngineRpm, data_out.EngineMaxRpm, changes);
 
     if (changes != 0) {
         mutex->lock();
