@@ -3,6 +3,8 @@
 
 #include <SDL3/SDL_pixels.h>
 
+const char static_tire_path[] = "assets/sprites/Tire.png";
+
 struct wheel_info_data {
     bool is_paused = false;
     unsigned short new_data = 0;

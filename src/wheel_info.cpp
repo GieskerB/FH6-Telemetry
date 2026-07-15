@@ -70,7 +70,7 @@ static const std::array<SDL_Color, 4>& update_slipping(float slips[4], unsigned 
     return return_value;
 }
 static const std::array<std::string, 4>& update_ground(int on_rumble[4], int on_water[4], unsigned short& changed) {
-    static unsigned char last_ground_stats = 0;
+    static unsigned char last_ground_stats = 0xff;
     static std::array<std::string, 4> return_value{};
     for (unsigned char i = 0; i < 4; ++i) {
         const bool equal_rumble = (on_rumble[i] != 0) == ((last_ground_stats & (0b1 << (2 * i))) != 0);
@@ -85,7 +85,9 @@ static const std::array<std::string, 4>& update_ground(int on_rumble[4], int on_
             return_value[i] = strstream.str();
             changed |= (0b10000 << i);
         }
+        std::cout << on_rumble[i] << " ";
     }
+    std::cout << "\n" << +last_ground_stats << "\n";
     return return_value;
 }
 static const std::array<std::string, 4>& update_wheel_speed(float rot_speed[4], float slip[4], char steer,
@@ -166,6 +168,8 @@ void wheel_info_t::update(const fh6_data& data_out) {
     slips[3] = data_out.TireCombinedSlipRearRight;
 
     // For update_ground
+    // TODO: Does not work!! Its buggy from the game...
+    // Replace!
     int on_rumble[4]{0};
     on_rumble[0] = data_out.WheelOnRumbleStripFrontLeft;
     on_rumble[1] = data_out.WheelOnRumbleStripFrontRight;
@@ -216,6 +220,38 @@ void wheel_info_t::update(const fh6_data& data_out) {
     }
 }
 
+static void render_tires(const SDL_Color colors[4], unsigned short changed) {
+    static SDL_Texture* texture[4]{nullptr};
+    for (unsigned char i = 0; i < 4; ++i) {
+        if (!texture[i]) texture_png(renderer, &texture[i], static_tire_path);
+        if ((changed & (0b1 << i)) == (0b1 << i))
+            SDL_SetTextureColorMod(texture[i], colors[i].r, colors[i].g, colors[i].b);
+        if (texture[i]) {
+            const SDL_FRect unit_rect{
+                WIDTH * (0.05f + 0.5f * (i / 2)),
+                HEIGHT * (0.05f + 0.5f * (i % 2)),
+                WIDTH * 0.4f,
+                HEIGHT * 0.4f};
+            SDL_RenderTexture(renderer, texture[i], nullptr, &unit_rect);
+        }
+    }
+}
+
+static void render_ground(char ground_path[4][30], unsigned short changed) {
+    static SDL_Texture* texture[4]{nullptr};
+    for (unsigned char i = 0; i < 4; ++i) {
+        if (!texture[i] or (changed & (0b10000 << i)) == (0b10000 << i)) texture_png(renderer, &texture[i], ground_path[i]);
+        if (texture[i]) {
+            const SDL_FRect unit_rect{
+                WIDTH * (0.05f + 0.5f * (i / 2)),
+                HEIGHT * (0.35f + 0.5f * (i % 2)),
+                WIDTH * 0.4f,
+                HEIGHT * 0.4f * (235.f / 630.f)};
+            SDL_RenderTexture(renderer, texture[i], nullptr, &unit_rect);
+        }
+    }
+}
+
 void wheel_info_t::render() {
     wheel_info_data data_copy;
     mutex->lock();
@@ -228,6 +264,9 @@ void wheel_info_t::render() {
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
+
+    render_tires(data_copy.slipping, data_copy.new_data);
+    render_ground(data_copy.ground, data_copy.new_data);
 
     SDL_RenderPresent(renderer);
 }
