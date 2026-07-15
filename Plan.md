@@ -2,7 +2,7 @@
 
 ## Available variables
 
-$15/88$ remaining!
+$10/88$ remaining!
 
 ``` cpp
 float SmashableVelDiff
@@ -12,11 +12,6 @@ float SmashableMass
 float Power
 
 float Torque
-
-float TireTempFrontLeft
-float TireTempFrontRight
-float TireTempRearLeft
-float TireTempRearRight
 
 float Boost
 
@@ -79,10 +74,10 @@ unsigned char HandBrake
 
 ### Wheel Info
 
-- (```float TireSlipRatioFrontLeft```)
-- (```float TireSlipRatioFrontRight```)
-- (```float TireSlipRatioRearLeft```)
-- (```float TireSlipRatioRearRight```)
+- ```float TireSlipRatioFrontLeft```
+- ```float TireSlipRatioFrontRight```
+- ```float TireSlipRatioRearLeft```
+- ```float TireSlipRatioRearRight```
 - (```float TireSlipAngleFrontLeft```)
 - (```float TireSlipAngleFrontRight```)
 - (```float TireSlipAngleRearLeft```)
@@ -91,14 +86,10 @@ unsigned char HandBrake
 - ```float TireCombinedSlipFrontRight```
 - ```float TireCombinedSlipRearLeft```
 - ```float TireCombinedSlipRearRight```
-- ```int WheelOnRumbleStripFrontLeft```
-- ```int WheelOnRumbleStripFrontRight```
-- ```int WheelOnRumbleStripRearLeft```
-- ```int WheelOnRumbleStripRearRight```
-- ```int WheelInPuddleFrontLeft```
-- ```int WheelInPuddleFrontRight```
-- ```int WheelInPuddleRearLeft```
-- ```int WheelInPuddleRearRight```
+- ```float TireTempFrontLeft```
+- ```float TireTempFrontRight```
+- ```float TireTempRearLeft```
+- ```float TireTempRearRight```
 - ```float VelocityZ```
 - ```char Steer```
 - ```float WheelRotationSpeedFrontLeft```
@@ -132,3 +123,13 @@ unsigned char HandBrake
 
 - ```char NormalizedDrivingLine```
 - ```char NormalizedAIBrakeDifference```
+
+- ```int WheelOnRumbleStripFrontLeft```
+- ```int WheelOnRumbleStripFrontRight```
+- ```int WheelOnRumbleStripRearLeft```
+- ```int WheelOnRumbleStripRearRight```
+- 
+- ```int WheelInPuddleFrontLeft```
+- ```int WheelInPuddleFrontRight```
+- ```int WheelInPuddleRearLeft```
+- ```int WheelInPuddleRearRight```
