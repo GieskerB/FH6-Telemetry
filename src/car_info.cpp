@@ -70,7 +70,7 @@ static std::string update_drivetrain_path(int drivetrain, unsigned char& changed
     return return_value;
 }
 static std::string update_class_id(int class_id, unsigned char& changed) {
-    static const std::string CLASSES[] = {" D", " C", " B", " A", "S1", "S2", " R", " X"};
+    static const std::string CLASSES[] = {"D", "C", "B", "A", "S1", "S2", "R", "X"};
     static int last_class_id = -1;
     static std::string return_value{};
     if (class_id != last_class_id) {
@@ -210,21 +210,16 @@ static void render_class_id(const char* value, const SDL_Color& color, bool chan
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, value, pi_font, WHITE);
     if (texture) {
-        // Let ID take up 40 % of the space on the left
-        static const float ID_SPACE = 0.4f;
-        static const SDL_FRect class_bg = {0, 0, static_cast<float>(WIDTH - SPRITE_WIDTH) * ID_SPACE,
-                                           static_cast<float>(SPRITE_HEIGHT)};
-        static const SDL_FRect rest_bg = {static_cast<float>(WIDTH - SPRITE_WIDTH) * ID_SPACE, 0,
-                                          static_cast<float>(WIDTH - SPRITE_WIDTH) * (1 - ID_SPACE),
-                                          static_cast<float>(SPRITE_HEIGHT)};
+        static const SDL_FRect colored_bg_rect {0,0,static_cast<float>(WIDTH - SPRITE_WIDTH),static_cast<float>(SPRITE_HEIGHT)};
 
         SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-        SDL_RenderFillRect(renderer, &class_bg);
-        SDL_RenderFillRect(renderer, &rest_bg);
+        SDL_RenderFillRect(renderer, &colored_bg_rect);
 
-        const SDL_FRect text_rect = {
-            class_bg.x + class_bg.w * 0.125f - ((value[0] == ' ') ? class_bg.w * 0.75f / 4 : 0),
-            class_bg.y + class_bg.h * 0.125f, class_bg.w * 0.75f, class_bg.h * 0.75f};
+        // const SDL_FRect text_rect = {
+        //     class_bg.x + class_bg.w * 0.125f - ((value[0] == ' ') ? class_bg.w * 0.75f / 4 : 0),
+        //     class_bg.y + class_bg.h * 0.125f, class_bg.w * 0.75f, class_bg.h * 0.75f};
+
+        const SDL_FRect text_rect = calc_centered_rect(texture, colored_bg_rect.w / 2 * 0.25f, colored_bg_rect.h / 2, colored_bg_rect.h * 0.75);
 
         SDL_RenderTexture(renderer, texture, nullptr, &text_rect);
     }

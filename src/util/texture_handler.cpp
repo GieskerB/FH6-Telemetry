@@ -12,6 +12,16 @@ SDL_FRect calc_centered_rect(SDL_Texture* texture, float center_x, float center_
     return {center_x - (final_width / 2.f), center_y - (target_height / 2.f), final_width, target_height};
 }
 
+SDL_FRect calc_left_rect(SDL_Texture* texture, float left_x, float left_y, float target_height) {
+    float w, h;
+    SDL_GetTextureSize(texture, &w, &h);
+
+    const float ratio = w / h;
+    const float final_width = target_height * ratio;
+
+    return {left_x, left_y, final_width, target_height};
+}
+
 void texture_text(SDL_Renderer* renderer, SDL_Texture** texture, const char* text, TTF_Font* font,
                   const SDL_Color& color) {
     SDL_Surface* surf = TTF_RenderText_Blended(font, text, 0, color);
