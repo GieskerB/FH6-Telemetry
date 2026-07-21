@@ -58,7 +58,7 @@ void car_info_t::init(unsigned short size) {
     }
 }
 
-static std::string update_drivetrain_path(int drivetrain, unsigned char& changed) {
+static const std::string& update_drivetrain_path(int drivetrain, unsigned char& changed) {
     static const std::string PATHS[] = {"assets/sprites/FWD.png", "assets/sprites/RWD.png", "assets/sprites/AWD.png"};
     static int last_drivetrain_type = -1;
     static std::string return_value{};
@@ -69,7 +69,7 @@ static std::string update_drivetrain_path(int drivetrain, unsigned char& changed
     }
     return return_value;
 }
-static std::string update_class_id(int class_id, unsigned char& changed) {
+static const std::string& update_class_id(int class_id, unsigned char& changed) {
     static const std::string CLASSES[] = {"D", "C", "B", "A", "S1", "S2", "R", "X"};
     static int last_class_id = -1;
     static std::string return_value{};
@@ -80,7 +80,7 @@ static std::string update_class_id(int class_id, unsigned char& changed) {
     }
     return return_value;
 }
-static SDL_Color update_class_color(int class_id, unsigned char& changed) {
+static const SDL_Color& update_class_color(int class_id, unsigned char& changed) {
     static constexpr SDL_Color CLASS_COLORS[8] = {{103, 185, 238, 255}, {246, 198, 85, 255},  {236, 109, 65, 255},
                                                   {233, 61, 78, 255},   {172, 100, 224, 255}, {49, 93, 210, 255},
                                                   {195, 53, 151, 255},  {101, 212, 104, 255}};
@@ -93,7 +93,7 @@ static SDL_Color update_class_color(int class_id, unsigned char& changed) {
     }
     return return_value;
 }
-static std::string update_performance_id(int performance_id, unsigned char& changed) {
+static const std::string& update_performance_id(int performance_id, unsigned char& changed) {
     static int last_performance_id = -1;
     static std::string return_value{};
     if (performance_id != last_performance_id) {
@@ -103,7 +103,7 @@ static std::string update_performance_id(int performance_id, unsigned char& chan
     }
     return return_value;
 }
-static std::string update_flag_path(const std::string& country, unsigned char& changed) {
+static const std::string& update_flag_path(const std::string& country, unsigned char& changed) {
     static std::string last_country;
     static std::string return_value{};
     if (country != last_country) {
@@ -115,7 +115,7 @@ static std::string update_flag_path(const std::string& country, unsigned char& c
     }
     return return_value;
 }
-static std::string update_group(const std::string& group, unsigned char& changed) {
+static const std::string& update_group(const std::string& group, unsigned char& changed) {
     static std::string last_group;
     static std::string return_value{};
     if (group != last_group) {
@@ -127,7 +127,7 @@ static std::string update_group(const std::string& group, unsigned char& changed
     }
     return return_value;
 }
-static std::string update_year_make(int year, const std::string& make, unsigned char& changed) {
+static const std::string& update_year_make(int year, const std::string& make, unsigned char& changed) {
     static auto car_map = car_details_map();
     static int last_year = -1;
     static std::string last_make;
@@ -142,7 +142,7 @@ static std::string update_year_make(int year, const std::string& make, unsigned 
     }
     return return_value;
 }
-static std::string update_model(const std::string& model, unsigned char& changed) {
+static const std::string& update_model(const std::string& model, unsigned char& changed) {
     static std::string last_model;
     static std::string return_value{};
     if (model != last_model) {
@@ -172,14 +172,14 @@ void car_info_t::update(const fh6_data& data_out) {
     const auto details = details_map[data_out.CarOrdinal];
 
     unsigned char changes = 0;
-    std::string drivetrain_path = update_drivetrain_path(data_out.DrivetrainType, changes);
-    std::string class_id = update_class_id(data_out.CarClass, changes);
-    SDL_Color class_color = update_class_color(data_out.CarClass, changes);
-    std::string performance_id = update_performance_id(data_out.CarPerformanceIndex, changes);
-    std::string flag_path = update_flag_path(country_map[details.make], changes);
-    std::string group = update_group(group_map[data_out.CarGroup], changes);
-    std::string year_make = update_year_make(details.year, details.make, changes);
-    std::string model = update_model(details.model, changes);
+    const std::string& drivetrain_path = update_drivetrain_path(data_out.DrivetrainType, changes);
+    const std::string& class_id = update_class_id(data_out.CarClass, changes);
+    const SDL_Color& class_color = update_class_color(data_out.CarClass, changes);
+    const std::string& performance_id = update_performance_id(data_out.CarPerformanceIndex, changes);
+    const std::string& flag_path = update_flag_path(country_map[details.make], changes);
+    const std::string& group = update_group(group_map[data_out.CarGroup], changes);
+    const std::string& year_make = update_year_make(details.year, details.make, changes);
+    const std::string& model = update_model(details.model, changes);
 
     if (changes != 0) {
         mutex->lock();
@@ -210,16 +210,13 @@ static void render_class_id(const char* value, const SDL_Color& color, bool chan
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, value, pi_font, WHITE);
     if (texture) {
-        static const SDL_FRect colored_bg_rect {0,0,static_cast<float>(WIDTH - SPRITE_WIDTH),static_cast<float>(SPRITE_HEIGHT)};
+        static const SDL_FRect colored_bg_rect{0, 0, static_cast<float>(WIDTH - SPRITE_WIDTH),
+                                               static_cast<float>(SPRITE_HEIGHT)};
 
         SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
         SDL_RenderFillRect(renderer, &colored_bg_rect);
 
-        // const SDL_FRect text_rect = {
-        //     class_bg.x + class_bg.w * 0.125f - ((value[0] == ' ') ? class_bg.w * 0.75f / 4 : 0),
-        //     class_bg.y + class_bg.h * 0.125f, class_bg.w * 0.75f, class_bg.h * 0.75f};
-
-        const SDL_FRect text_rect = calc_centered_rect(texture, colored_bg_rect.w / 2 * 0.25f, colored_bg_rect.h / 2, colored_bg_rect.h * 0.75);
+        const SDL_FRect text_rect = calc_centered_rect(texture, colored_bg_rect.w / 2 * 0.4f, colored_bg_rect.h / 2, colored_bg_rect.h * 0.75);
 
         SDL_RenderTexture(renderer, texture, nullptr, &text_rect);
     }
@@ -228,18 +225,14 @@ static void render_performance_id(const char* value, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, value, pi_font, WHITE);
     if (texture) {
-        // Let PI take up 60 % of the space on the right - some small padding
-        static const SDL_FRect performance_bg = {
+        static const SDL_FRect performance_bg {
             WIDTH * (1 - SPRITE_PORTION) * 0.4f + PADDING, static_cast<float>(PADDING),
             WIDTH * (1 - SPRITE_PORTION) * 0.6f - 2 * PADDING, static_cast<float>(SPRITE_HEIGHT - 2 * PADDING)};
 
         SDL_SetRenderDrawColor(renderer, BLACK.r, BLACK.g, BLACK.b, 255);
         SDL_RenderFillRect(renderer, &performance_bg);
 
-        // Center using the newly scaled dimensions
-        static const SDL_FRect text_rect = {performance_bg.x + performance_bg.w * 0.125f,
-                                            performance_bg.y + performance_bg.h * 0.125f, performance_bg.w * 0.75f,
-                                            performance_bg.h * 0.75f};
+        static const SDL_FRect text_rect = calc_centered_rect(texture, (WIDTH - SPRITE_WIDTH) * 0.7, SPRITE_HEIGHT / 2, performance_bg.h * 0.9);
 
         SDL_RenderTexture(renderer, texture, nullptr, &text_rect);
     }
@@ -257,27 +250,24 @@ static void render_group(const char* value, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, value, text_font, WHITE);
     if (texture) {
-        const SDL_FRect unit_rect = {0, static_cast<float>(SPRITE_HEIGHT), static_cast<float>(WIDTH - SPRITE_WIDTH),
-                                     static_cast<float>(SPRITE_WIDTH / 3)};
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        const SDL_FRect rect = calc_left_rect(texture, 0.f, SPRITE_HEIGHT, SPRITE_WIDTH / 3);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_year_make(const char* value, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, value, text_font, WHITE);
     if (texture) {
-        const SDL_FRect unit_rect = {0, static_cast<float>(SPRITE_HEIGHT + SPRITE_WIDTH / 3),
-                                     static_cast<float>(WIDTH - SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH / 3)};
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        const SDL_FRect rect = calc_left_rect(texture, 0.f, SPRITE_HEIGHT + SPRITE_WIDTH / 3, SPRITE_WIDTH / 3);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_model(const char* value, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, value, text_font, WHITE);
     if (texture) {
-        const SDL_FRect unit_rect = {0, static_cast<float>(SPRITE_HEIGHT + SPRITE_WIDTH * 2 / 3),
-                                     static_cast<float>(WIDTH - SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH / 3)};
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        const SDL_FRect rect = calc_left_rect(texture, 0.f, SPRITE_HEIGHT + SPRITE_WIDTH * 2 / 3, SPRITE_WIDTH / 3);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 
