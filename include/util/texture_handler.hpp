@@ -13,6 +13,7 @@
 extern std::vector<SDL_Texture*> registered_textures;
 
 SDL_FRect calc_centered_rect(SDL_Texture* texture, float center_x, float center_y, float target_height);
+SDL_FRect calc_left_rect(SDL_Texture* texture, float left_x, float left_y, float target_height);
 
 void texture_text(SDL_Renderer*, SDL_Texture**, const char*, TTF_Font*, const SDL_Color&);
 
