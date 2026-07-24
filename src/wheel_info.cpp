@@ -170,10 +170,10 @@ void wheel_info_t::update(const fh6_data& data_out) {
 
     // For Update_wheel_speed
     float rot_speed[4]{0}, slip[4]{0};
-    rot_speed[0] = std::abs(data_out.WheelRotationSpeedFrontLeft * 3.6f);
-    rot_speed[1] = std::abs(data_out.WheelRotationSpeedFrontRight * 3.6f);
-    rot_speed[2] = std::abs(data_out.WheelRotationSpeedRearLeft * 3.6f);
-    rot_speed[3] = std::abs(data_out.WheelRotationSpeedRearRight * 3.6f);
+    rot_speed[0] = std::abs(data_out.WheelRotationSpeedFrontLeft);
+    rot_speed[1] = std::abs(data_out.WheelRotationSpeedFrontRight);
+    rot_speed[2] = std::abs(data_out.WheelRotationSpeedRearLeft);
+    rot_speed[3] = std::abs(data_out.WheelRotationSpeedRearRight);
     slip[0] = data_out.TireSlipRatioFrontLeft;
     slip[1] = data_out.TireSlipRatioFrontRight;
     slip[2] = data_out.TireSlipRatioRearLeft;
@@ -181,15 +181,16 @@ void wheel_info_t::update(const fh6_data& data_out) {
 
     // For update_suspension
     float suspend[4]{0};
-    slip[0] = data_out.NormalizedSuspensionTravelFrontLeft;
-    slip[1] = data_out.NormalizedSuspensionTravelFrontRight;
-    slip[2] = data_out.NormalizedSuspensionTravelRearLeft;
-    slip[3] = data_out.NormalizedSuspensionTravelRearRight;
+    suspend[0] = data_out.NormalizedSuspensionTravelFrontLeft;
+    suspend[1] = data_out.NormalizedSuspensionTravelFrontRight;
+    suspend[2] = data_out.NormalizedSuspensionTravelRearLeft;
+    suspend[3] = data_out.NormalizedSuspensionTravelRearRight;
 
     unsigned short changes = 0;
     const auto& slipping = update_slipping(slips, changes);
     const auto& temperature = update_temperature(temp, changes);
-    const auto& wheel_speed = update_wheel_speed(rot_speed, slip, data_out.Steer, std::abs(data_out.VelocityZ), changes);
+    const auto& wheel_speed =
+        update_wheel_speed(rot_speed, slip, data_out.Steer, std::abs(data_out.VelocityZ * 3.6f), changes);
     const auto& suspension = update_suspension(suspend, changes);
 
     if (changes != 0) {
@@ -213,8 +214,8 @@ static void render_tires(const SDL_Color colors[4], unsigned short changed) {
         if ((changed & (0b1 << i)) == (0b1 << i))
             SDL_SetTextureColorMod(texture[i], colors[i].r, colors[i].g, colors[i].b);
         if (texture[i]) {
-            const SDL_FRect rect{WIDTH * (0.02f + 0.5f * (i / 2)), HEIGHT * (0.10f + 0.5f * (i % 2)), WIDTH * 0.15f,
-                                 HEIGHT * 0.30f};
+            const SDL_FRect rect{WIDTH * (0.025f + 0.5f * (i / 2)), HEIGHT * (0.025f + 0.5f * (i % 2)), WIDTH * 0.15f,
+                                 HEIGHT * 0.45f};
             SDL_RenderTexture(renderer, texture[i], nullptr, &rect);
         }
     }
@@ -226,8 +227,8 @@ static void render_temperature(char temperature[4][sizeof(wheel_info_data::tempe
         if (!texture[i] or (changed & (0b10000 << i)) == (0b10000 << i))
             texture_text(renderer, &texture[i], temperature[i], font, WHITE);
         if (texture[i]) {
-            const SDL_FRect rect{WIDTH * (0.26f + 0.5f * (i / 2)), HEIGHT * (0.27f + 0.5f * (i % 2)), WIDTH * 0.2f,
-                                 HEIGHT * 0.1f};
+            const SDL_FRect rect = calc_centered_rect(texture[i], WIDTH * (0.369f + 0.5f * (i / 2)),
+                                                      HEIGHT * (0.35f + 0.5f * (i % 2)), HEIGHT * 0.075f);
             SDL_RenderTexture(renderer, texture[i], nullptr, &rect);
         }
     }
@@ -239,22 +240,41 @@ static void render_speed(char speed[4][sizeof(wheel_info_data::wheel_speed[0])],
         if (!texture[i] or (changed & (0b10000 << i)) == (0b10000 << i))
             texture_text(renderer, &texture[i], speed[i], font, WHITE);
         if (texture[i]) {
-            const SDL_FRect rect{WIDTH * (0.26f + 0.5f * (i / 2)), HEIGHT * (0.10f + 0.5f * (i % 2)), WIDTH * 0.2f,
-                                 HEIGHT * 0.1f};
+            const SDL_FRect rect = calc_centered_rect(texture[i], WIDTH * (0.369f + 0.5f * (i / 2)),
+                                                      HEIGHT * (0.2f + 0.5f * (i % 2)), HEIGHT * 0.075f);
             SDL_RenderTexture(renderer, texture[i], nullptr, &rect);
         }
     }
 }
 
 static void render_suspension(float travel[4], unsigned short changed) {
-    static SDL_Texture* texture[4]{nullptr};
+    static SDL_Texture* white_texture{nullptr};
+    static SDL_Texture* orange_texture{nullptr};
+    static float texture_width, texture_height;
     for (unsigned char i = 0; i < 4; ++i) {
-        if (!texture[i] or (changed & (0b10000 << i)) == (0b10000 << i))
-            texture_png(renderer, &texture[i], static_suspension_path);
-        if (texture[i]) {
-            const SDL_FRect rect{WIDTH * (0.20f + 0.5f * (i / 2)) + travel[0] - travel[0],
-                                 HEIGHT * (0.10f + 0.5f * (i % 2)), WIDTH * 0.05f, HEIGHT * 0.30f};
-            SDL_RenderTexture(renderer, texture[i], nullptr, &rect);
+        if (white_texture == nullptr) {
+            texture_png(renderer, &white_texture, static_suspension_path);
+            SDL_GetTextureSize(white_texture, &texture_width, &texture_height);
+        }
+        if (orange_texture == nullptr) {
+            texture_png(renderer, &orange_texture, static_suspension_path);
+            SDL_SetTextureColorMod(orange_texture, ORANGE.r, ORANGE.g, ORANGE.b);
+        }
+        if (white_texture != nullptr and orange_texture != nullptr and (changed & (0b10000 << i)) == (0b10000 << i)) {
+            const float x_offset = WIDTH * (0.5f * (i / 2));
+            const float y_offset = HEIGHT * (0.5f * (i % 2));
+
+            const SDL_FRect base_rect{WIDTH * 0.19f, HEIGHT * 0.025f, WIDTH * 0.075f, HEIGHT * 0.45f};
+            const SDL_FRect white_source_rect{0.f, 0.f, texture_width, texture_height * travel[i]};
+            const SDL_FRect orange_source_rect{0.f, texture_height * travel[i], texture_width,
+                                               texture_height * (1 - travel[i])};
+            const SDL_FRect white_destination_rect{base_rect.x + x_offset, base_rect.y + y_offset, base_rect.w,
+                                                   base_rect.h * travel[i]};
+            const SDL_FRect orange_destination_rect{base_rect.x + x_offset,
+                                                    base_rect.y + base_rect.h * travel[i] + y_offset, base_rect.w,
+                                                    base_rect.h * (1 - travel[i])};
+            SDL_RenderTexture(renderer, white_texture, &white_source_rect, &white_destination_rect);
+            SDL_RenderTexture(renderer, orange_texture, &orange_source_rect, &orange_destination_rect);
         }
     }
 }
