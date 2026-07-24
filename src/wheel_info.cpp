@@ -94,7 +94,7 @@ static const std::array<std::string, 4>& update_wheel_speed(float rot_speed[4], 
     static float estim_wheel_diam_front = 0;
     static float estim_wheel_diam_rear = 0;
 
-    if (slip[0] < 1 and slip[1] < 1 and steer < 32 and steer > -32 and car_speed > 10) {
+    if (slip[0] < 1 and slip[1] < 1 and steer < 32 and steer > -32 and rot_speed[0] > 10 and rot_speed[1] > 10) {
         // estimate front diameter
         const float diameter_fl = car_speed / rot_speed[0];
         const float diameter_fr = car_speed / rot_speed[1];
@@ -103,7 +103,7 @@ static const std::array<std::string, 4>& update_wheel_speed(float rot_speed[4], 
         estim_wheel_diam_front += (1 - alpha) * avg_diameter;
     }
 
-    if (slip[2] < 1 and slip[3] < 1 and car_speed > 10) {
+    if (slip[2] < 1 and slip[3] < 1 and rot_speed[2] > 10 and rot_speed[3] > 10) {
         // estimate rear diameter
         const float diameter_rl = car_speed / rot_speed[2];
         const float diameter_rr = car_speed / rot_speed[3];
@@ -124,7 +124,7 @@ static const std::array<std::string, 4>& update_wheel_speed(float rot_speed[4], 
         if (wheel_speed[i] != last_wheel_speed[i]) {
             last_wheel_speed[i] = wheel_speed[i];
             std::stringstream strstream;
-            strstream << wheel_speed[i];
+            strstream << std::setw(3) << std::setfill(' ') << wheel_speed[i] << "km/h";
             return_value[i] = strstream.str();
             changed |= 0b100000000 << 0b1;
         }
@@ -170,10 +170,10 @@ void wheel_info_t::update(const fh6_data& data_out) {
 
     // For Update_wheel_speed
     float rot_speed[4]{0}, slip[4]{0};
-    rot_speed[0] = data_out.WheelRotationSpeedFrontLeft;
-    rot_speed[1] = data_out.WheelRotationSpeedFrontRight;
-    rot_speed[2] = data_out.WheelRotationSpeedRearLeft;
-    rot_speed[3] = data_out.WheelRotationSpeedRearRight;
+    rot_speed[0] = std::abs(data_out.WheelRotationSpeedFrontLeft * 3.6f);
+    rot_speed[1] = std::abs(data_out.WheelRotationSpeedFrontRight * 3.6f);
+    rot_speed[2] = std::abs(data_out.WheelRotationSpeedRearLeft * 3.6f);
+    rot_speed[3] = std::abs(data_out.WheelRotationSpeedRearRight * 3.6f);
     slip[0] = data_out.TireSlipRatioFrontLeft;
     slip[1] = data_out.TireSlipRatioFrontRight;
     slip[2] = data_out.TireSlipRatioRearLeft;
@@ -189,7 +189,7 @@ void wheel_info_t::update(const fh6_data& data_out) {
     unsigned short changes = 0;
     const auto& slipping = update_slipping(slips, changes);
     const auto& temperature = update_temperature(temp, changes);
-    const auto& wheel_speed = update_wheel_speed(rot_speed, slip, data_out.Steer, data_out.VelocityZ, changes);
+    const auto& wheel_speed = update_wheel_speed(rot_speed, slip, data_out.Steer, std::abs(data_out.VelocityZ), changes);
     const auto& suspension = update_suspension(suspend, changes);
 
     if (changes != 0) {
@@ -220,7 +220,7 @@ static void render_tires(const SDL_Color colors[4], unsigned short changed) {
     }
 }
 
-static void render_temperature(char temperature[4][8], unsigned short changed) {
+static void render_temperature(char temperature[4][sizeof(wheel_info_data::temperature[0])], unsigned short changed) {
     static SDL_Texture* texture[4]{nullptr};
     for (unsigned char i = 0; i < 4; ++i) {
         if (!texture[i] or (changed & (0b10000 << i)) == (0b10000 << i))
@@ -233,7 +233,7 @@ static void render_temperature(char temperature[4][8], unsigned short changed) {
     }
 }
 
-static void render_speed(char speed[4][4], unsigned short changed) {
+static void render_speed(char speed[4][sizeof(wheel_info_data::wheel_speed[0])], unsigned short changed) {
     static SDL_Texture* texture[4]{nullptr};
     for (unsigned char i = 0; i < 4; ++i) {
         if (!texture[i] or (changed & (0b10000 << i)) == (0b10000 << i))

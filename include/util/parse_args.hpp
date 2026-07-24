@@ -16,6 +16,7 @@
 const char* TELEMETRIES[] = {"car-info", "engine-rpm", "g-force", "map", "race-info", "wheel-info"};
 constexpr unsigned char TELEMETRY_COUNT = sizeof(TELEMETRIES) / sizeof(char*);
 
+using telemetry_sizes_t = std::array<unsigned short, TELEMETRY_COUNT>;
 using telemetries_t = std::variant<car_info_t, engine_rpm_t, gforce_t, map_t, race_info_t, wheel_info_t>;
 
 void print_help() {
@@ -67,7 +68,7 @@ bool push_unique(std::vector<telemetries_t>& vec, telemetries_t&& value) {
 }
 
 bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetries,
-                          std::array<unsigned short, 5>& sizes) {
+                          telemetry_sizes_t& sizes) {
     const size_t colon_pos = arg.find(':');
     const bool specify_size = std::string::npos != colon_pos;
 
@@ -150,7 +151,7 @@ bool handle_telemetry_arg(std::string arg, std::vector<telemetries_t>& telemetri
 }
 
 int parse_args(int argc, const char* argv[], std::vector<telemetries_t>& telemetries,
-               std::array<unsigned short, 5>& sizes) {
+               telemetry_sizes_t& sizes) {
     bool has_port_input = false;
     bool need_help = false;
     int port_number = 0;

@@ -30,7 +30,7 @@
 // Running variable to stop loop when program ends.
 volatile bool running = true;
 
-void render_thread(std::vector<telemetries_t>* telemetries, const std::array<unsigned short, 5>& sizes) {
+void render_thread(std::vector<telemetries_t>* telemetries, const telemetry_sizes_t& sizes) {
     for (auto& telem : *telemetries) {
         std::visit(
             [&](auto& obj) {
@@ -68,9 +68,9 @@ void render_thread(std::vector<telemetries_t>* telemetries, const std::array<uns
 
 // Continuously receive data via UDP.
 void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<telemetries_t>& telemetries,
-                  const std::array<unsigned short, 5>& sizes) {
+                  const telemetry_sizes_t& sizes) {
     std::thread thread(render_thread, &telemetries, sizes);
-    // usleep(200000);
+    usleep(200000);
 
     struct fh6_data data_out;
     unsigned int last_time_stamp = 0;
@@ -123,7 +123,7 @@ int main(int argc, const char* argv[]) {
     }
 
     std::vector<telemetries_t> telemetries;
-    std::array<unsigned short, 5> sizes;
+    telemetry_sizes_t sizes;
     int port = parse_args(argc, argv, telemetries, sizes);
 
     // setup everything socket related

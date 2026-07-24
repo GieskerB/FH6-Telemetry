@@ -10,8 +10,8 @@ struct wheel_info_data {
     bool is_paused = false;
     unsigned short new_data = 0;
     SDL_Color slipping[4] {0, 0, 0, 0};
-    char temperature[4][8]{0};
-    char wheel_speed[4][4]{0};
+    char temperature[4][9]{0}; // one extra byte because of ° symbol!
+    char wheel_speed[4][8]{0};
     float suspension[4]{0};
 };
 
