@@ -76,7 +76,8 @@ static const std::array<std::string, 4>& update_temperature(float temperature[4]
         if (temperature[i] != last_temperatures[i]) {
             last_temperatures[i] = temperature[i];
             std::stringstream strstream;
-            strstream << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill(' ') << temperature[i] << "°C";
+            strstream << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill(' ') << temperature[i]
+                      << "°C";
             return_value[i] = strstream.str();
             changed |= (0b10000 << i);
         }
@@ -212,13 +213,9 @@ static void render_tires(const SDL_Color colors[4], unsigned short changed) {
         if ((changed & (0b1 << i)) == (0b1 << i))
             SDL_SetTextureColorMod(texture[i], colors[i].r, colors[i].g, colors[i].b);
         if (texture[i]) {
-            const SDL_FRect unit_rect{
-                WIDTH * (0.02f + 0.5f * (i / 2)),    
-                HEIGHT * (0.10f + 0.5f * (i % 2)),   
-                WIDTH * 0.15f,                       
-                HEIGHT * 0.30f                       
-            };
-            SDL_RenderTexture(renderer, texture[i], nullptr, &unit_rect);
+            const SDL_FRect rect{WIDTH * (0.02f + 0.5f * (i / 2)), HEIGHT * (0.10f + 0.5f * (i % 2)), WIDTH * 0.15f,
+                                 HEIGHT * 0.30f};
+            SDL_RenderTexture(renderer, texture[i], nullptr, &rect);
         }
     }
 }
@@ -226,15 +223,12 @@ static void render_tires(const SDL_Color colors[4], unsigned short changed) {
 static void render_temperature(char temperature[4][8], unsigned short changed) {
     static SDL_Texture* texture[4]{nullptr};
     for (unsigned char i = 0; i < 4; ++i) {
-        if (!texture[i] or (changed & (0b10000 << i)) == (0b10000 << i)) texture_text(renderer, &texture[i], temperature[i], font, WHITE);
+        if (!texture[i] or (changed & (0b10000 << i)) == (0b10000 << i))
+            texture_text(renderer, &texture[i], temperature[i], font, WHITE);
         if (texture[i]) {
-            const SDL_FRect unit_rect{
-                WIDTH * (0.26f + 0.5f * (i / 2)),    
-                HEIGHT * (0.27f + 0.5f * (i % 2)),   
-                WIDTH * 0.2f,                      
-                HEIGHT * 0.1f                      
-            };
-            SDL_RenderTexture(renderer, texture[i], nullptr, &unit_rect);
+            const SDL_FRect rect{WIDTH * (0.26f + 0.5f * (i / 2)), HEIGHT * (0.27f + 0.5f * (i % 2)), WIDTH * 0.2f,
+                                 HEIGHT * 0.1f};
+            SDL_RenderTexture(renderer, texture[i], nullptr, &rect);
         }
     }
 }
@@ -242,32 +236,25 @@ static void render_temperature(char temperature[4][8], unsigned short changed) {
 static void render_speed(char speed[4][4], unsigned short changed) {
     static SDL_Texture* texture[4]{nullptr};
     for (unsigned char i = 0; i < 4; ++i) {
-        if (!texture[i] or (changed & (0b10000 << i)) == (0b10000 << i)) texture_text(renderer, &texture[i], speed[i], font, WHITE);
+        if (!texture[i] or (changed & (0b10000 << i)) == (0b10000 << i))
+            texture_text(renderer, &texture[i], speed[i], font, WHITE);
         if (texture[i]) {
-            const SDL_FRect unit_rect{
-                WIDTH * (0.26f + 0.5f * (i / 2)),   
-                HEIGHT * (0.10f + 0.5f * (i % 2)),  
-                WIDTH * 0.2f,                       
-                HEIGHT * 0.1f                       
-            };
-            SDL_RenderTexture(renderer, texture[i], nullptr, &unit_rect);
+            const SDL_FRect rect{WIDTH * (0.26f + 0.5f * (i / 2)), HEIGHT * (0.10f + 0.5f * (i % 2)), WIDTH * 0.2f,
+                                 HEIGHT * 0.1f};
+            SDL_RenderTexture(renderer, texture[i], nullptr, &rect);
         }
     }
 }
 
-
 static void render_suspension(float travel[4], unsigned short changed) {
     static SDL_Texture* texture[4]{nullptr};
     for (unsigned char i = 0; i < 4; ++i) {
-        if (!texture[i] or (changed & (0b10000 << i)) == (0b10000 << i)) texture_png(renderer, &texture[i],static_suspension_path);
+        if (!texture[i] or (changed & (0b10000 << i)) == (0b10000 << i))
+            texture_png(renderer, &texture[i], static_suspension_path);
         if (texture[i]) {
-            const SDL_FRect unit_rect{
-                WIDTH * (0.20f + 0.5f * (i / 2)) + travel[0] - travel[0], 
-                HEIGHT * (0.10f + 0.5f * (i % 2)),                     
-                WIDTH * 0.05f,                                          
-                HEIGHT * 0.30f                                          
-            };
-            SDL_RenderTexture(renderer, texture[i], nullptr, &unit_rect);
+            const SDL_FRect rect{WIDTH * (0.20f + 0.5f * (i / 2)) + travel[0] - travel[0],
+                                 HEIGHT * (0.10f + 0.5f * (i % 2)), WIDTH * 0.05f, HEIGHT * 0.30f};
+            SDL_RenderTexture(renderer, texture[i], nullptr, &rect);
         }
     }
 }

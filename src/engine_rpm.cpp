@@ -24,7 +24,7 @@ static TTF_Font* font = nullptr;
 
 void engine_rpm_t::init(unsigned short size) {
     WIDTH = size;
-    HEIGHT = size / 2;
+    HEIGHT = size / 1.75f;
 
     window = SDL_CreateWindow("Engine RPM", WIDTH, HEIGHT, SDL_WINDOW_ALWAYS_ON_TOP | SDL_WINDOW_TRANSPARENT);
     if (window == nullptr) {
@@ -125,8 +125,8 @@ static void render_static_text() {
     static SDL_Texture* texture = nullptr;
     if (!texture) texture_text_static(renderer, &texture, static_kmh_text, font, WHITE);
     if (texture) {
-        static const SDL_FRect unit_rect = {WIDTH * 0.75f, HEIGHT * 0.5f, WIDTH * 0.225f, HEIGHT * 0.2f};
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        static const SDL_FRect rect = calc_left_rect(texture, WIDTH * 0.7f, HEIGHT * 0.45f, HEIGHT * 0.275f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 
@@ -134,16 +134,16 @@ static void render_gear(const char* gear, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, gear, font, ORANGE);
     if (texture) {
-        static const SDL_FRect gear_rect = {WIDTH * 0.75f, HEIGHT * 0.1f, WIDTH * 0.225f, HEIGHT * 0.4f};
-        SDL_RenderTexture(renderer, texture, nullptr, &gear_rect);
+        static const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.875f, HEIGHT * 0.25f, HEIGHT * 0.5f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_speed(const char* speed, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, speed, font, WHITE);
     if (texture) {
-        static const SDL_FRect speed_rect = {HEIGHT * 0.1f, 0.0f, WIDTH * 0.667f, HEIGHT * 0.8f};
-        SDL_RenderTexture(renderer, texture, nullptr, &speed_rect);
+        static const SDL_FRect rect = calc_left_rect(texture, HEIGHT * 0.1f, 0.0f, HEIGHT * 0.8f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_rpm_bar(int idle_rpm, int current_rpm, int max_rpm, const SDL_Color& color) {

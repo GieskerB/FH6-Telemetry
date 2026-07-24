@@ -201,49 +201,50 @@ static void render_drivetrain(const char* path, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_png(renderer, &texture, path);
     if (texture) {
-        static const SDL_FRect unit_rect = {static_cast<float>(WIDTH - SPRITE_WIDTH), 0,
-                                            static_cast<float>(SPRITE_WIDTH), static_cast<float>(SPRITE_HEIGHT)};
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        static const SDL_FRect rect = {static_cast<float>(WIDTH - SPRITE_WIDTH), 0, static_cast<float>(SPRITE_WIDTH),
+                                       static_cast<float>(SPRITE_HEIGHT)};
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_class_id(const char* value, const SDL_Color& color, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, value, pi_font, WHITE);
     if (texture) {
-        static const SDL_FRect colored_bg_rect{0, 0, static_cast<float>(WIDTH - SPRITE_WIDTH),
-                                               static_cast<float>(SPRITE_HEIGHT)};
+        static const SDL_FRect bg_rect{0, 0, static_cast<float>(WIDTH - SPRITE_WIDTH),
+                                       static_cast<float>(SPRITE_HEIGHT)};
 
         SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-        SDL_RenderFillRect(renderer, &colored_bg_rect);
+        SDL_RenderFillRect(renderer, &bg_rect);
 
-        const SDL_FRect text_rect = calc_centered_rect(texture, colored_bg_rect.w / 2 * 0.4f, colored_bg_rect.h / 2, colored_bg_rect.h * 0.75);
+        const SDL_FRect rect = calc_centered_rect(texture, bg_rect.w / 2 * 0.4f, bg_rect.h / 2, bg_rect.h * 0.75);
 
-        SDL_RenderTexture(renderer, texture, nullptr, &text_rect);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_performance_id(const char* value, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, value, pi_font, WHITE);
     if (texture) {
-        static const SDL_FRect performance_bg {
+        static const SDL_FRect performance_bg{
             WIDTH * (1 - SPRITE_PORTION) * 0.4f + PADDING, static_cast<float>(PADDING),
             WIDTH * (1 - SPRITE_PORTION) * 0.6f - 2 * PADDING, static_cast<float>(SPRITE_HEIGHT - 2 * PADDING)};
 
         SDL_SetRenderDrawColor(renderer, BLACK.r, BLACK.g, BLACK.b, 255);
         SDL_RenderFillRect(renderer, &performance_bg);
 
-        static const SDL_FRect text_rect = calc_centered_rect(texture, (WIDTH - SPRITE_WIDTH) * 0.7, SPRITE_HEIGHT / 2, performance_bg.h * 0.9);
+        static const SDL_FRect rect =
+            calc_centered_rect(texture, (WIDTH - SPRITE_WIDTH) * 0.7, SPRITE_HEIGHT / 2, performance_bg.h * 0.9);
 
-        SDL_RenderTexture(renderer, texture, nullptr, &text_rect);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_flag(const char* path, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_png(renderer, &texture, path);
     if (texture) {
-        static const SDL_FRect unit_rect = {WIDTH * (1 - SPRITE_PORTION), static_cast<float>(SPRITE_HEIGHT),
-                                            static_cast<float>(SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH)};
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        static const SDL_FRect rect = {WIDTH * (1 - SPRITE_PORTION), static_cast<float>(SPRITE_HEIGHT),
+                                       static_cast<float>(SPRITE_WIDTH), static_cast<float>(SPRITE_WIDTH)};
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_group(const char* value, bool changed) {

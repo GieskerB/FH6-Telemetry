@@ -115,8 +115,8 @@ void gforce_t::update(const fh6_data& data_out) {
     }
 
     unsigned char changes = 0;
-    auto gforce_pair = update_gforce_point(data_out.AccelerationX, data_out.AccelerationZ, changes);
-    auto speed_pair = update_speed_point(data_out.VelocityX, data_out.VelocityZ, changes);
+    const auto& gforce_pair = update_gforce_point(data_out.AccelerationX, data_out.AccelerationZ, changes);
+    const auto& speed_pair = update_speed_point(data_out.VelocityX, data_out.VelocityZ, changes);
 
     if (changes != 0) {
         mutex->lock();
@@ -134,8 +134,8 @@ static void render_static_background() {
     static SDL_Texture* texture = nullptr;
     if (!texture) texture_png_static(renderer, &texture, static_background_path);
     if (texture) {
-        static const SDL_FRect unit_rect = {0, 0, static_cast<float>(WIDTH), static_cast<float>(HEIGHT)};
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        static const SDL_FRect rect{0, 0, static_cast<float>(WIDTH), static_cast<float>(HEIGHT)};
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_static_gforce_labels() {
@@ -147,9 +147,9 @@ static void render_static_gforce_labels() {
     }
     if (textures[0]) {
         for (int i = 0; i < G_MAX; ++i) {
-            const SDL_FRect unit_rect = {WIDTH / 2.f + (i + 0.5f) * WIDTH / 8.f, static_cast<float>(HEIGHT / 2),
-                                         WIDTH * 0.05f, WIDTH * 0.05f};
-            SDL_RenderTexture(renderer, textures[i], nullptr, &unit_rect);
+            const SDL_FRect rect = calc_left_rect(textures[i], WIDTH / 2.f + (i + 0.5f) * WIDTH / 8.f,
+                                                  static_cast<float>(HEIGHT / 2), HEIGHT * 0.05f);
+            SDL_RenderTexture(renderer, textures[i], nullptr, &rect);
         }
     }
 }
@@ -162,9 +162,9 @@ static void render_static_speed_labels() {
     }
     if (textures[0]) {
         for (int i = 0; i < G_MAX; ++i) {
-            const SDL_FRect unit_rect = {(i)*WIDTH / 8.f, static_cast<float>(HEIGHT / 2), WIDTH * 0.075f,
-                                         WIDTH * 0.05f};
-            SDL_RenderTexture(renderer, textures[i], nullptr, &unit_rect);
+            const SDL_FRect rect =
+                calc_left_rect(textures[i], i * WIDTH / 8.f, static_cast<float>(HEIGHT / 2), HEIGHT * 0.05f);
+            SDL_RenderTexture(renderer, textures[i], nullptr, &rect);
         }
     }
 }
@@ -207,16 +207,16 @@ static void render_gforce(const char* gforce, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, gforce, font, ORANGE);
     if (texture) {
-        const SDL_FRect unit_rect = {WIDTH * 0.7f, HEIGHT * 0.92f, WIDTH * 0.3f, WIDTH * 0.08f};
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.875f, HEIGHT * 0.95f, HEIGHT * 0.1f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_speed(const char* speed, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, speed, font, BLUE);
     if (texture) {
-        const SDL_FRect unit_rect = {0, HEIGHT * 0.92f, WIDTH * 0.3f, WIDTH * 0.08f};
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.175f, HEIGHT * 0.95f, HEIGHT * 0.1f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 

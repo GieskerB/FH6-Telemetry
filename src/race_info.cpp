@@ -238,66 +238,64 @@ static void render_static_position_text() {
     static SDL_Texture* texture = nullptr;
     if (!texture) texture_text_static(renderer, &texture, static_position_text, text_font, WHITE);
     if (texture) {
-        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.225f, HEIGHT * 0.05f, HEIGHT * 0.075f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        static const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.225f, HEIGHT * 0.05f, HEIGHT * 0.075f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_static_lap_text() {
     static SDL_Texture* texture = nullptr;
     if (!texture) texture_text_static(renderer, &texture, static_lap_text, text_font, WHITE);
     if (texture) {
-        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.8f, HEIGHT * 0.05f, HEIGHT * 0.075f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        static const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.8f, HEIGHT * 0.05f, HEIGHT * 0.075f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_static_race_time_text() {
     static SDL_Texture* texture = nullptr;
     if (!texture) texture_text_static(renderer, &texture, static_race_time_text, text_font, WHITE);
     if (texture) {
-        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.50f, HEIGHT * 0.15f, HEIGHT * 0.075f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        static const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.50f, HEIGHT * 0.15f, HEIGHT * 0.075f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_static_current_lap_text() {
     static SDL_Texture* texture = nullptr;
     if (!texture) texture_text_static(renderer, &texture, static_current_lap_text, text_font, WHITE);
     if (texture) {
-        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.50f, HEIGHT * 0.375f, HEIGHT * 0.075f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        static const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.50f, HEIGHT * 0.375f, HEIGHT * 0.075f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_static_best_lap_text() {
     static SDL_Texture* texture = nullptr;
     if (!texture) texture_text_static(renderer, &texture, static_best_lap_text, text_font, WHITE);
     if (texture) {
-        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.6f, HEIGHT * 0.0525f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        static const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.6f, HEIGHT * 0.0525f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_static_last_lap_text() {
     static SDL_Texture* texture = nullptr;
     if (!texture) texture_text_static(renderer, &texture, static_last_lap_text, text_font, WHITE);
     if (texture) {
-        static const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.6f, HEIGHT * 0.0525f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        static const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.6f, HEIGHT * 0.0525f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_static_distance_text() {
     static SDL_Texture* texture = nullptr;
     if (!texture) texture_text_static(renderer, &texture, static_distance_text, text_font, WHITE);
     if (texture) {
-        static const SDL_FRect unit_rect =
-            calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.825f, HEIGHT * 0.0525f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        static const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.825f, HEIGHT * 0.0525f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_static_shifts_text() {
     static SDL_Texture* texture = nullptr;
     if (!texture) texture_text_static(renderer, &texture, static_shifts_text, text_font, WHITE);
     if (texture) {
-        static const SDL_FRect unit_rect =
-            calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.825f, HEIGHT * 0.0525f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        static const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.825f, HEIGHT * 0.0525f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 
@@ -305,64 +303,64 @@ static void render_position(const char* position, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, position, num_font, ORANGE);
     if (texture) {
-        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.45f, HEIGHT * 0.05f, HEIGHT * 0.08f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.45f, HEIGHT * 0.05f, HEIGHT * 0.08f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_lap(const char* lap, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, lap, num_font, ORANGE);
     if (texture) {
-        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.925f, HEIGHT * 0.05f, HEIGHT * 0.08f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.925f, HEIGHT * 0.05f, HEIGHT * 0.08f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_race_time(const char* race_time, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, race_time, num_font, WHITE);
     if (texture) {
-        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.50f, HEIGHT * 0.25f, HEIGHT * 0.125f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.50f, HEIGHT * 0.25f, HEIGHT * 0.125f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_current_lap(const char* current_lap, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, current_lap, num_font, WHITE);
     if (texture) {
-        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.50f, HEIGHT * 0.475f, HEIGHT * 0.125f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.50f, HEIGHT * 0.475f, HEIGHT * 0.125f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_best_lap(const char* best_lap, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, best_lap, num_font, BLUE);
     if (texture) {
-        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.675f, HEIGHT * 0.0775f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.675f, HEIGHT * 0.0775f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_last_lap(const char* last_lap, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, last_lap, num_font, BLUE);
     if (texture) {
-        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.675f, HEIGHT * 0.0775f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.675f, HEIGHT * 0.0775f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_distance(const char* distance, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, distance, num_font, ORANGE);
     if (texture) {
-        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.9f, HEIGHT * 0.0775f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.25f, HEIGHT * 0.9f, HEIGHT * 0.0775f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 static void render_shifts(const char* shifts, bool changed) {
     static SDL_Texture* texture = nullptr;
     if (changed or !texture) texture_text(renderer, &texture, shifts, num_font, ORANGE);
     if (texture) {
-        const SDL_FRect unit_rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.9f, HEIGHT * 0.0775f);
-        SDL_RenderTexture(renderer, texture, nullptr, &unit_rect);
+        const SDL_FRect rect = calc_centered_rect(texture, WIDTH * 0.75f, HEIGHT * 0.9f, HEIGHT * 0.0775f);
+        SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
 
