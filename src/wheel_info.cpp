@@ -214,7 +214,7 @@ static void render_tires(const SDL_Color colors[4], unsigned short changed) {
         if ((changed & (0b1 << i)) == (0b1 << i))
             SDL_SetTextureColorMod(texture[i], colors[i].r, colors[i].g, colors[i].b);
         if (texture[i]) {
-            const SDL_FRect rect{WIDTH * (0.025f + 0.5f * (i / 2)), HEIGHT * (0.025f + 0.5f * (i % 2)), WIDTH * 0.15f,
+            const SDL_FRect rect{WIDTH * (0.025f + 0.5f * (i % 2)), HEIGHT * (0.025f + 0.5f * (i / 2)), WIDTH * 0.15f,
                                  HEIGHT * 0.45f};
             SDL_RenderTexture(renderer, texture[i], nullptr, &rect);
         }
@@ -227,8 +227,8 @@ static void render_temperature(char temperature[4][sizeof(wheel_info_data::tempe
         if (!texture[i] or (changed & (0b10000 << i)) == (0b10000 << i))
             texture_text(renderer, &texture[i], temperature[i], font, WHITE);
         if (texture[i]) {
-            const SDL_FRect rect = calc_centered_rect(texture[i], WIDTH * (0.369f + 0.5f * (i / 2)),
-                                                      HEIGHT * (0.35f + 0.5f * (i % 2)), HEIGHT * 0.075f);
+            const SDL_FRect rect = calc_centered_rect(texture[i], WIDTH * (0.369f + 0.5f * (i % 2)),
+                                                      HEIGHT * (0.35f + 0.5f * (i / 2)), HEIGHT * 0.075f);
             SDL_RenderTexture(renderer, texture[i], nullptr, &rect);
         }
     }
@@ -240,8 +240,8 @@ static void render_speed(char speed[4][sizeof(wheel_info_data::wheel_speed[0])],
         if (!texture[i] or (changed & (0b10000 << i)) == (0b10000 << i))
             texture_text(renderer, &texture[i], speed[i], font, WHITE);
         if (texture[i]) {
-            const SDL_FRect rect = calc_centered_rect(texture[i], WIDTH * (0.369f + 0.5f * (i / 2)),
-                                                      HEIGHT * (0.2f + 0.5f * (i % 2)), HEIGHT * 0.075f);
+            const SDL_FRect rect = calc_centered_rect(texture[i], WIDTH * (0.369f + 0.5f * (i % 2)),
+                                                      HEIGHT * (0.2f + 0.5f * (i / 2)), HEIGHT * 0.075f);
             SDL_RenderTexture(renderer, texture[i], nullptr, &rect);
         }
     }
@@ -261,8 +261,8 @@ static void render_suspension(float travel[4], unsigned short changed) {
             SDL_SetTextureColorMod(orange_texture, ORANGE.r, ORANGE.g, ORANGE.b);
         }
         if (white_texture != nullptr and orange_texture != nullptr and (changed & (0b10000 << i)) == (0b10000 << i)) {
-            const float x_offset = WIDTH * (0.5f * (i / 2));
-            const float y_offset = HEIGHT * (0.5f * (i % 2));
+            const float x_offset = WIDTH * (0.5f * (i % 2));
+            const float y_offset = HEIGHT * (0.5f * (i / 2));
 
             const SDL_FRect base_rect{WIDTH * 0.19f, HEIGHT * 0.025f, WIDTH * 0.075f, HEIGHT * 0.45f};
             const SDL_FRect white_source_rect{0.f, 0.f, texture_width, texture_height * travel[i]};
