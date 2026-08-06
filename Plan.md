@@ -10,9 +10,7 @@ float SmashableVelDiff
 float SmashableMass
 
 float Power
-
 float Torque
-
 float Boost
 
 float Fuel
@@ -128,7 +126,7 @@ unsigned char HandBrake
 - ```int WheelOnRumbleStripFrontRight```
 - ```int WheelOnRumbleStripRearLeft```
 - ```int WheelOnRumbleStripRearRight```
-- 
+
 - ```int WheelInPuddleFrontLeft```
 - ```int WheelInPuddleFrontRight```
 - ```int WheelInPuddleRearLeft```
