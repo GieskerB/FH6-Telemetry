@@ -93,9 +93,9 @@ static void add_car(const std::string& car_folder, const std::string& filename) 
               << "===Year:  ";
     std::cin >> year;
     std::cout << "===Make:  ";
-    std::cin >> make;
+    std::getline(std::cin, make);
     std::cout << "===Model: ";
-    std::cin >> model;
+    std::getline(std::cin, model);
 
     int id = get_id(car_folder, filename);
 
