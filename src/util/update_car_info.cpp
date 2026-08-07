@@ -18,7 +18,6 @@ std::set<std::string> get_zip_set() {
     std::getline(csv_file, line);  // skip first line (csv header)
     while (std::getline(csv_file, line, '\n')) {
         std::stringstream str_stream(line);
-
         std::string zip;
 
         std::getline(str_stream, zip, ',');   // read id & discard
@@ -26,10 +25,31 @@ std::set<std::string> get_zip_set() {
         std::getline(str_stream, zip, ',');   // read make & discard
         std::getline(str_stream, zip, ',');   // read model & discard
         std::getline(str_stream, zip, '\r');  // read zip name
-
         zip_set.insert(zip);
     }
     return zip_set;
+}
+
+std::set<std::string> get_make_set() {
+    std::ifstream csv_file{"csv/fh6_make_database.csv"};
+    if (!csv_file.is_open()) {
+        std::cerr << "Could not open CSV file!\n";
+        exit(EXIT_FAILURE);
+    }
+
+    std::set<std::string> make_set;
+
+    std::string line;
+    std::getline(csv_file, line);  // skip first line (csv header)
+    while (std::getline(csv_file, line, '\n')) {
+        std::stringstream str_stream(line);
+        std::string make;
+
+        std::getline(str_stream, make, ',');   // read make
+        make_set.insert(make);
+        std::getline(str_stream, make, '\r');  // read country & discard
+    }
+    return make_set;
 }
 
 static int get_id(const std::string& car_folder, const std::string& zip_filename) {
@@ -85,17 +105,54 @@ static int get_id(const std::string& car_folder, const std::string& zip_filename
     return -1;
 }
 
+// /mnt/ntfs/Steam/steamapps/common/ForzaHorizon6/media/Cars
 static void add_car(const std::string& car_folder, const std::string& filename) {
+    static const auto set = get_make_set();
     int year;
     std::string make, model;
-    std::cout << "FOUND NEW CAR [" << filename << "]!!!\n"
-              << "Following informations are need to add it to the database (Year, Make, Model)!\n"
-              << "===Year:  ";
-    std::cin >> year;
-    std::cout << "===Make:  ";
-    std::getline(std::cin, make);
-    std::cout << "===Model: ";
-    std::getline(std::cin, model);
+    std::cout << "New car found! [" << filename << "]\n"
+              << "Add following informations (Year, Make, Model) to add the car to the database.\n";
+    bool failed = false;
+    do {
+        std::cout << "===Year:  ";
+        std::cin >> year;
+        if (!std::cin) {
+            failed = true;
+            std::cin.clear();
+            std::cin.ignore();
+            std::cout << "Invalid input. Could not be converted into a number.\n";
+        } else if (year < 1885 or year > 3000) {
+            failed = true;
+            std::cin.ignore();
+            std::cout << "Unbelievable manufacturing date.\n";
+        } else {
+            failed = false;
+            std::cin.ignore();
+        }
+    } while (failed);
+    do {
+        std::cout << "===Make:  ";
+        std::getline(std::cin, make);
+        if (make.empty()) {
+            failed = true;
+            std::cout << "Make name must not be empty.\n";
+        } else if (!set.contains(make)) {
+            failed = true;
+            std::cout << "Unknown make. Try again.\n";
+        } else {
+            failed = false;
+        }
+    } while (failed);
+    do {
+        std::cout << "===Model: ";
+        std::getline(std::cin, model);
+        if (make.empty()) {
+            failed = true;
+            std::cout << "Model name must not be empty.\n";
+        } else {
+            failed = false;
+        }
+    } while (failed);
 
     int id = get_id(car_folder, filename);
 

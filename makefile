@@ -80,10 +80,6 @@ windows: $(WIN_PROGS)
 	@cp $(BUILD_DIR)/telemetry.exe $(WIN_DIR)/telemetry.exe
 	@cp $(BUILD_DIR)/capture_data.exe $(WIN_DIR)/capture_data.exe
 	@cp $(BUILD_DIR)/update_cars.exe $(WIN_DIR)/update_cars.exe
-	@echo "Creating run script..."
-	@echo "@echo off" > $(WIN_DIR)/run.bat
-	@echo "update_cars.exe" >> $(WIN_DIR)/run.bat
-	@echo "telemetry.exe" >> $(WIN_DIR)/run.bat
 
 telemetry.exe: $(telemetry_WIN_OBJS)
 	@echo "Linking" $@
