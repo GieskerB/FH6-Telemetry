@@ -111,7 +111,8 @@ static void add_car(const std::string& car_folder, const std::string& filename) 
     int year;
     std::string make, model;
     std::cout << "New car found! [" << filename << "]\n"
-              << "Add following informations (Year, Make, Model) to add the car to the database.\n";
+              << "Add following informations (Year, Make, Model) to add the car to the database.\n"
+              << "Type -1 to skip this car for now.\n";
     bool failed = false;
     do {
         std::cout << "===Year:  ";
@@ -121,6 +122,9 @@ static void add_car(const std::string& car_folder, const std::string& filename) 
             std::cin.clear();
             std::cin.ignore();
             std::cout << "Invalid input. Could not be converted into a number.\n";
+        }else if (year == -1) {
+            std::cin.ignore();
+            return;
         } else if (year < 1885 or year > 3000) {
             failed = true;
             std::cin.ignore();
