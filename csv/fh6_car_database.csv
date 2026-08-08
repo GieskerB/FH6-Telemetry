@@ -279,7 +279,7 @@ id,year,make,model,zip
 2472,2016,McLaren,570 S,MCL_570S_16.zip
 2473,2016,Audi,r 8 v 10 plus,aud_r8v10plus_16.zip
 2486,2015,Radical,RXC,RAD_RXC_15.zip
-2489,2016,Fiat,695 Abarth,FIA_695Abarth_16.zip
+2489,2016,Abarth,695 Abarth,FIA_695Abarth_16.zip
 2494,2015,Land Rover,rangeroversvr,lr_rangeroversvr_15.zip
 2507,1955,Chevrolet,150 Utility Sedan,CHE_150UtilitySedan_55.zip
 2512,1987,Nissan,Skyline GTSR,NIS_SkylineGTSR_87.zip
@@ -623,3 +623,15 @@ id,year,make,model,zip
 4341,2017,Ferrari,J 50 PO,FER_J50PO_17.zip
 4342,1965,Toyota,Sports 800 Fanta,TOY_Sports800Fanta_65.zip
 3304,1990,Alfa Romeo,SE 048SP,ALF_00_SE048SP_90.zip
+4147,2021,Alfa Romeo,Giulia GTam,ALF_GiuliaGTAm_21.zip
+3325,2003,Aston Martin,DB7 GT,AST_DB7GT_03.zip
+3198,1984,De Tomaso,Pantera GT5,DET_PanteraGT5_84.zip
+3950,1967,Ferrari,275 GTB4 Spider,FER_275GTS_67.zip
+4156,2025,Ferrari,F80,FER_F80_25.zip
+2740,2017,Abarth,124 Spider,FIA_124Spider_17.zip
+4034,1972,Honda,Z GT,HON_ZGT_72.zip
+3759,2022,Lamborghini,Huracan EVO Spyder,LAM_HuracanEVOSpyder_22.zip
+4002,2024,Lamborghini,Temerario,LAM_Temerario_24.zip
+1295,1982,Lancia,037 Stradale,LAN_037Stradale_82.zip
+4205,1972,Nissan,Patrol,NIS_Patrol_72.zip
+3964,2024,Toyota,Prius Prime XSE Premium,TOY_Prius_24.zip
