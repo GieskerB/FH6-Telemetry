@@ -151,6 +151,8 @@ static void render_arrow(const char* arrow_path, const SDL_Point& arrow_position
 }
 
 void map_t::render() {
+    check_sdl_events();
+    
     map_data data_copy;
     mutex->lock();
     if (data.new_data == 0 or data.is_paused) {

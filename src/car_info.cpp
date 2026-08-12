@@ -273,6 +273,8 @@ static void render_model(const char* value, bool changed) {
 }
 
 void car_info_t::render() {
+    check_sdl_events();
+    
     car_info_data data_copy;
     mutex->lock();
     if (data.new_data == 0 or data.is_paused) {

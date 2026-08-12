@@ -221,6 +221,8 @@ static void render_speed(const char* speed, bool changed) {
 }
 
 void gforce_t::render() {
+    check_sdl_events();
+    
     gforce_data data_copy;
     mutex->lock();
     if (data.new_data == 0 or data.is_paused) {

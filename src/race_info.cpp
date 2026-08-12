@@ -365,6 +365,8 @@ static void render_shifts(const char* shifts, bool changed) {
 }
 
 void race_info_t::render() {
+    check_sdl_events();
+    
     race_info_data data_copy;
     mutex->lock();
     if (data.new_data == 0 or data.is_paused) {

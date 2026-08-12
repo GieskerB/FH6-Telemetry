@@ -57,8 +57,10 @@ void render_thread(std::vector<telemetries_t>* telemetries, const telemetry_size
                 telem);
         }
         const auto end = std::chrono::system_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-        // std::cout << " - Total time: " << elapsed.count() << "ms\n";
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        if (elapsed < 16 and elapsed >= 0) {
+            SDL_Delay(16-elapsed);
+        }
     }
 
     for (auto& telem : *telemetries) {
@@ -89,16 +91,6 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<te
 
         for (auto& telem : telemetries) {
             std::visit([&](auto& obj) { obj.update(data_out); }, telem);
-        }
-
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_QUIT) {
-                running = false;
-            }
-            if (event.type == SDL_EVENT_KEY_DOWN and event.key.key == SDLK_ESCAPE) {
-                running = false;
-            }
         }
     }
 

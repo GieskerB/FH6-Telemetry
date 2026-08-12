@@ -183,6 +183,8 @@ static void render_rpm_bar(int idle_rpm, int current_rpm, int max_rpm, const SDL
 }
 
 void engine_rpm_t::render() {
+    check_sdl_events();
+    
     engine_rpm_data data_copy;
     mutex->lock();
     if (data.new_data == 0 or data.is_paused) {

@@ -1,5 +1,6 @@
 #include "../../include/util/texture_handler.hpp"
 
+extern bool running;
 std::vector<SDL_Texture*> registered_textures;
 
 SDL_FRect calc_centered_rect(SDL_Texture* texture, float center_x, float center_y, float target_height) {
@@ -101,5 +102,17 @@ void texture_png_static(SDL_Renderer* renderer, SDL_Texture** texture, const cha
 void destroy_registered_textures() {
     for (const auto& texture : registered_textures) {
         SDL_DestroyTexture(texture);
+    }
+}
+
+void check_sdl_events() {
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_EVENT_QUIT) {
+            running = false;
+        }
+        if (event.type == SDL_EVENT_KEY_DOWN and event.key.key == SDLK_ESCAPE) {
+            running = false;
+        }
     }
 }

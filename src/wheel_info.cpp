@@ -280,6 +280,8 @@ static void render_suspension(float travel[4], unsigned short changed) {
 }
 
 void wheel_info_t::render() {
+    check_sdl_events();
+    
     wheel_info_data data_copy;
     mutex->lock();
     if (data.new_data == 0 or data.is_paused) {
