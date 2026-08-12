@@ -12,7 +12,6 @@ class engine_rpm_t {
     engine_rpm_data data;
 
    public:
-    const unsigned char ID = 1;
     void init(unsigned short = 400);
     void update(const fh6_data&);
     void render();

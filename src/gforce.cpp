@@ -26,6 +26,12 @@ static SDL_Renderer* renderer = nullptr;
 static TTF_Font* font = nullptr;
 
 void gforce_t::init(unsigned short size) {
+    // multi init check
+    static bool initialized = false;
+    if(initialized) {
+        throw std::runtime_error("Cannot instanace gforce more then once!\n");
+    }
+
     WIDTH = size;
     HEIGHT = size;
 
@@ -45,6 +51,7 @@ void gforce_t::init(unsigned short size) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    initialized = true;
 }
 
 static const std::pair<SDL_Point, std::string>& update_gforce_point(float acc_x, float acc_z, unsigned char& changed) {
@@ -221,8 +228,6 @@ static void render_speed(const char* speed, bool changed) {
 }
 
 void gforce_t::render() {
-    check_sdl_events();
-    
     gforce_data data_copy;
     mutex->lock();
     if (data.new_data == 0 or data.is_paused) {

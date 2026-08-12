@@ -21,6 +21,12 @@ static TTF_Font* text_font = nullptr;
 static TTF_Font* num_font = nullptr;
 
 void race_info_t::init(unsigned short size) {
+    // multi init check
+    static bool initialized = false;
+    if(initialized) {
+        throw std::runtime_error("Cannot instanace race-info more then once!\n");
+    }
+
     WIDTH = size;
     HEIGHT = static_cast<unsigned short>(size * 1.f);
 
@@ -45,6 +51,7 @@ void race_info_t::init(unsigned short size) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    initialized = true;
 }
 
 static std::string format_time(float seconds) {
@@ -365,8 +372,6 @@ static void render_shifts(const char* shifts, bool changed) {
 }
 
 void race_info_t::render() {
-    check_sdl_events();
-    
     race_info_data data_copy;
     mutex->lock();
     if (data.new_data == 0 or data.is_paused) {

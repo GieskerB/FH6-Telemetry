@@ -104,15 +104,3 @@ void destroy_registered_textures() {
         SDL_DestroyTexture(texture);
     }
 }
-
-void check_sdl_events() {
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_EVENT_QUIT) {
-            running = false;
-        }
-        if (event.type == SDL_EVENT_KEY_DOWN and event.key.key == SDLK_ESCAPE) {
-            running = false;
-        }
-    }
-}

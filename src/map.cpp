@@ -34,6 +34,12 @@ static SDL_Window* window = nullptr;
 static SDL_Renderer* renderer = nullptr;
 
 void map_t::init(unsigned short size) {
+    // multi init check
+    static bool initialized = false;
+    if(initialized) {
+        throw std::runtime_error("Cannot instanace map more then once!\n");
+    }
+
     WIDTH = size;
     HEIGHT = static_cast<unsigned short>(996.f / 780.f * size);
 
@@ -54,6 +60,7 @@ void map_t::init(unsigned short size) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    initialized = true;
 }
 
 static const std::string& update_map_path(const date& today, unsigned char& changed) {
@@ -151,8 +158,6 @@ static void render_arrow(const char* arrow_path, const SDL_Point& arrow_position
 }
 
 void map_t::render() {
-    check_sdl_events();
-    
     map_data data_copy;
     mutex->lock();
     if (data.new_data == 0 or data.is_paused) {

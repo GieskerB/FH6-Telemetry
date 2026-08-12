@@ -23,6 +23,12 @@ static SDL_Renderer* renderer = nullptr;
 static TTF_Font* font = nullptr;
 
 void engine_rpm_t::init(unsigned short size) {
+    // multi init check
+    static bool initialized = false;
+    if(initialized) {
+        throw std::runtime_error("Cannot instanace engine-rpm more then once!\n");
+    }
+
     WIDTH = size;
     HEIGHT = size / 1.75f;
 
@@ -41,6 +47,7 @@ void engine_rpm_t::init(unsigned short size) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    initialized = true;
 }
 
 static const std::string& update_gear(int gear, unsigned char& changed) {
@@ -183,8 +190,6 @@ static void render_rpm_bar(int idle_rpm, int current_rpm, int max_rpm, const SDL
 }
 
 void engine_rpm_t::render() {
-    check_sdl_events();
-    
     engine_rpm_data data_copy;
     mutex->lock();
     if (data.new_data == 0 or data.is_paused) {

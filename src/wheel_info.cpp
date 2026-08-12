@@ -21,6 +21,12 @@ static SDL_Renderer* renderer = nullptr;
 static TTF_Font* font = nullptr;
 
 void wheel_info_t::init(unsigned short size) {
+    // multi init check
+    static bool initialized = false;
+    if(initialized) {
+        throw std::runtime_error("Cannot instanace wheel-info more then once!\n");
+    }
+
     WIDTH = size;
     HEIGHT = static_cast<unsigned short>(size * 0.69f);
 
@@ -40,6 +46,7 @@ void wheel_info_t::init(unsigned short size) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    initialized = true;
 }
 
 static const std::array<SDL_Color, 4>& update_slipping(float slips[4], unsigned short& changed) {
@@ -279,9 +286,7 @@ static void render_suspension(float travel[4], unsigned short changed) {
     }
 }
 
-void wheel_info_t::render() {
-    check_sdl_events();
-    
+void wheel_info_t::render() { 
     wheel_info_data data_copy;
     mutex->lock();
     if (data.new_data == 0 or data.is_paused) {

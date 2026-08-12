@@ -30,55 +30,56 @@
 // Running variable to stop loop when program ends.
 volatile bool running = true;
 
-void render_thread(std::vector<telemetries_t>* telemetries, const telemetry_sizes_t& sizes) {
-    for (auto& telem : *telemetries) {
-        std::visit(
-            [&](auto& obj) {
-                if (sizes[obj.ID] != 0)
-                    obj.init(sizes[obj.ID]);
-                else
-                    obj.init();
-            },
-            telem);
-    }
+std::binary_semaphore space_available(1);
+std::binary_semaphore data_available(0);
 
+void render_loop(std::vector<telemetry_variant_t>& telemetries) {
     while (running) {
-        const auto start = std::chrono::system_clock::now();
-        auto last = start;
-        for (auto& telem : *telemetries) {
-            std::visit(
-                [&](auto& obj) {
-                    obj.render();
-                    const auto elapsed =
-                        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - last);
-                    // std::{0} << elapsed.count() << " ";
-                    last = std::chrono::system_clock::now();
-                },
-                telem);
+        // Handle Events
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_QUIT) {
+                running = false;
+            }
+            if (event.type == SDL_EVENT_KEY_DOWN and event.key.key == SDLK_ESCAPE) {
+                running = false;
+            }
         }
-        const auto end = std::chrono::system_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        if (elapsed < 16 and elapsed >= 0) {
-            SDL_Delay(16-elapsed);
+        // Handle data
+        data_available.acquire();
+        std::vector<std::chrono::system_clock::time_point> timing;
+        timing.push_back(std::chrono::system_clock::now());
+        for (auto& telem : telemetries) {
+            std::visit([&](auto& obj) { obj.render(); }, telem);
+            timing.push_back(std::chrono::system_clock::now());
         }
+        for (size_t i = 0; i < timing.size() - 1; ++i) {
+            std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(timing[i + 1] - timing[i]).count()
+                      << "ms ";
+        }
+        std::cout
+            << "=> "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(timing[timing.size() - 1] - timing[0]).count()
+            << "ms\n";
+        space_available.release();
     }
 
-    for (auto& telem : *telemetries) {
+    for (auto& telem : telemetries) {
         std::visit([](auto& obj) { obj.close(); }, telem);
     }
 }
 
-// Continuously receive data via UDP.
-void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<telemetries_t>& telemetries,
-                  const telemetry_sizes_t& sizes) {
-    std::thread thread(render_thread, &telemetries, sizes);
-    usleep(200000);
+void data_loop(int port, std::vector<telemetry_variant_t>* telemetries) {
+    auto [sockfd, client_addr] = setup(port);
+    bind_socket(sockfd, (const struct sockaddr*)&client_addr);
 
     struct fh6_data data_out;
     unsigned int last_time_stamp = 0;
+    unsigned long long frame = 0;
     while (running) {
         // Call wrapper, exit if data could not be received.
         receive_message(sockfd, ((void*)&data_out), (const struct sockaddr*)&client_addr);
+        ++frame;
 
         if (last_time_stamp < data_out.TimestampMS) {
             last_time_stamp = data_out.TimestampMS;
@@ -89,12 +90,17 @@ void receive_loop(int sockfd, const struct sockaddr* client_addr, std::vector<te
             continue;
         }
 
-        for (auto& telem : telemetries) {
-            std::visit([&](auto& obj) { obj.update(data_out); }, telem);
+        if (space_available.try_acquire()) {
+            // Render was fast enough, ready to write next data.
+            for (auto& telem : *telemetries) {
+                std::visit([&](auto& obj) { obj.update(data_out); }, telem);
+            }
+            data_available.release();
+        } else if (frame > 10) {
+            // Render was too slow, skiping current data frame.
+            std::cerr << "Render thread too slow, cant keep up - skipping frame <" << frame << ">!\n";
         }
     }
-
-    thread.join();
 
 #ifdef _WIN32
     closesocket(sockfd);
@@ -114,20 +120,16 @@ int main(int argc, const char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    std::vector<telemetries_t> telemetries;
-    telemetry_sizes_t sizes;
-    int port = parse_args(argc, argv, telemetries, sizes);
+    std::vector<telemetry_variant_t> telemetries;
+    const int port = parse_args(argc, argv, telemetries);
+    std::thread data_thread(data_loop, port, &telemetries);
 
-    // setup everything socket related
-    auto [sockfd, client_addr] = setup(port);
-    bind_socket(sockfd, (const struct sockaddr*)&client_addr);
+    render_loop(telemetries);
 
-    receive_loop(sockfd, (const struct sockaddr*)&client_addr, telemetries, sizes);
-
+    data_thread.join();
     destroy_registered_textures();
 
     SDL_Quit();
     TTF_Quit();
-
     return 0;
 }

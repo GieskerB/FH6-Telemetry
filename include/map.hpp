@@ -12,7 +12,6 @@ class map_t {
     map_data data;
 
    public:
-    const unsigned char ID = 3;
     void init(unsigned short = 780);
     void update(const fh6_data&);
     void render();

@@ -24,6 +24,4 @@ void texture_png_static(SDL_Renderer*, SDL_Texture**, const char*);
 
 void destroy_registered_textures();
 
-void check_sdl_events();
-
 #endif

@@ -12,7 +12,6 @@ class race_info_t {
     race_info_data data;
 
    public:
-    const unsigned char ID = 4;
     void init(unsigned short = 400);
     void update(const fh6_data&);
     void render();

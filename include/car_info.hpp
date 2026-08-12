@@ -12,7 +12,6 @@ class car_info_t {
     car_info_data data;
 
    public:
-    const unsigned char ID = 0;
     void init(unsigned short = 350);
     void update(const fh6_data&);
     void render();

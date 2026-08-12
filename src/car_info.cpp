@@ -4,6 +4,7 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <stdlib.h>
 
+#include <stdexcept>
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -29,6 +30,12 @@ static TTF_Font* pi_font = nullptr;
 static TTF_Font* text_font = nullptr;
 
 void car_info_t::init(unsigned short size) {
+    // multi init check
+    static bool initialized = false;
+    if(initialized) {
+        throw std::runtime_error("Cannot instanace car-info more then once!\n");
+    }
+
     WIDTH = size;
     SPRITE_WIDTH = WIDTH * SPRITE_PORTION;
     SPRITE_HEIGHT = SPRITE_WIDTH * SPRITE_RATIO;
@@ -56,6 +63,7 @@ void car_info_t::init(unsigned short size) {
         perror(SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    initialized = true;
 }
 
 static const std::string& update_drivetrain_path(int drivetrain, unsigned char& changed) {
@@ -273,8 +281,6 @@ static void render_model(const char* value, bool changed) {
 }
 
 void car_info_t::render() {
-    check_sdl_events();
-    
     car_info_data data_copy;
     mutex->lock();
     if (data.new_data == 0 or data.is_paused) {

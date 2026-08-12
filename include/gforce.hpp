@@ -12,7 +12,6 @@ class gforce_t {
     gforce_data data;
 
    public:
-    const unsigned char ID = 2;
     void init(unsigned short = 300);
     void update(const fh6_data&);
     void render();
