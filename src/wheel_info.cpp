@@ -23,7 +23,7 @@ static TTF_Font* font = nullptr;
 void wheel_info_t::init(unsigned short size) {
     // multi init check
     static bool initialized = false;
-    if(initialized) {
+    if (initialized) {
         throw std::runtime_error("Cannot instanace wheel-info more then once!\n");
     }
 
@@ -83,8 +83,8 @@ static const std::array<std::string, 4>& update_temperature(float temperature[4]
         if (temperature[i] != last_temperatures[i]) {
             last_temperatures[i] = temperature[i];
             std::stringstream strstream;
-            strstream << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill(' ') << temperature[i]
-                      << "°C";
+            strstream << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill(' ')
+                      << (temperature[i] - 32) / 1.8f << "°C";
             return_value[i] = strstream.str();
             changed |= (0b10000 << i);
         }
@@ -286,7 +286,7 @@ static void render_suspension(float travel[4], unsigned short changed) {
     }
 }
 
-void wheel_info_t::render() { 
+void wheel_info_t::render() {
     wheel_info_data data_copy;
     mutex->lock();
     if (data.new_data == 0 or data.is_paused) {
