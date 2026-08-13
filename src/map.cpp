@@ -78,18 +78,14 @@ static const std::string& update_map_path(const date& today, unsigned char& chan
     }
     return return_value;
 }
-static const std::string& update_arrow_path(float yaw, unsigned char& changed) {
+static float update_arrow_angle(float yaw, unsigned char& changed) {
     float rotation = (std::round((yaw * 180 / PI) / 5)) * 5;
     if (rotation < 0) {
         rotation += 360;
     }
-    static float last_rotation = -1;
-    static std::string return_value{};
-    if (rotation != last_rotation) {
-        last_rotation = rotation;
-        std::stringstream strstream;
-        strstream << "assets/arrows/nav-" << std::setw(3) << std::setfill('0') << rotation << ".png";
-        return_value = strstream.str();
+    static float return_value = -1;
+    if (rotation != return_value) {
+        return_value = rotation;
         changed |= 0b10;
     }
     return return_value;
@@ -120,7 +116,7 @@ void map_t::update(const fh6_data& data_out) {
 
     unsigned char changes = 0;
     const std::string& map_path = update_map_path(get_today(), changes);
-    const std::string& arrow_path = update_arrow_path(data_out.Yaw, changes);
+    const float arrow_angle = update_arrow_angle(data_out.Yaw, changes);
     const SDL_Point& arrow_position = update_arrow_position(data_out.PositionX, data_out.PositionZ, changes);
 
     if (changes != 0) {
@@ -128,7 +124,7 @@ void map_t::update(const fh6_data& data_out) {
         data.is_paused = is_paused;
         data.new_data = changes;
         std::strncpy(data.season_map_path, map_path.c_str(), sizeof(data.season_map_path) - 1);
-        std::strncpy(data.arrow_path, arrow_path.c_str(), sizeof(data.arrow_path) - 1);
+        data.arrow_angle = arrow_angle;
         data.arrow_position = arrow_position;
         mutex->unlock();
     }
@@ -142,9 +138,9 @@ static void render_season_map(const char* map_path, bool changed) {
         SDL_RenderTexture(renderer, texture, nullptr, &rect);
     }
 }
-static void render_arrow(const char* arrow_path, const SDL_Point& arrow_position, bool changed) {
+static void render_arrow(const SDL_Point& arrow_position, const double angle) {
     static SDL_Texture* texture = nullptr;
-    if (changed or !texture) texture_png(renderer, &texture, arrow_path);
+    if (!texture) texture_png_static(renderer, &texture, static_arrow_path);
     if (texture) {
         float texture_size = 0;
         // should be between 21 and 30!
@@ -153,7 +149,7 @@ static void render_arrow(const char* arrow_path, const SDL_Point& arrow_position
         const float offset = ARROW_SIZE * scalar / 2 + 1;
         const float size = ARROW_SIZE * scalar;
         const SDL_FRect rect = {arrow_position.x - offset, arrow_position.y - offset, size, size};
-        SDL_RenderTexture(renderer, texture, nullptr, &rect);
+        SDL_RenderTextureRotated(renderer, texture, nullptr, &rect, angle,nullptr,SDL_FLIP_NONE);
     }
 }
 
@@ -171,7 +167,7 @@ void map_t::render() {
     SDL_RenderClear(renderer);
 
     render_season_map(data_copy.season_map_path, (data_copy.new_data & 0b1) == 0b1);
-    render_arrow(data_copy.arrow_path, data_copy.arrow_position, (data_copy.new_data & 0b10) == 0b10);
+    render_arrow(data_copy.arrow_position, data_copy.arrow_angle /*, (data_copy.new_data & 0b10) == 0b10*/);
 
     SDL_RenderPresent(renderer);
 }
