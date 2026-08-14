@@ -27,6 +27,8 @@
 #include "../include/util/parse_args.hpp"
 #include "../include/util/texture_handler.hpp"
 
+#define __TIMING__
+
 // Running variable to stop loop when program ends.
 volatile bool running = true;
 
@@ -47,12 +49,17 @@ void render_loop(std::vector<telemetry_variant_t>& telemetries) {
         }
         // Handle data
         data_available.acquire();
+#ifdef __TIMING__
         std::vector<std::chrono::system_clock::time_point> timing;
         timing.push_back(std::chrono::system_clock::now());
+#endif
         for (auto& telem : telemetries) {
-            std::visit([&](auto& obj) { obj.render(); }, telem);
+            std::visit([&](auto& t) { t.render(); }, telem);
+#ifdef __TIMING__
             timing.push_back(std::chrono::system_clock::now());
+#endif
         }
+#ifdef __TIMING__
         for (size_t i = 0; i < timing.size() - 1; ++i) {
             std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(timing[i + 1] - timing[i]).count()
                       << "ms ";
@@ -61,6 +68,7 @@ void render_loop(std::vector<telemetry_variant_t>& telemetries) {
             << "=> "
             << std::chrono::duration_cast<std::chrono::milliseconds>(timing[timing.size() - 1] - timing[0]).count()
             << "ms\n";
+#endif
         space_available.release();
     }
 

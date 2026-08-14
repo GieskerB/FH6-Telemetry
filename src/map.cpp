@@ -36,7 +36,7 @@ static SDL_Renderer* renderer = nullptr;
 void map_t::init(unsigned short size) {
     // multi init check
     static bool initialized = false;
-    if(initialized) {
+    if (initialized) {
         throw std::runtime_error("Cannot instanace map more then once!\n");
     }
 
@@ -119,15 +119,15 @@ void map_t::update(const fh6_data& data_out) {
     const float arrow_angle = update_arrow_angle(data_out.Yaw, changes);
     const SDL_Point& arrow_position = update_arrow_position(data_out.PositionX, data_out.PositionZ, changes);
 
+    mutex->lock();
+    data.is_paused = is_paused;
+    data.new_data = changes;
     if (changes != 0) {
-        mutex->lock();
-        data.is_paused = is_paused;
-        data.new_data = changes;
-        std::strncpy(data.season_map_path, map_path.c_str(), sizeof(data.season_map_path) - 1);
+        std::snprintf(data.season_map_path, sizeof(data.season_map_path), "%s", map_path.c_str());
         data.arrow_angle = arrow_angle;
         data.arrow_position = arrow_position;
-        mutex->unlock();
     }
+    mutex->unlock();
 }
 
 static void render_season_map(const char* map_path, bool changed) {
@@ -149,19 +149,18 @@ static void render_arrow(const SDL_Point& arrow_position, const double angle) {
         const float offset = ARROW_SIZE * scalar / 2 + 1;
         const float size = ARROW_SIZE * scalar;
         const SDL_FRect rect = {arrow_position.x - offset, arrow_position.y - offset, size, size};
-        SDL_RenderTextureRotated(renderer, texture, nullptr, &rect, angle,nullptr,SDL_FLIP_NONE);
+        SDL_RenderTextureRotated(renderer, texture, nullptr, &rect, angle, nullptr, SDL_FLIP_NONE);
     }
 }
 
 void map_t::render() {
     map_data data_copy;
-    mutex->lock();
-    if (data.new_data == 0 or data.is_paused) {
-        mutex->unlock();
-        return;
+
+    {
+        std::lock_guard<std::mutex> lock(*mutex);
+        if (data.new_data == 0 or data.is_paused) return;
+        data_copy = data;
     }
-    std::memcpy(&data_copy, &data, sizeof(data));
-    mutex->unlock();
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);

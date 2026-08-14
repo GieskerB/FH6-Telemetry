@@ -125,16 +125,16 @@ void gforce_t::update(const fh6_data& data_out) {
     const auto& gforce_pair = update_gforce_point(data_out.AccelerationX, data_out.AccelerationZ, changes);
     const auto& speed_pair = update_speed_point(data_out.VelocityX, data_out.VelocityZ, changes);
 
+    mutex->lock();
+    data.is_paused = is_paused;
+    data.new_data = changes;
     if (changes != 0) {
-        mutex->lock();
-        data.is_paused = is_paused;
-        data.new_data = changes;
         data.new_gforce_point = gforce_pair.first;
         data.new_speed_point = speed_pair.first;
-        std::strncpy(data.gforce, gforce_pair.second.c_str(), sizeof(data.gforce) - 1);
-        std::strncpy(data.speed, speed_pair.second.c_str(), sizeof(data.speed) - 1);
-        mutex->unlock();
+        std::snprintf(data.gforce,sizeof(data.gforce), "%s",gforce_pair.second.c_str());
+        std::snprintf(data.speed,sizeof(data.speed), "%s",speed_pair.second.c_str());
     }
+    mutex->unlock();
 }
 
 static void render_static_background() {
@@ -229,13 +229,12 @@ static void render_speed(const char* speed, bool changed) {
 
 void gforce_t::render() {
     gforce_data data_copy;
-    mutex->lock();
-    if (data.new_data == 0 or data.is_paused) {
-        mutex->unlock();
-        return;
+
+    {
+        std::lock_guard<std::mutex> lock(*mutex);
+        if (data.new_data == 0 or data.is_paused) return;
+        data_copy = data; 
     }
-    std::memcpy(&data_copy, &data, sizeof(data));
-    mutex->unlock();
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);

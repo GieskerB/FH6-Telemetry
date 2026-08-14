@@ -5,11 +5,11 @@ WIN_CXX := x86_64-w64-mingw32-g++
 SDL_CFLAGS := $(shell pkg-config --cflags sdl3 sdl3-ttf)
 SDL_LIBS   := $(shell pkg-config --libs sdl3 sdl3-ttf)
 
-CXXFLAGS := -Wall -Wextra -Werror -std=c++20 -O3 $(SDL_CFLAGS) # -fsanitize=address -static-libasan -g
+CXXFLAGS := -Wall -Wextra -Werror -std=c++20 -O3 $(SDL_CFLAGS) # -fsanitize=address,undefined -static-libasan -g
 LDFLAGS  := $(SDL_LIBS)
 
 # Windows Cross-Compilation Flags
-WIN_SDL      := deps/SDL3-3.4.10/x86_64-w64-mingw32
+WIN_SDL      := deps/SDL3-3.4.14/x86_64-w64-mingw32
 WIN_TTF      := deps/SDL3_ttf-3.2.2/x86_64-w64-mingw32
 WIN_CXXFLAGS := -Wall -Wextra -Werror -O3 -std=c++20 -I$(WIN_SDL)/include -I$(WIN_TTF)/include
 WIN_LDFLAGS  := -L$(WIN_SDL)/lib -L$(WIN_TTF)/lib -lSDL3_ttf -lSDL3 -static-libgcc -static-libstdc++ -lws2_32

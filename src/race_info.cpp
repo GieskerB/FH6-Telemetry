@@ -23,7 +23,7 @@ static TTF_Font* num_font = nullptr;
 void race_info_t::init(unsigned short size) {
     // multi init check
     static bool initialized = false;
-    if(initialized) {
+    if (initialized) {
         throw std::runtime_error("Cannot instanace race-info more then once!\n");
     }
 
@@ -225,20 +225,20 @@ void race_info_t::update(const fh6_data& data_out) {
     const std::string& distance = update_distance(distance_arg, changes);
     const std::string& shifts = update_shifts(shifts_arg, changes);
 
+    mutex->lock();
+    data.is_paused = is_paused;
+    data.new_data = changes;
     if (changes != 0) {
-        mutex->lock();
-        data.is_paused = is_paused;
-        data.new_data = changes;
-        std::strncpy(data.position, position.c_str(), sizeof(data.position) - 1);
-        std::strncpy(data.lap, lap.c_str(), sizeof(data.lap) - 1);
-        std::strncpy(data.race_time, race_time.c_str(), sizeof(data.race_time) - 1);
-        std::strncpy(data.current_lap, current_lap.c_str(), sizeof(data.current_lap) - 1);
-        std::strncpy(data.best_lap, best_lap.c_str(), sizeof(data.best_lap) - 1);
-        std::strncpy(data.last_lap, last_lap.c_str(), sizeof(data.last_lap) - 1);
-        std::strncpy(data.distance, distance.c_str(), sizeof(data.distance) - 1);
-        std::strncpy(data.shifts, shifts.c_str(), sizeof(data.shifts) - 1);
-        mutex->unlock();
+        std::snprintf(data.position, sizeof(data.position), "%s", position.c_str());
+        std::snprintf(data.lap, sizeof(data.lap), "%s", lap.c_str());
+        std::snprintf(data.race_time, sizeof(data.race_time), "%s", race_time.c_str());
+        std::snprintf(data.current_lap, sizeof(data.current_lap), "%s", current_lap.c_str());
+        std::snprintf(data.best_lap, sizeof(data.best_lap), "%s", best_lap.c_str());
+        std::snprintf(data.last_lap, sizeof(data.last_lap), "%s", last_lap.c_str());
+        std::snprintf(data.distance, sizeof(data.distance), "%s", distance.c_str());
+        std::snprintf(data.shifts, sizeof(data.shifts), "%s", shifts.c_str());
     }
+    mutex->unlock();
 }
 
 static void render_static_position_text() {
@@ -373,13 +373,12 @@ static void render_shifts(const char* shifts, bool changed) {
 
 void race_info_t::render() {
     race_info_data data_copy;
-    mutex->lock();
-    if (data.new_data == 0 or data.is_paused) {
-        mutex->unlock();
-        return;
+
+    {
+        std::lock_guard<std::mutex> lock(*mutex);
+        if (data.new_data == 0 or data.is_paused) return;
+        data_copy = data;
     }
-    std::memcpy(&data_copy, &data, sizeof(data));
-    mutex->unlock();
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);

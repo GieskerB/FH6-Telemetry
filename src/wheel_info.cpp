@@ -200,18 +200,16 @@ void wheel_info_t::update(const fh6_data& data_out) {
         update_wheel_speed(rot_speed, slip, data_out.Steer, std::abs(data_out.VelocityZ * 3.6f), changes);
     const auto& suspension = update_suspension(suspend, changes);
 
-    if (changes != 0) {
-        mutex->lock();
-        data.is_paused = is_paused;
-        data.new_data = changes;
-        for (unsigned char i = 0; i < 4; ++i) {
-            data.slipping[i] = slipping[i];
-            std::strncpy(data.temperature[i], temperature[i].c_str(), sizeof(data.temperature[i]) - 1);
-            std::strncpy(data.wheel_speed[i], wheel_speed[i].c_str(), sizeof(data.wheel_speed[i]) - 1);
-            data.suspension[i] = suspension[i];
-        }
-        mutex->unlock();
+    mutex->lock();
+    data.is_paused = is_paused;
+    data.new_data = changes;
+    for (unsigned char i = 0; i < 4 and changes != 0; ++i) {
+        data.slipping[i] = slipping[i];
+        std::snprintf(data.temperature[i], sizeof(data.temperature[i]), "%s", temperature[i].c_str());
+        std::snprintf(data.wheel_speed[i], sizeof(data.wheel_speed[i]), "%s", wheel_speed[i].c_str());
+        data.suspension[i] = suspension[i];
     }
+    mutex->unlock();
 }
 
 static void render_tires(const SDL_Color colors[4], unsigned short changed) {
@@ -288,13 +286,12 @@ static void render_suspension(float travel[4], unsigned short changed) {
 
 void wheel_info_t::render() {
     wheel_info_data data_copy;
-    mutex->lock();
-    if (data.new_data == 0 or data.is_paused) {
-        mutex->unlock();
-        return;
+
+    {
+        std::lock_guard<std::mutex> lock(*mutex);
+        if (data.new_data == 0 or data.is_paused) return;
+        data_copy = data;
     }
-    std::memcpy(&data_copy, &data, sizeof(data));
-    mutex->unlock();
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);

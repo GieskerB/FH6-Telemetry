@@ -25,7 +25,7 @@ static TTF_Font* font = nullptr;
 void engine_rpm_t::init(unsigned short size) {
     // multi init check
     static bool initialized = false;
-    if(initialized) {
+    if (initialized) {
         throw std::runtime_error("Cannot instanace engine-rpm more then once!\n");
     }
 
@@ -114,18 +114,18 @@ void engine_rpm_t::update(const fh6_data& data_out) {
     const std::string& speed = update_speed(data_out.Speed, changes);
     const SDL_Color& rpm_bar_color = update_rpm_bar_color(data_out.CurrentEngineRpm, data_out.EngineMaxRpm, changes);
 
+    mutex->lock();
+    data.is_paused = is_paused;
+    data.new_data = changes;
     if (changes != 0) {
-        mutex->lock();
-        data.is_paused = is_paused;
-        data.new_data = changes;
-        std::strncpy(data.gear, gear.c_str(), sizeof(data.gear) - 1);
-        std::strncpy(data.speed, speed.c_str(), sizeof(data.speed) - 1);
+        std::snprintf(data.gear, sizeof(data.gear), "%s", gear.c_str());
+        std::snprintf(data.speed, sizeof(data.speed), "%s", speed.c_str());
         data.rpm_bar_color = rpm_bar_color;
         data.idle_rpm = data_out.EngineIdleRpm;
         data.current_rpm = data_out.CurrentEngineRpm;
         data.max_rpm = data_out.EngineMaxRpm;
-        mutex->unlock();
     }
+    mutex->unlock();
 }
 
 static void render_static_text() {
@@ -191,13 +191,12 @@ static void render_rpm_bar(int idle_rpm, int current_rpm, int max_rpm, const SDL
 
 void engine_rpm_t::render() {
     engine_rpm_data data_copy;
-    mutex->lock();
-    if (data.new_data == 0 or data.is_paused) {
-        mutex->unlock();
-        return;
+
+    {
+        std::lock_guard<std::mutex> lock(*mutex);
+        if (data.new_data == 0 or data.is_paused) return;
+        data_copy = data;
     }
-    std::memcpy(&data_copy, &data, sizeof(data));
-    mutex->unlock();
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);

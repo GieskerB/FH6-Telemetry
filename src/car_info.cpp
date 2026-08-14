@@ -4,14 +4,15 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <stdlib.h>
 
-#include <stdexcept>
 #include <algorithm>
+#include <bitset>
 #include <cstdio>
 #include <cstring>
 #include <format>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 
 #include "../include/util/colors.hpp"
@@ -32,7 +33,7 @@ static TTF_Font* text_font = nullptr;
 void car_info_t::init(unsigned short size) {
     // multi init check
     static bool initialized = false;
-    if(initialized) {
+    if (initialized) {
         throw std::runtime_error("Cannot instanace car-info more then once!\n");
     }
 
@@ -180,6 +181,7 @@ void car_info_t::update(const fh6_data& data_out) {
     const auto details = details_map[data_out.CarOrdinal];
 
     unsigned char changes = 0;
+
     const std::string& drivetrain_path = update_drivetrain_path(data_out.DrivetrainType, changes);
     const std::string& class_id = update_class_id(data_out.CarClass, changes);
     const SDL_Color& class_color = update_class_color(data_out.CarClass, changes);
@@ -189,20 +191,20 @@ void car_info_t::update(const fh6_data& data_out) {
     const std::string& year_make = update_year_make(details.year, details.make, changes);
     const std::string& model = update_model(details.model, changes);
 
+    mutex->lock();
+    data.is_paused = is_paused;
+    data.new_data = changes;
     if (changes != 0) {
-        mutex->lock();
-        data.is_paused = is_paused;
-        data.new_data = changes;
-        std::strncpy(data.drivetrain_path, drivetrain_path.c_str(), sizeof(data.drivetrain_path) - 1);
-        std::strncpy(data.class_id, class_id.c_str(), sizeof(data.class_id) - 1);
+        std::snprintf(data.drivetrain_path, sizeof(data.drivetrain_path), "%s", drivetrain_path.c_str());
+        std::snprintf(data.class_id, sizeof(data.class_id), "%s", class_id.c_str());
         data.class_color = class_color;
-        std::strncpy(data.performance_id, performance_id.c_str(), sizeof(data.performance_id) - 1);
-        std::strncpy(data.flag_path, flag_path.c_str(), sizeof(data.flag_path) - 1);
-        std::strncpy(data.group, group.c_str(), sizeof(data.group) - 1);
-        std::strncpy(data.year_make, year_make.c_str(), sizeof(data.year_make) - 1);
-        std::strncpy(data.model, model.c_str(), sizeof(data.model) - 1);
-        mutex->unlock();
+        std::snprintf(data.performance_id, sizeof(data.performance_id), "%s", performance_id.c_str());
+        std::snprintf(data.flag_path, sizeof(data.flag_path), "%s", flag_path.c_str());
+        std::snprintf(data.group, sizeof(data.group), "%s", group.c_str());
+        std::snprintf(data.year_make, sizeof(data.year_make), "%s", year_make.c_str());
+        std::snprintf(data.model, sizeof(data.model), "%s", model.c_str());
     }
+    mutex->unlock();
 }
 
 static void render_drivetrain(const char* path, bool changed) {
@@ -282,13 +284,12 @@ static void render_model(const char* value, bool changed) {
 
 void car_info_t::render() {
     car_info_data data_copy;
-    mutex->lock();
-    if (data.new_data == 0 or data.is_paused) {
-        mutex->unlock();
-        return;
+
+    {
+        std::lock_guard<std::mutex> lock(*mutex);
+        if (data.new_data == 0 or data.is_paused) return;
+        data_copy = data;
     }
-    std::memcpy(&data_copy, &data, sizeof(data));
-    mutex->unlock();
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
