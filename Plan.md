@@ -99,8 +99,6 @@ unsigned char HandBrake
 - ```float NormalizedSuspensionTravelRearLeft```
 - ```float NormalizedSuspensionTravelRearRight```
 
-*Idea: calc wheel speed based on rotation and car speed!*
-
 ## Unused resources
 
 - ```float AngularVelocityX```

@@ -3,7 +3,7 @@
 
 #include <SDL3/SDL_rect.h>
 
-constexpr const char static_arrow_path[] = "assets/sprites/arrow.png";
+constexpr const char static_arrow_path[] = "assets/sprites/Arrow.png";
 
 struct map_data {
     bool is_paused = false;

@@ -27,7 +27,7 @@
 #include "../include/util/parse_args.hpp"
 #include "../include/util/texture_handler.hpp"
 
-#define __TIMING__
+// #define __TIMING__
 
 // Running variable to stop loop when program ends.
 volatile bool running = true;
